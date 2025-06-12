@@ -1,9 +1,8 @@
 {
   "name": "accufin",
   "version": "0.1.0",
-  "private": true,   
-  "type": "module",     
-   
+  "private": true,
+  "type": "module",
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
@@ -11,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "framer-motion": "^12.17.3",
     "next": "15.3.3",
     "next-auth": "^4.24.11",
     "react": "^19.0.0",
