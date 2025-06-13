@@ -1,3 +1,6 @@
+"use client";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { FaChartBar, FaMoneyCheckAlt, FaClipboardList } from "react-icons/fa";
 
 const projects = [
@@ -37,36 +40,17 @@ const stages = [
 ];
 
 export default function Finance() {
-    return (
-        <section>
-            {/* Top Section with Fixed Background */}
-            {/* <div
-                className="relative w-full h-[320px] flex flex-col items-center justify-center text-center"
-                style={{
-                    backgroundImage: "url('/img5.jpg')",
-                    backgroundAttachment: "fixed",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                }}
-            >
-                <div className="absolute inset-0 bg-black opacity-50"></div>
-                <div className="relative z-10 px-4">
-                    <h2 className="text-white text-3xl md:text-4xl font-bold mb-4">
-                        Having Trouble Managing Your Finances?
-                    </h2>
-                    <p className="text-white text-base md:text-lg mb-6 max-w-2xl mx-auto">
-                        Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut suspendisse. Pharetra finibus condimentum aenean lacinia sem metus Integer dapibus diam justo.
-                    </p>
-                    <a
-                        href=""
-                        className="inline-block bg-[#00c6fb] hover:bg-[#00a6d6] text-white font-semibold px-8 py-3 rounded transition-colors text-lg"
-                    >
-                        CONTACT US NOW &rarr;
-                    </a>
-                </div>
-            </div> */}
+    const sectionRef = useRef(null);
+    const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
 
+    const animations = [
+        { x: -100, opacity: 0 },
+        { y: 100, opacity: 0 },
+        { x: 100, opacity: 0 },
+    ];
+
+    return (
+        <section ref={sectionRef}>
             {/* Case Studies */}
             <div className="bg-[#f7f9fa] py-16 px-4">
                 <div className="max-w-7xl mx-auto">
@@ -80,10 +64,13 @@ export default function Finance() {
                         Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut suspendisse pharetra. Finibus condimentum aenean lacinia sem metus Integer.
                     </p>
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {projects.map((project) => (
-                            <div
+                        {projects.map((project, index) => (
+                            <motion.div
                                 key={project.title}
                                 className="rounded-lg border border-[#008db3] bg-white hover:bg-[#008db3] hover:text-white transition-colors p-0 flex flex-col h-full group"
+                                initial={animations[index]}
+                                animate={isInView ? { x: 0, y: 0, opacity: 1 } : {}}
+                                transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
                             >
                                 <div className="overflow-hidden rounded-t-lg">
                                     <img
@@ -102,14 +89,11 @@ export default function Finance() {
                                         READ MORE &rarr;
                                     </a>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             </div>
-
-         
-
         </section>
     );
 }

@@ -12,89 +12,43 @@ import {
     FaUserTie,
     FaChevronRight,
 } from "react-icons/fa";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 
 const services = [
-    {
-        icon: <FaBook className="text-3xl" />,
-        title: "Bookkeeping",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaMoneyCheckAlt className="text-3xl" />,
-        title: "Payroll Services",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaCalculator className="text-3xl" />,
-        title: "Tax Planning",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaClipboardCheck className="text-3xl" />,
-        title: "Audit & Assurance",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaChartLine className="text-3xl" />,
-        title: "Financial Statement",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaUserCog className="text-3xl" />,
-        title: "Tech Consulting",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaBriefcase className="text-3xl" />,
-        title: "Business Advisory",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
-    {
-        icon: <FaUserTie className="text-3xl" />,
-        title: "Outsourced CFO",
-        desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq.",
-    },
+    { icon: <FaBook className="text-3xl" />, title: "Bookkeeping", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaMoneyCheckAlt className="text-3xl" />, title: "Payroll Services", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaCalculator className="text-3xl" />, title: "Tax Planning", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaClipboardCheck className="text-3xl" />, title: "Audit & Assurance", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaChartLine className="text-3xl" />, title: "Financial Statement", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaUserCog className="text-3xl" />, title: "Tech Consulting", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaBriefcase className="text-3xl" />, title: "Business Advisory", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    { icon: <FaUserTie className="text-3xl" />, title: "Outsourced CFO", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
 ];
 
 export default function Company() {
+    const sectionRef = useRef(null);
+    const isInView = useInView(sectionRef, { once: true, amount: 0.2 });
+
+    const getInitial = (idx: number) => {
+        const angles = [
+            { x: -50, y: 0 }, // left
+            { x: 0, y: 50 },  // bottom
+            { x: 50, y: 0 },  // right
+            { x: 0, y: -50 }, // top
+        ];
+        return angles[idx % angles.length];
+    };
+
     return (
-        <section className="mt-15">
-            {/* Our Company In Number with fixed background */}
-            {/* <div
-                className="relative w-full h-[320px] flex items-center"
-                style={{
-                    backgroundImage: "url('/img3.jpg')",
-                    backgroundAttachment: "fixed",
-                    backgroundPosition: "center",
-                    backgroundRepeat: "no-repeat",
-                    backgroundSize: "cover",
-                }}
-            >
-                <div className="absolute inset-0 bg-black opacity-40"></div>
-                <div className="relative z-10 w-full max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between h-full">
-                    <div className="text-white text-3xl sm:text-4xl font-bold mb-6 sm:mb-0">
-                        Our Company <br /> In Number
-                    </div>
-                    <div className="flex flex-col sm:flex-row gap-8 text-white text-center">
-                        <div>
-                            <div className="text-3xl sm:text-4xl font-bold">
-                                15<sup>th</sup>
-                            </div>
-                            <div className="font-semibold">Years Experience</div>
-                        </div>
-                        <div>
-                            <div className="text-3xl sm:text-4xl font-bold">1,700+</div>
-                            <div className="font-semibold">Happy Client</div>
-                        </div>
-                        <div>
-                            <div className="text-3xl sm:text-4xl font-bold">4,300+</div>
-                            <div className="font-semibold">Project Completed</div>
-                        </div>
-                    </div>
-                </div>
-            </div> */}
+        <section className="mt-15" ref={sectionRef}>
             <div className="bg-[#ffffff] py-16 px-4">
-                <div className="max-w-7xl mx-auto">
+                <motion.div
+                    initial={{ opacity: 0, y: 50 }}
+                    animate={isInView ? { opacity: 1, y: 0 } : {}}
+                    transition={{ duration: 0.8, ease: "easeOut" }}
+                    className="max-w-7xl mx-auto"
+                >
                     <div className="text-center mb-2 text-[#008db3] font-semibold tracking-widest uppercase">
                         Our Services
                     </div>
@@ -107,10 +61,15 @@ export default function Company() {
                     </p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
                         {services.map((service, idx) => {
+                            const initialPos = getInitial(idx);
                             const isFirst = idx === 0;
+
                             return (
-                                <div
+                                <motion.div
                                     key={service.title}
+                                    initial={{ opacity: 0, x: initialPos.x, y: initialPos.y }}
+                                    animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
+                                    transition={{ duration: 0.6, delay: idx * 0.1 }}
                                     className={`rounded-lg border border-[#008db3] transition-colors p-6 flex flex-col h-full group ${isFirst
                                         ? "bg-[#008db3] text-white hover:bg-[#007399]"
                                         : "bg-white text-[#0a2236] hover:bg-[#008db3] hover:text-white"
@@ -125,12 +84,12 @@ export default function Company() {
                                     >
                                         READ MORE <FaChevronRight className="ml-2" />
                                     </Link>
-                                </div>
+                                </motion.div>
                             );
                         })}
                     </div>
-                </div>
-            </div>        
+                </motion.div>
+            </div>
         </section>
     );
 }

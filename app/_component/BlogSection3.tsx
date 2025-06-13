@@ -25,6 +25,27 @@ const blogs = [
     comments: 0,
     desc: "Lorem ipsum dolor sit amet elit. Maecenas eget augue nulla. Proin pellentesque interdum nisi id porttitor. Etiam ultrices accumsan augue,…",
   },
+  {
+    img: "/img11.jpg",
+    title: "How Automation is Changing Modern Bookkeeping",
+    date: "March 28, 2023",
+    comments: 2,
+    desc: "Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nulla ac convallis justo. Integer vulputate arcu id metus fermentum,…",
+  },
+  {
+    img: "/img9.jpg",
+    title: "Top 5 KPIs for Financial Performance in 2024",
+    date: "March 29, 2023",
+    comments: 3,
+    desc: "Understand the most critical KPIs for your accounting team and why they're essential for long-term financial planning,…",
+  },
+  {
+    img: "/img10.jpg",
+    title: "Cloud Accounting vs Traditional Software",
+    date: "March 30, 2023",
+    comments: 5,
+    desc: "Explore the benefits and drawbacks of cloud-based accounting platforms in today's fast-paced digital business world,…",
+  },
 ];
 
 export default function BlogSection() {
@@ -50,7 +71,7 @@ export default function BlogSection() {
           suspendisse pharetra. Finibus condimentum aenean lacinia sem metus
           Integer.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {blogs.map((blog) => (
             <div
               key={blog.title}
@@ -63,7 +84,6 @@ export default function BlogSection() {
                   className="w-full h-56 object-cover transition-transform duration-300 ease-out group-hover:scale-105"
                 />
               </div>
-              {/* Card inner section with red background */}
               <div className="flex-1 flex flex-col p-6 bg-[#008db3] group-hover:bg-[#008db3] transition-colors text-white">
                 <div className="font-bold text-lg mb-2">{blog.title}</div>
                 <div className="flex items-center text-sm mb-2 opacity-80 group-hover:opacity-100">
@@ -74,7 +94,7 @@ export default function BlogSection() {
                 </div>
                 <div className="mb-4 text-sm flex-1">{blog.desc}</div>
                 <a
-                  href="#"
+                  href="/readmore"
                   className="inline-flex items-center font-semibold text-sm mt-auto text-white group-hover:text-white transition-colors"
                 >
                   READ MORE <FaChevronRight className="ml-2" />

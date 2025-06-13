@@ -2,6 +2,8 @@
 import { FaChevronRight } from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { motion, useInView } from "framer-motion";
+import { useRef } from "react";
 
 const latestCases = [
     { title: "Project Cost Analysis", date: "March 23, 2023", image: "/img2.jpg", link: "/cases/project-cost-analysis" },
@@ -22,16 +24,23 @@ const otherServices = [
 
 export default function Restruct() {
     const router = useRouter();
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
 
     const handleNavigate = () => {
-        window.scrollTo({ top: 0, behavior: "smooth" }); // allow scroll animation to complete
+        window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
     return (
-        <section className="bg-[#f7f9fa] py-8 px-2 min-h-screen">
+        <section className="bg-[#f7f9fa] py-8 px-2 min-h-screen" ref={ref}>
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
                 {/* Main Content */}
-                <div className="flex-1 min-w-0">
+                <motion.div
+                    initial={{ opacity: 0, x: -50 }}
+                    animate={isInView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ duration: 0.7, ease: "easeOut" }}
+                    className="flex-1 min-w-0"
+                >
                     <img
                         src="/img6.jpg"
                         alt="Financial Restructuring"
@@ -67,10 +76,15 @@ export default function Restruct() {
                         <li className="flex items-start"><FaChevronRight className="mt-1 mr-2" /><span className="text-[#5a6a7a]">Etiam sit amet odio sed...</span></li>
                         <li className="flex items-start"><FaChevronRight className="mt-1 mr-2" /><span className="text-[#5a6a7a]">Integer vitae nunc eu leo...</span></li>
                     </ul>
-                </div>
+                </motion.div>
 
                 {/* Sidebar */}
-                <div className="w-full lg:w-[350px] flex flex-col gap-6">
+                <motion.div
+                    initial={{ opacity: 0, x: 50 }}
+                    animate={isInView ? { opacity: 1, x: 0 } : {}}
+                    transition={{ duration: 0.7, delay: 0.3, ease: "easeOut" }}
+                    className="w-full lg:w-[350px] flex flex-col gap-6"
+                >
                     {/* Latest Cases */}
                     <div className="bg-[#007399] rounded-xl p-6 text-white mb-2">
                         <div className="font-bold text-lg mb-4">Latest Cases</div>
@@ -164,7 +178,7 @@ export default function Restruct() {
                             SEND MESSAGE
                         </button>
                     </form>
-                </div>
+                </motion.div>
             </div>
         </section>
     );

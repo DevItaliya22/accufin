@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { motion, useInView } from "framer-motion";
 
 const faqs = [
     {
@@ -32,7 +33,6 @@ const faqs = [
 export default function Faq() {
     const [open, setOpen] = useState<number | null>(null);
 
-    // Split FAQs into two columns of 3 each
     const firstHalf = faqs.slice(0, 3);
     const secondHalf = faqs.slice(3);
 
@@ -44,19 +44,24 @@ export default function Faq() {
             return (
                 <div key={index}>
                     <button
-                        className={`w-full flex items-center justify-between rounded-lg px-6 py-4 text-left font-semibold text-lg focus:outline-none transition border ${isOpen ? "bg-white text-black border-white" : "bg-transparent text-white border-white"
-                            }`}
+                        className={`w-full flex items-center justify-between rounded-lg px-6 py-4 text-left font-semibold text-lg focus:outline-none transition border ${
+                            isOpen
+                                ? "bg-white text-black border-white"
+                                : "bg-transparent text-white border-white"
+                        }`}
                         onClick={() => setOpen(isOpen ? null : index)}
                     >
                         <span>{item.q}</span>
                         <MdKeyboardArrowDown
-                            className={`ml-2 text-2xl transition-transform ${isOpen ? "rotate-180" : ""
-                                }`}
+                            className={`ml-2 text-2xl transition-transform ${
+                                isOpen ? "rotate-180" : ""
+                            }`}
                         />
                     </button>
                     <div
-                        className={`overflow-hidden transition-all duration-300 px-6 ${isOpen ? "max-h-40 py-4" : "max-h-0 py-0"
-                            }`}
+                        className={`overflow-hidden transition-all duration-300 px-6 ${
+                            isOpen ? "max-h-40 py-4" : "max-h-0 py-0"
+                        }`}
                     >
                         <p className="text-cyan-100 text-base">{item.a}</p>
                     </div>
@@ -64,25 +69,36 @@ export default function Faq() {
             );
         });
 
+    // Add animation trigger
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "0px 0px -100px 0px" });
+
     return (
         <section className="bg-[#0082a3] text-white py-14 px-4">
-            <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between gap-8">
-                <div className="flex-1 mb-8 md:mb-0">
-                    <div className="uppercase text-xs tracking-widest text-cyan-200 mb-1">FAQ</div>
-                    <h2 className="text-3xl md:text-5xl font-bold mb-4">The Most Questions</h2>
+            <motion.div
+                ref={ref}
+                initial={{ opacity: 0, y: 50 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+            >
+                <div className="max-w-6xl mx-auto flex flex-col md:flex-row md:justify-between gap-8">
+                    <div className="flex-1 mb-8 md:mb-0">
+                        <div className="uppercase text-xs tracking-widest text-cyan-200 mb-1">FAQ</div>
+                        <h2 className="text-3xl md:text-5xl font-bold mb-4">The Most Questions</h2>
+                    </div>
+                    <div className="flex-1 flex items-center">
+                        <p className="text-cyan-100 text-sm md:text-base max-w-xl">
+                            Proin laoreet nisi vitae pharetra mattis. Etiam luctus suscipit velit vitae mixue ultricies. Augue molestie a etiam quis tincidunt est, et efficitur ipsum nunc bibendum ut risus et vehicula proin tempus tellus diam laoreet justo donec tempus.
+                        </p>
+                    </div>
                 </div>
-                <div className="flex-1 flex items-center">
-                    <p className="text-cyan-100 text-sm md:text-base max-w-xl">
-                        Proin laoreet nisi vitae pharetra mattis. Etiam luctus suscipit velit vitae mixue ultricies. Augue molestie a etiam quis tincidunt est, et efficitur ipsum nunc bibendum ut risus et vehicula proin tempus tellus diam laoreet justo donec tempus.
-                    </p>
-                </div>
-            </div>
 
-            {/* 2-column layout */}
-            <div className="max-w-6xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-4">{renderFaqs(firstHalf, 0)}</div>
-                <div className="space-y-4">{renderFaqs(secondHalf, 3)}</div>
-            </div>
+                {/* 2-column layout */}
+                <div className="max-w-6xl mx-auto mt-8 grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-4">{renderFaqs(firstHalf, 0)}</div>
+                    <div className="space-y-4">{renderFaqs(secondHalf, 3)}</div>
+                </div>
+            </motion.div>
         </section>
     );
 }

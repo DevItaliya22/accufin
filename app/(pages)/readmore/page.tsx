@@ -1,15 +1,13 @@
 "use client";
 import Navbar from "@/app/_component/Navbar";
 import Footer from "@/app/_component/Footer";
-import Cases2 from "@/app/_component/Cases2";
-import Restruct from "@/app/_component/Restruct";
+import Read from "@/app/_component/Read";
 
-export default function CasedetailPage() {
+export default function PricingPage() {
     return (
         <div>
             <Navbar />
-            <Cases2 />
-            <Restruct />
+            <Read />
             <Footer />
         </div>
     );

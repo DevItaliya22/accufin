@@ -1,15 +1,15 @@
 "use client";
-import Navbar from "../_component/Navbar";
-import AboutCompany from "../_component/AboutCompany";
-import Partner from "../_component/Partner";
-import Partner2 from "../_component/Partner2";
-import Company2 from "../_component/Company2";
-import Footer from "../_component/Footer";
-import Logos from "../_component/logos";
-import Ourteam from "../_component/Ourteam";
-import Ourteam2 from "../_component/Ourteam2";
-import Team from "../_component/Team";
-import Finance from "../_component/Finance";
+import Navbar from "@/app/_component/Navbar";
+import AboutCompany from "@/app/_component/AboutCompany";
+import Partner from "@/app/_component/Partner";
+import Partner2 from "@/app/_component/Partner2";
+import Company2 from "@/app/_component/Company2";
+import Footer from "@/app/_component/Footer";
+import Logos from "@/app/_component/logos";
+import Ourteam from "@/app/_component/Ourteam";
+import Ourteam2 from "@/app/_component/Ourteam2";
+import Team from "@/app/_component/Team";
+import Finance from "@/app/_component/Finance";
 
 export default function TeamPage() {
     return (
