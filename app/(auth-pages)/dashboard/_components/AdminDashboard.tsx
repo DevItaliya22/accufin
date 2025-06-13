@@ -15,6 +15,7 @@ import {
   EyeOff,
   Eye,
   Bell,
+  BookOpen,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
@@ -25,12 +26,13 @@ import { useSession } from "next-auth/react";
 import { s3 } from "@/lib/s3";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/ui/loader";
+import BlogManagement from "./BlogManagement";
 
 export default function AdminDashboard() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"users" | "notifications">(
-    "users"
-  );
+  const [activeTab, setActiveTab] = useState<
+    "users" | "notifications" | "blogs"
+  >("users");
 
   // Loading and error states
   const [loading, setLoading] = useState(true);
@@ -345,6 +347,7 @@ export default function AdminDashboard() {
           {[
             { key: "users", label: "User Management", icon: Users },
             { key: "notifications", label: "Notifications", icon: FileText },
+            { key: "blogs", label: "Blogs", icon: BookOpen },
           ].map(({ key, label, icon: Icon }) => (
             <Button
               key={key}
@@ -834,6 +837,8 @@ export default function AdminDashboard() {
             </CardContent>
           </Card>
         )}
+
+        {activeTab === "blogs" && <BlogManagement />}
       </div>
     </div>
   );

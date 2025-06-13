@@ -1,9 +1,9 @@
 "use client";
 import Link from "next/link";
 import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { useRef, useState, useEffect } from "react";
 
-export default function Service() {
+export default function Blog() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.3 });
 
@@ -34,6 +34,8 @@ export default function Service() {
           <span className="text-white">Blog</span>
         </div>
       </motion.div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      </div>
     </section>
   );
 }

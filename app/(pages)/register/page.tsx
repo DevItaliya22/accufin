@@ -86,26 +86,26 @@ export default function RegisterPage() {
           Create your account
         </h2>
       </div>
-           
+
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
-          <div>
+            <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700" 
+                className="block text-sm font-medium text-gray-700"
               >
                 First Name
               </label>
               <div className="mt-1">
                 <input
-                  id="name" 
+                  id="name"
                   name="name"
                   type="text"
                   autoComplete="name"
                   required
                   value={formData.name}
-                  onChange={handleChange}   
+                  onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
@@ -113,19 +113,19 @@ export default function RegisterPage() {
             <div>
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-gray-700" 
+                className="block text-sm font-medium text-gray-700"
               >
                 Last Name
               </label>
               <div className="mt-1">
                 <input
-                  id="lastName" 
+                  id="lastName"
                   name="lastName"
                   type="text"
                   autoComplete="name"
                   required
                   value={formData.lastName}
-                  onChange={handleChange}   
+                  onChange={handleChange}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
               </div>
@@ -158,7 +158,7 @@ export default function RegisterPage() {
               >
                 Password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   name="password"
@@ -166,12 +166,12 @@ export default function RegisterPage() {
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+                  className="appearance-none block w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 focus:outline-none"
                   tabIndex={0}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
@@ -191,22 +191,24 @@ export default function RegisterPage() {
               >
                 Confirm password
               </label>
-              <div className="mt-1">
+              <div className="mt-1 relative">
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
-                  type={showConfirmPassword ? "text" : "password"}  
+                  type={showConfirmPassword ? "text" : "password"}
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+                  className="appearance-none block w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
+                  className="absolute inset-y-0 right-0 flex items-center pr-3 focus:outline-none"
                   tabIndex={0}
-                  aria-label={showConfirmPassword ? "Hide password" : "Show password"}
+                  aria-label={
+                    showConfirmPassword ? "Hide password" : "Show password"
+                  }
                 >
                   {showConfirmPassword ? (
                     <EyeIcon className="w-5 h-5 text-gray-500" />
