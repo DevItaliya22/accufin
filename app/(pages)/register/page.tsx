@@ -8,11 +8,11 @@ import { EyeClosedIcon, EyeIcon } from "lucide-react";
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
+    lastName: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -31,7 +31,7 @@ export default function RegisterPage() {
         body: JSON.stringify({
           email: formData.email,
           password: formData.password,
-          firstName: formData.firstName,
+          name: formData.name,
           lastName: formData.lastName,
         }),
       });
@@ -86,10 +86,50 @@ export default function RegisterPage() {
           Create your account
         </h2>
       </div>
-
+           
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
+          <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700" 
+              >
+                First Name
+              </label>
+              <div className="mt-1">
+                <input
+                  id="name" 
+                  name="name"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={formData.name}
+                  onChange={handleChange}   
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+                />
+              </div>
+            </div>
+            <div>
+              <label
+                htmlFor="email"
+                className="block text-sm font-medium text-gray-700" 
+              >
+                Last Name
+              </label>
+              <div className="mt-1">
+                <input
+                  id="lastName" 
+                  name="lastName"
+                  type="text"
+                  autoComplete="name"
+                  required
+                  value={formData.lastName}
+                  onChange={handleChange}   
+                  className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
+                />
+              </div>
+            </div>
             <div>
               <label
                 htmlFor="email"
