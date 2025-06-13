@@ -12,12 +12,13 @@ import {
   FaYoutube,
 } from "react-icons/fa";
 import { RiArrowDropDownLine } from "react-icons/ri";
-
+import { useSession } from "next-auth/react";
 export default function NewHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const headerRef = useRef<HTMLDivElement>(null);
 
+  const { data: session } = useSession();
   const handleDropdownClick = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
@@ -152,12 +153,21 @@ export default function NewHeader() {
                 )}
               </div>
             ))}
-            <Link
+            {session ? (
+              <Link
+                href="/dashboard"
+                className="text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
+              >
+                Dashboard
+              </Link>
+            ) : (
+              <Link
               href="/login"
               className="text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
             >
               Login
             </Link>
+            )}
           </nav>
 
           {/* Contact Info - Desktop */}
