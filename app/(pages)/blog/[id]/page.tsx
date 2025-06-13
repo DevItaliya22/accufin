@@ -6,11 +6,11 @@ import prisma from "@/lib/prisma";
 import { Suspense } from "react";
 import Link from "next/link";
 
-export default async function BlogPage({ params }: { params: { id: string } }) {
+export default async function BlogPage({ params }: { params: Promise<{ id: string }> }) {
   try {
     const blog = await prisma.blogs.findFirst({
       where: {
-        id: params.id,
+        id: (await params).id,
         isActive: true,
       },
     });
