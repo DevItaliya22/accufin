@@ -11,6 +11,8 @@ import Faq from "./_component/Faq";
 import BlogSection from "./_component/BlogSection";
 import Footer from "./_component/Footer";
 import Logos from "./_component/logos";
+import { Toaster } from "react-hot-toast";
+import { Providers } from "@/lib/provider";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -24,7 +26,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "AccuFin - Financial Management Solutions",
-  description: "Your trusted partner in financial management and accounting solutions.",
+  description:
+    "Your trusted partner in financial management and accounting solutions.",
 };
 
 export default function RootLayout({
@@ -33,7 +36,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" >
+    <html lang="en">
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -47,7 +50,8 @@ export default function RootLayout({
         <Faq />
         <BlogSection />
         <Footer /> */}
-        {children}
+        <Toaster />
+        <Providers>{children}</Providers>
       </body>
     </html>
   );
