@@ -1,3 +1,7 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { FaChevronRight, FaShareAlt, FaRegCalendarAlt, FaRegUser } from "react-icons/fa";
 
 const recentBlogs = [
@@ -31,8 +35,17 @@ export default function Entry() {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
 
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, margin: "-100px" });
+
     return (
-        <section className="bg-[#f7f9fa] py-8 px-2 min-h-screen">
+        <motion.section
+            ref={ref}
+            initial={{ opacity: 0, y: 50 }}
+            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="bg-[#f7f9fa] py-8 px-2 min-h-screen"
+        >
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-8">
                 {/* Main Content */}
                 <div className="flex-1 min-w-0">
@@ -60,7 +73,7 @@ export default function Entry() {
                         </a>
                     </div>
                     <p className="mb-4 text-[#5a6a7a]">
-                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Blanditiis odio molestias illo repellendus necessitatibus quod perspiciatis illum quos exercitationem pariatur quis repellat ullam placeat tempora facere reprehenderit praesentium vero corporis, accusamus consectetur? Ullam accusantium cum facere, necessitatibus tenetur dicta exercitationem deserunt asperiores. Ipsa neque quia sequi excepturi! Adipisci possimus autem commodi corrupti optio suscipit exercitationem, quaerat tenetur ducimus non cupiditate accusantium quas praesentium doloribus! Numquam omnis excepturi deleniti neque cumque optio consectetur enim inventore, dolores maxime nam rerum facere quo tempore! Explicabo accusantium recusandae velit laborum suscipit harum ipsa nam laudantium delectus ea? Quisquam veritatis fuga obcaecati sit. Doloribus, harum nulla? Veritatis facilis delectus tempora molestias saepe debitis nam facere numquam reiciendis quibusdam corrupti quasi in laboriosam explicabo temporibus, possimus, fugit repellat consectetur! Unde reiciendis incidunt ducimus quam at eveniet, cumque deleniti veniam assumenda aliquid! Soluta nesciunt, provident quaerat vel sit at officiis ut dolores corrupti voluptates magni, est ab.
+                        Lorem, ipsum dolor sit amet consectetur adipisicing elit. Blanditiis odio molestias illo...
                     </p>
                     <div className="flex flex-col md:flex-row gap-4 mb-4">
                         <img
@@ -77,9 +90,9 @@ export default function Entry() {
                             ))}
                         </ul>
                     </div>
-                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolorem commodi perferendis, eligendi quos reprehenderit maxime nam sint corporis totam saepe atque veritatis! Doloremque, voluptatum beatae! Dolor, labore! Maiores corrupti quisquam sit excepturi quibusdam est fugit accusamus illo amet aliquid, deleniti perferendis iure velit. Voluptate eos fugit odit voluptatum assumenda hic.</p>
-                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolorem commodi perferendis, eligendi quos reprehenderit maxime nam sint corporis totam saepe atque veritatis! Doloremque, voluptatum beatae! Dolor, labore! Maiores corrupti quisquam sit excepturi quibusdam est fugit accusamus illo amet aliquid, deleniti perferendis iure velit. Voluptate eos fugit odit voluptatum assumenda hic.</p>
-                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit. Dolorem commodi perferendis, eligendi quos reprehenderit maxime nam sint corporis totam saepe atque veritatis! Doloremque, voluptatum beatae! Dolor, labore! Maiores corrupti quisquam sit excepturi quibusdam est fugit accusamus illo amet aliquid, deleniti perferendis iure velit. Voluptate eos fugit odit voluptatum assumenda hic.</p>
+                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit...</p>
+                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit...</p>
+                    <p className="mb-4 text-[#5a6a7a]">Lorem ipsum dolor, sit amet consectetur adipisicing elit...</p>
                 </div>
 
                 {/* Sidebar */}
@@ -186,6 +199,6 @@ export default function Entry() {
                     </form>
                 </div>
             </div>
-        </section>
+        </motion.section>
     );
 }

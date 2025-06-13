@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { FaPhoneAlt, FaBars } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
@@ -16,10 +16,28 @@ import { useSession } from "next-auth/react";
 export default function NewHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const headerRef = useRef<HTMLDivElement>(null);
+
   const { data: session } = useSession();
   const handleDropdownClick = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        headerRef.current &&
+        !headerRef.current.contains(event.target as Node)
+      ) {
+        setActiveDropdown(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const menuItems = [
     { name: "Home", href: "/" },
@@ -54,7 +72,7 @@ export default function NewHeader() {
   ];
 
   return (
-    <header className="bg-[#007399]">
+    <header className="bg-[#007399]" ref={headerRef}>
       {/* Top Bar */}
       <div className="bg-[#f7f7f7] py-2 px-4 md:px-8">
         <div className="container mx-auto flex flex-col md:flex-row justify-between items-center gap-4">

@@ -1,9 +1,21 @@
+"use client";
+
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt } from "react-icons/fa";
 
 export default function Contact() {
+    const ref = useRef(null);
+    const isInView = useInView(ref, { once: true, amount: 0.2 });
+
     return (
-        <section className="bg-[#f7f9fa] pt-12 pb-0 px-2">
-            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12">
+        <section className="bg-[#f7f9fa] pt-12 pb-0 px-2" ref={ref}>
+            <motion.div
+                initial={{ opacity: 0, y: 50 }}
+                animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12"
+            >
                 {/* Form */}
                 <form
                     className="flex-1 flex flex-col gap-4"
@@ -18,7 +30,6 @@ export default function Contact() {
                                 required
                                 className="border border-[#008db3] rounded px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-[#00c6fb] text-[#0a2236]"
                             />
-
                         </div>
                         <div className="flex-1 flex flex-col">
                             <input
@@ -27,7 +38,6 @@ export default function Contact() {
                                 required
                                 className="border border-[#008db3] rounded px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-[#00c6fb] text-[#0a2236]"
                             />
-
                         </div>
                     </div>
                     <div className="flex flex-col">
@@ -37,7 +47,6 @@ export default function Contact() {
                             required
                             className="border border-[#008db3] rounded px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-[#00c6fb] text-[#0a2236]"
                         />
-
                     </div>
                     <div className="flex flex-col">
                         <textarea
@@ -45,7 +54,6 @@ export default function Contact() {
                             required
                             className="border border-[#008db3] rounded px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-[#00c6fb] text-[#0a2236] min-h-[80px]"
                         />
-
                     </div>
                     <button
                         type="submit"
@@ -54,6 +62,7 @@ export default function Contact() {
                         SEND MESSAGE
                     </button>
                 </form>
+
                 {/* Contact Info */}
                 <div className="flex-1 flex flex-col gap-4">
                     <div className="text-[#008db3] font-semibold tracking-widest mb-2 uppercase">
@@ -85,7 +94,8 @@ export default function Contact() {
                         </div>
                     </div>
                 </div>
-            </div>
+            </motion.div>
+
             {/* Map */}
             <div className="w-full mt-12">
                 <iframe

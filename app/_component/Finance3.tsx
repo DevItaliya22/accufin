@@ -1,3 +1,5 @@
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { FaChartBar, FaMoneyCheckAlt, FaClipboardList } from "react-icons/fa";
 
 const projects = [
@@ -37,24 +39,26 @@ const stages = [
 ];
 
 export default function Finance() {
+    const sectionRef = useRef(null);
+    const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+    const animations = [
+        { x: -100, opacity: 0 },
+        { y: 100, opacity: 0 },
+        { x: 100, opacity: 0 },
+    ];
+
     return (
-        <section>
-          
+        <section ref={sectionRef}>
             <div className="bg-[#f7f9fa] py-0 pb-10 px-4">
                 <div className="max-w-7xl mx-auto">
-                    {/* <div className="text-center mb-2 text-[#008db3] font-semibold tracking-widest uppercase">
-                        Case Studies
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#0a2236] text-center mb-4">
-                        The Last Project We Worked On
-                    </h2>
-                    <p className="text-center text-[#5a6a7a] mb-10 max-w-2xl mx-auto">
-                        Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut suspendisse pharetra. Finibus condimentum aenean lacinia sem metus Integer.
-                    </p> */}
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {projects.map((project) => (
-                            <div
+                        {projects.map((project, index) => (
+                            <motion.div
                                 key={project.title}
+                                initial={animations[index]}
+                                animate={isInView ? { x: 0, y: 0, opacity: 1 } : {}}
+                                transition={{ duration: 0.6, delay: index * 0.2, ease: "easeOut" }}
                                 className="rounded-lg border border-[#008db3] bg-white hover:bg-[#008db3] hover:text-white transition-colors p-0 flex flex-col h-full group"
                             >
                                 <div className="overflow-hidden rounded-t-lg">
@@ -74,14 +78,11 @@ export default function Finance() {
                                         READ MORE &rarr;
                                     </a>
                                 </div>
-                            </div>
+                            </motion.div>
                         ))}
                     </div>
                 </div>
             </div>
-
-
-
         </section>
     );
 }

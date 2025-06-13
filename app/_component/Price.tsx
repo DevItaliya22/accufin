@@ -1,4 +1,6 @@
 "use client";
+import { useRef } from "react";
+import { motion, useInView } from "framer-motion";
 import { FaArrowRight } from "react-icons/fa";
 
 const plans = [
@@ -41,8 +43,17 @@ const plans = [
 ];
 
 export default function Price() {
+    const sectionRef = useRef(null);
+    const isInView = useInView(sectionRef, { once: true, margin: "-100px" });
+
+    const directions = [
+        { x: -100, y: 0 },
+        { x: 0, y: 100 },
+        { x: 100, y: 0 },
+    ];
+
     return (
-        <section className="bg-[#f7f7f7] py-16 px-4">
+        <section ref={sectionRef} className="bg-[#f7f7f7] py-16 px-4">
             <div className="max-w-7xl mx-auto">
                 <div className="flex flex-col md:flex-row md:justify-between md:items-center mb-10 gap-6">
                     <div className="flex-1">
@@ -56,12 +67,15 @@ export default function Price() {
                     </div>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                    {plans.map((plan) => (
-                        <div
+                    {plans.map((plan, i) => (
+                        <motion.div
                             key={plan.name}
+                            initial={{ opacity: 0, ...directions[i % directions.length] }}
+                            animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
+                            transition={{ duration: 0.8, delay: i * 0.2, ease: "easeOut" }}
                             className={`flex flex-col border rounded-xl p-8 transition shadow-sm ${plan.highlight
-                                    ? "bg-[#0082a3] text-white shadow-lg"
-                                    : "bg-white text-[#0a2236] border-[#0082a3]"
+                                ? "bg-[#0082a3] text-white shadow-lg"
+                                : "bg-white text-[#0a2236] border-[#0082a3]"
                                 }`}
                         >
                             <div className="font-bold text-2xl mb-2">{plan.name}</div>
@@ -90,7 +104,7 @@ export default function Price() {
                             >
                                 Get Started <FaArrowRight className="ml-2" />
                             </a>
-                        </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>

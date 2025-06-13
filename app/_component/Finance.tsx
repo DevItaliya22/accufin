@@ -1,4 +1,7 @@
+"use client";
+import { useRef } from "react";
 import { FaChartBar, FaMoneyCheckAlt, FaClipboardList } from "react-icons/fa";
+import { motion, useInView } from "framer-motion";
 
 const projects = [
     {
@@ -37,10 +40,22 @@ const stages = [
 ];
 
 export default function Finance() {
+    const topRef = useRef(null);
+    const caseRef = useRef(null);
+    const stageRef = useRef(null);
+
+    const topInView = useInView(topRef, { once: true, margin: "0px 0px -100px 0px" });
+    const caseInView = useInView(caseRef, { once: true, margin: "0px 0px -100px 0px" });
+    const stageInView = useInView(stageRef, { once: true, margin: "0px 0px -100px 0px" });
+
     return (
         <section>
             {/* Top Section with Fixed Background */}
-            <div
+            <motion.div
+                ref={topRef}
+                initial={{ opacity: 0, y: 60 }}
+                animate={topInView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
                 className="relative w-full h-[320px] flex flex-col items-center justify-center text-center"
                 style={{
                     backgroundImage: "url('/img5.jpg')",
@@ -65,10 +80,16 @@ export default function Finance() {
                         CONTACT US NOW &rarr;
                     </a>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Case Studies */}
-            {/* <div className="bg-[#f7f9fa] py-16 px-4">
+            <motion.div
+                ref={caseRef}
+                initial={{ opacity: 0, x: -60 }}
+                animate={caseInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="bg-[#f7f9fa] py-16 px-4"
+            >
                 <div className="max-w-7xl mx-auto">
                     <div className="text-center mb-2 text-[#008db3] font-semibold tracking-widest uppercase">
                         Case Studies
@@ -106,12 +127,17 @@ export default function Finance() {
                         ))}
                     </div>
                 </div>
-            </div> */}
+            </motion.div>
 
             {/* Our Stages */}
-            {/* <div className="bg-[#f7f9fa] py-16 px-4">
+            <motion.div
+                ref={stageRef}
+                initial={{ opacity: 0, x: 60 }}
+                animate={stageInView ? { opacity: 1, x: 0 } : {}}
+                transition={{ duration: 0.8, ease: "easeOut" }}
+                className="bg-[#f7f9fa] py-16 px-4"
+            >
                 <div className="max-w-7xl mx-auto flex flex-col md:flex-row gap-10">
-                    
                     <div className="flex-1 flex flex-col gap-8">
                         {stages.map((stage) => (
                             <div key={stage.title} className="flex items-start gap-4">
@@ -135,8 +161,7 @@ export default function Finance() {
                         </p>
                     </div>
                 </div>
-            </div> */}
-
+            </motion.div>
         </section>
     );
 }

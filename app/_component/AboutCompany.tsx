@@ -11,11 +11,14 @@ export default function AboutCompany() {
   const isInView = useInView(ref, { once: true, amount: 0.3 });
 
   return (
-    <section className="bg-[#FFFFFF] py-12 px-4">
-      <div
-        ref={ref}
-        className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center"
-      >
+    <motion.section
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.8, ease: "easeOut" }}
+      ref={ref}
+      className="bg-[#FFFFFF] py-12 px-4"
+    >
+      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center">
         {/* Images */}
         <div className="relative flex-shrink-0 w-full lg:w-[420px]">
           <img
@@ -42,6 +45,7 @@ export default function AboutCompany() {
             </div>
           </div>
         </div>
+
         {/* Text Content */}
         <div className="flex-1 pt-20 lg:pt-0">
           <motion.div
@@ -85,46 +89,31 @@ export default function AboutCompany() {
                 Our Vision
               </motion.div>
               <ul className="space-y-2 text-[#008db3]">
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <span className="text-[#5a6a7a]">
-                    Nulla congue aliquet vulputate
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <span className="text-[#5a6a7a]">
-                    Proin tempus auctor libero
-                  </span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Sed venenatis purus sed
-                  </motion.span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Etiam lobortis sapien amatug
-                  </motion.span>
-                </li>
+                {[
+                  "Nulla congue aliquet vulputate",
+                  "Proin tempus auctor libero",
+                  "Sed venenatis purus sed",
+                  "Etiam lobortis sapien amatug",
+                ].map((text, idx) => (
+                  <li className="flex items-start" key={idx}>
+                    <FaChevronRight className="mt-1 mr-2" />
+                    <motion.span
+                      initial={{ x: -50, opacity: 0 }}
+                      animate={
+                        isInView
+                          ? { x: 0, opacity: 1 }
+                          : { x: -50, opacity: 0 }
+                      }
+                      transition={{ duration: 0.6, delay: idx * 0.1 }}
+                      className="text-[#5a6a7a]"
+                    >
+                      {text}
+                    </motion.span>
+                  </li>
+                ))}
               </ul>
             </div>
+
             {/* Mission */}
             <div>
               <motion.div
@@ -138,58 +127,28 @@ export default function AboutCompany() {
                 Our Mission
               </motion.div>
               <ul className="space-y-2 text-[#00c6fb]">
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Mauris non euismod odio donec
-                  </motion.span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Tellus velit eleifend ante
-                  </motion.span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Quis efficitur dolor nulla orci
-                  </motion.span>
-                </li>
-                <li className="flex items-start">
-                  <FaChevronRight className="mt-1 mr-2" />
-                  <motion.span
-                    initial={{ x: -50, opacity: 0 }}
-                    animate={
-                      isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }
-                    }
-                    transition={{ duration: 0.6 }}
-                    className="text-[#5a6a7a]"
-                  >
-                    Lacus nec malesuada lacinia velit
-                  </motion.span>
-                </li>
+                {[
+                  "Mauris non euismod odio donec",
+                  "Tellus velit eleifend ante",
+                  "Quis efficitur dolor nulla orci",
+                  "Lacus nec malesuada lacinia velit",
+                ].map((text, idx) => (
+                  <li className="flex items-start" key={idx}>
+                    <FaChevronRight className="mt-1 mr-2" />
+                    <motion.span
+                      initial={{ x: -50, opacity: 0 }}
+                      animate={
+                        isInView
+                          ? { x: 0, opacity: 1 }
+                          : { x: -50, opacity: 0 }
+                      }
+                      transition={{ duration: 0.6, delay: idx * 0.1 }}
+                      className="text-[#5a6a7a]"
+                    >
+                      {text}
+                    </motion.span>
+                  </li>
+                ))}
               </ul>
             </div>
           </div>
@@ -204,6 +163,7 @@ export default function AboutCompany() {
           </motion.a>
         </div>
       </div>
+
       {/* Video Modal */}
       {showVideo && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-70">
@@ -227,6 +187,6 @@ export default function AboutCompany() {
           </div>
         </div>
       )}
-    </section>
+    </motion.section>
   );
 }
