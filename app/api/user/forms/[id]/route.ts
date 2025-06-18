@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 // GET - Get form details for filling
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,10 +15,12 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     // Check if user already submitted this form
     const existingResponse = await prisma.formResponse.findFirst({
       where: {
-        formId: params.id,
+        formId: id,
         userId: session.user.id,
       },
     });
@@ -32,7 +34,7 @@ export async function GET(
 
     // Get form details with all fields
     const form = await prisma.forms.findUnique({
-      where: { id: params.id },
+        where: { id },
       include: {
         inputs: {
           select: {

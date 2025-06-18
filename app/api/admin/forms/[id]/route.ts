@@ -6,7 +6,7 @@ import { authOptions } from "@/lib/auth";
 // GET - Get individual form details
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -15,8 +15,10 @@ export async function GET(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const { id } = await params;
+
     const form = await prisma.forms.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         inputs: true,
         selections: true,
@@ -46,7 +48,7 @@ export async function GET(
 // PUT - Update form
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -54,6 +56,8 @@ export async function PUT(
     if (!session?.user?.isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     const body = await request.json();
     const { title, description, privacyLabel, fields } = body;
@@ -69,15 +73,15 @@ export async function PUT(
     const result = await prisma.$transaction(async (tx) => {
       // Delete existing fields
       await tx.input.deleteMany({
-        where: { formId: params.id },
+        where: { formId: id },
       });
 
       await tx.selection.deleteMany({
-        where: { formId: params.id },
+        where: { formId: id },
       });
 
       await tx.multipleChoice.deleteMany({
-        where: { formId: params.id },
+        where: { formId: id },
       });
 
       const sequence: string[] = [];
@@ -90,7 +94,7 @@ export async function PUT(
               label: field.label,
               required: field.required || false,
               type: field.inputType || "text",
-              formId: params.id,
+              formId: id,
             },
           });
           sequence.push(input.id);
@@ -100,7 +104,7 @@ export async function PUT(
               label: field.label,
               required: field.required || false,
               options: field.options || [],
-              formId: params.id,
+              formId: id,
             },
           });
           sequence.push(selection.id);
@@ -111,7 +115,7 @@ export async function PUT(
               required: field.required || false,
               maxChoices: field.maxChoices,
               options: field.options || [],
-              formId: params.id,
+              formId: id,
             },
           });
           sequence.push(multipleChoice.id);
@@ -120,7 +124,7 @@ export async function PUT(
 
       // Update the form with new data and sequence
       const updatedForm = await tx.forms.update({
-        where: { id: params.id },
+        where: { id },
         data: {
           title,
           description,

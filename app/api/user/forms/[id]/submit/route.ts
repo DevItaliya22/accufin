@@ -17,9 +17,11 @@ interface SubmitFormRequest {
 // POST - Submit form response
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params;
+
     const session = await getServerSession(authOptions);
 
     if (!session?.user?.id) {
@@ -47,7 +49,7 @@ export async function POST(
     // Check if user already submitted this form
     const existingResponse = await prisma.formResponse.findFirst({
       where: {
-        formId: params.id,
+        formId: id,
         userId: session.user.id,
       },
     });
@@ -61,7 +63,7 @@ export async function POST(
 
     // Verify form exists and is active
     const form = await prisma.forms.findUnique({
-      where: { id: params.id },
+      where: { id },
       include: {
         inputs: {
           select: {
@@ -130,7 +132,7 @@ export async function POST(
       const formResponse = await tx.formResponse.create({
         data: {
           userId: session.user.id,
-          formId: params.id,
+          formId: id,
           isChecked,
         },
       });
