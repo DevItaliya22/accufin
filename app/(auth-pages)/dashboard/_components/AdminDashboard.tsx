@@ -16,6 +16,8 @@ import {
   Eye,
   Bell,
   BookOpen,
+  MapPin,
+  Settings,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
@@ -27,11 +29,13 @@ import { s3 } from "@/lib/s3";
 import toast from "react-hot-toast";
 import { Loader } from "@/components/ui/loader";
 import BlogManagement from "./BlogManagement";
+import OpenContactsManagement from "./OpenContactsManagement";
+import FormsManagement from "./FormsManagement";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "users" | "notifications" | "blogs"
+    "users" | "notifications" | "blogs" | "contacts" | "forms"
   >("users");
 
   // Loading and error states
@@ -348,6 +352,8 @@ export default function AdminDashboard() {
             { key: "users", label: "User Management", icon: Users },
             { key: "notifications", label: "Notifications", icon: FileText },
             { key: "blogs", label: "Blogs", icon: BookOpen },
+            { key: "contacts", label: "Open Contacts", icon: MapPin },
+            { key: "forms", label: "Forms", icon: Settings },
           ].map(({ key, label, icon: Icon }) => (
             <Button
               key={key}
@@ -839,6 +845,10 @@ export default function AdminDashboard() {
         )}
 
         {activeTab === "blogs" && <BlogManagement />}
+
+        {activeTab === "contacts" && <OpenContactsManagement />}
+
+        {activeTab === "forms" && <FormsManagement />}
       </div>
     </div>
   );

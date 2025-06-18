@@ -39,6 +39,8 @@ model File {
   size String?
   type String?
 
+  folderName String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -80,6 +82,8 @@ model Forms {
   title String
   description String?
   isActive Boolean @default(false)
+  privacyLabel String @default("I consent to the processing of my personal data and agree to the privacy policy")
+  isCompulsory Boolean @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -95,6 +99,7 @@ model Forms {
 
 model FormResponse {
   id        String   @id @default(uuid())
+  isChecked Boolean @default(false)
   
   user      User     @relation("UserFormResponses", fields: [userId], references: [id])
   userId    String
@@ -165,4 +170,24 @@ model MultipleChoice {
   formId String
 
   @@index([formId])
+}
+
+model OpenContact { 
+  id String @id @default(uuid())
+  address String?
+  phone1 String?
+  phone2 String?
+  email String?
+  links Link[] @relation("OpenContactLinks")
+}
+
+model Link { 
+  id String @id @default(uuid())
+  name String
+  url String
+  openContact OpenContact @relation("OpenContactLinks", fields: [openContactId], references: [id], onDelete: Cascade)
+  openContactId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

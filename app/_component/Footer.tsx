@@ -1,4 +1,7 @@
-import { FaFacebookF, FaTwitter, FaInstagram, FaYoutube, FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaChevronRight } from "react-icons/fa";
+"use client";
+import { FaPhoneAlt, FaEnvelope, FaMapMarkerAlt, FaChevronRight } from "react-icons/fa";
+import { useEffect, useState } from "react";
+import { Link, OpenContact } from "@/lib/generated/prisma";
 
 const quickLinks = [
     "Home",
@@ -20,8 +23,21 @@ const services = [
     "Business Advisory",
     "Outsourced CFO",
 ];
-
+type OpenContactWithLinks = OpenContact & { links: Link[] };
 export default function Footer() {
+    const [openContact, setOpenContact] = useState<OpenContactWithLinks | null>(null);
+
+    useEffect(() => {
+        const fetchOpenContacts = async () => {
+            const openContacts = await fetch("/api/user/open-contacts");
+            const data = await openContacts.json();
+            setOpenContact(data as OpenContactWithLinks);
+        };
+        fetchOpenContacts();
+    }, []);
+
+    if (!openContact) return null;
+
     return (
         <footer className="bg-[#007399] text-white pt-12 pb-4 px-4">
             <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-12 justify-between">
@@ -37,19 +53,12 @@ export default function Footer() {
                     <p className="mb-6 mt-4 text-white/90">
                         Donec neque massa, faucibus nec lorem vitae feugiat pharetra sem. Nulla elementum eget lectus dapibus amatug mix finibus.
                     </p>
-                    <div className="flex space-x-4 mt-6">
-                        <a href="" className="bg-[#00c6fb] hover:translate-y-[-6px] transition-transform rounded-full p-3">
-                            <FaFacebookF className="text-2xl" />
-                        </a>
-                        <a href="" className="bg-[#00c6fb] hover:translate-y-[-6px] transition-transform rounded-full p-3">
-                            <FaTwitter className="text-2xl" />
-                        </a>
-                        <a href="" className="bg-[#00c6fb] hover:translate-y-[-6px] transition-transform rounded-full p-3">
-                            <FaInstagram className="text-2xl" />
-                        </a>
-                        <a href="" className="bg-[#00c6fb] hover:translate-y-[-6px] transition-transform rounded-full p-3">
-                            <FaYoutube className="text-2xl" />
-                        </a>
+                    <div className="flex space-x-4 mt-6 flex-col">
+                        {openContact.links && openContact.links.map((link) => (
+                            <a href={link.url} className="mb-2" key={link.id}>
+                                {link.name}
+                            </a>
+                        ))}
                     </div>
                 </div>
                 {/* Quick Links */}
@@ -93,28 +102,29 @@ export default function Footer() {
                         <FaPhoneAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Phone</div>
-                            <div>+123-234-1234</div>
+                            <div>{openContact.phone1}</div>
+                            <div>{openContact.phone2}</div>
                         </div>
                     </div>
                     <div className="flex items-start mb-4">
                         <FaEnvelope className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Email</div>
-                            <div>hello@awesomesite.com</div>
+                            <div>{openContact.email}</div>
                         </div>
                     </div>
                     <div className="flex items-start">
                         <FaMapMarkerAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Address</div>
-                            <div>99 Roving St., Big City, PKU 23456</div>
+                            <div>{openContact.address}</div>
                         </div>
                     </div>
                 </div>
             </div>
             <hr className="my-8 border-white/30" />
             <div className="text-center text-white/80 text-sm">
-                Copyright 2023 © All Right Reserved Design by Rometheme
+                Copyright 2025 © All Right Reserved Design by Accufin
             </div>
         </footer>
     );
