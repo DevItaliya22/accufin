@@ -21,15 +21,16 @@ export async function GET(
         formId: paramsID,
         userId: session.user.id,
       },
-      include: {
+      select: {
+        id: true,
+        isChecked: true,
+        createdAt: true,
         form: {
           select: {
             title: true,
             description: true,
             isCompulsory: true,
             sequence: true,
-          },
-          include: {
             inputs: {
               select: {
                 id: true,

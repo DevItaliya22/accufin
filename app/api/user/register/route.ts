@@ -4,7 +4,7 @@ import { hash } from "bcryptjs";
 
 export async function POST(req: NextRequest) {
   try {
-    const { email, password, name, lastName} = await req.json();
+    const { email, password, name, lastName, contactNumber } = await req.json();
     if (!email || !password) {
       return NextResponse.json(
         { error: "Email and password are required." },
@@ -25,6 +25,7 @@ export async function POST(req: NextRequest) {
         password: hashedPassword,
         isAdmin: false,
         name: name + " " + lastName,
+        contactNumber,
       },
       select: {
         id: true,
@@ -32,6 +33,7 @@ export async function POST(req: NextRequest) {
         name: true,
         isAdmin: true,
         createdAt: true,
+        contactNumber: true,
       },
     });
     return NextResponse.json(user, { status: 201 });
