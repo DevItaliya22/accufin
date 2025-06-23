@@ -75,7 +75,6 @@ export default function UserDashboardHeader({
                 {item.label}
               </button>
             ))}
-            <span className="text-white text-sm ml-4">User Dashboard</span>
             <Button
               variant="outline"
               size="sm"
@@ -116,7 +115,6 @@ export default function UserDashboardHeader({
                 {item.label}
               </button>
             ))}
-            <span className="text-white text-sm mt-2">User Dashboard</span>
             <Button
               variant="outline"
               size="sm"

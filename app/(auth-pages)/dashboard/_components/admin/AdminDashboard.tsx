@@ -1,20 +1,3 @@
-import { Button } from "@/components/ui/button";
-import {
-  Shield,
-  Users,
-  FileText,
-  BookOpen,
-  MapPin,
-  Settings,
-  User,
-  Mail,
-  Phone,
-  LogOut,
-  Pencil,
-  Check,
-  X,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { useState, useEffect, useRef } from "react";
 import { signOut } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -25,13 +8,21 @@ import BlogManagement from "./BlogManagement";
 import OpenContactsManagement from "./OpenContactsManagement";
 import FormsManagement from "./FormsManagement";
 import NotificationManagement from "./NotificationManagement";
-import UserManagement from "./UserManagement";
+import FileManagement from "./FileManagement";
 import DashboardHeader from "./DashboardHeader";
+import ProfileManagement from "./ProfileManagement";
+import UserManagement from "./UserManagement";
 
 export default function AdminDashboard() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "users" | "notifications" | "blogs" | "contacts" | "forms" | "profile"
+    | "users"
+    | "files"
+    | "notifications"
+    | "blogs"
+    | "contacts"
+    | "forms"
+    | "profile"
   >("users");
 
   // Loading and error states
@@ -66,15 +57,6 @@ export default function AdminDashboard() {
     [userId: string]: any;
   }>({});
   const [prefetching, setPrefetching] = useState(false);
-
-  // Profile state
-  const [profile, setProfile] = useState<any>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
-
-  const [editContact, setEditContact] = useState(false);
-  const [contactNumber, setContactNumber] = useState("");
-  const [savingContact, setSavingContact] = useState(false);
 
   // Fetch users and notifications on mount
   useEffect(() => {
@@ -170,32 +152,6 @@ export default function AdminDashboard() {
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedUser]);
-
-  // Fetch admin profile info
-  const fetchProfile = async () => {
-    setProfileLoading(true);
-    setProfileError(null);
-    try {
-      const res = await fetch("/api/user/info");
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      const data = await res.json();
-      setProfile(data);
-    } catch (err: any) {
-      setProfileError(err.message || "Failed to load profile");
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    if (activeTab === "profile") fetchProfile();
-  }, [activeTab]);
-
-  useEffect(() => {
-    if (activeTab === "profile" && profile) {
-      setContactNumber(profile.contactNumber || "");
-    }
-  }, [activeTab, profile]);
 
   // Handler functions to pass to child components
   const handleUserSelect = (userId: string) => {
@@ -358,19 +314,24 @@ export default function AdminDashboard() {
     }
   };
 
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
+    router.push("/login");
+  };
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cyan-50">
       <DashboardHeader
         activeTab={activeTab}
-        onTabChange={(tab) => setActiveTab(tab as typeof activeTab)}
-        onLogout={async () => {
-          await signOut({ redirect: false });
-          router.push("/login");
-        }}
+        onTabChange={(tab) => setActiveTab(tab as any)}
+        onLogout={handleLogout}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
         {activeTab === "users" && (
-          <UserManagement
+          <UserManagement users={users} loading={loading} error={error} />
+        )}
+        {activeTab === "files" && (
+          <FileManagement
             users={users}
             loading={loading}
             error={error}
@@ -402,120 +363,7 @@ export default function AdminDashboard() {
         {activeTab === "blogs" && <BlogManagement />}
         {activeTab === "contacts" && <OpenContactsManagement />}
         {activeTab === "forms" && <FormsManagement />}
-        {activeTab === "profile" && (
-          <div className="flex flex-col items-center w-full">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center relative">
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-4 border-4 border-gray-200">
-                <User className="w-12 h-12 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold mb-1">
-                {profile?.name || "-"}
-              </div>
-              <div className="text-gray-500 mb-6">Admin Profile</div>
-              <div className="w-full flex flex-col gap-4">
-                <div className="flex items-center gap-3 border-b pb-4">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-700">
-                    {profile?.email}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 border-b pb-4">
-                  <Phone className="w-5 h-5 text-gray-400" />
-                  {editContact ? (
-                    <>
-                      <input
-                        className="border rounded px-2 py-1 flex-1 text-gray-700"
-                        type="text"
-                        value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
-                        placeholder="Enter contact number"
-                        disabled={savingContact}
-                        autoFocus
-                      />
-                      <button
-                        className="ml-2 text-green-600 hover:text-green-800"
-                        onClick={async () => {
-                          setSavingContact(true);
-                          try {
-                            const res = await fetch("/api/user/info", {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                name: profile.name,
-                                contactNumber,
-                              }),
-                            });
-                            if (!res.ok) throw new Error("Failed to update");
-                            const data = await res.json();
-                            setProfile(data);
-                            setEditContact(false);
-                            toast.success("Contact number updated");
-                          } catch (err) {
-                            toast.error(
-                              (err as any).message || "Failed to update"
-                            );
-                          } finally {
-                            setSavingContact(false);
-                          }
-                        }}
-                        disabled={savingContact}
-                        title="Save"
-                      >
-                        <Check className="w-5 h-5" />
-                      </button>
-                      <button
-                        className="ml-1 text-gray-400 hover:text-gray-600"
-                        onClick={() => {
-                          setEditContact(false);
-                          setContactNumber(profile.contactNumber || "");
-                        }}
-                        disabled={savingContact}
-                        title="Cancel"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span
-                        className={
-                          "font-medium text-gray-700 " +
-                          (profile?.contactNumber ? "" : "text-gray-400")
-                        }
-                      >
-                        {profile?.contactNumber || "Not set"}
-                      </span>
-                      <button
-                        className="ml-2 text-blue-600 hover:text-blue-800"
-                        onClick={() => setEditContact(true)}
-                        title={profile?.contactNumber ? "Edit" : "Add"}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 pt-4">
-                  <span className="text-xs text-gray-400">
-                    Member since{" "}
-                    {profile?.createdAt
-                      ? new Date(profile.createdAt).toLocaleDateString()
-                      : "-"}
-                  </span>
-                </div>
-              </div>
-              <button
-                className="mt-8 w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-all text-lg shadow"
-                onClick={async () => {
-                  await signOut({ redirect: false });
-                  router.push("/login");
-                }}
-              >
-                <LogOut className="w-5 h-5" /> Sign Out
-              </button>
-            </div>
-          </div>
-        )}
+        {activeTab === "profile" && <ProfileManagement />}
       </div>
     </div>
   );

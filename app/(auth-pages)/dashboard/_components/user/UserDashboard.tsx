@@ -1,39 +1,15 @@
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardContent,
-  CardTitle,
-  CardDescription,
-} from "@/components/ui/card";
-import {
-  FileText,
-  Upload,
-  Bell,
-  Download,
-  FormInput,
-  CheckCircle,
-  AlertCircle,
-  Clock,
-  User,
-  Mail,
-  Phone,
-  LogOut,
-  Pencil,
-  Check,
-  X,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { s3 } from "@/lib/s3";
 import toast from "react-hot-toast";
 import UserDashboardHeader from "./UserDashboardHeader";
-import UploadTab from "./UploadTab";
 import ResponsesTab from "./ResponsesTab";
 import FormsTab from "./FormsTab";
 import NotificationsTab from "./NotificationsTab";
+import ProfileTab from "./ProfileTab";
+import FileBrowser from "@/app/_component/FileBrowser";
+import { ManagedFile } from "@/types/files";
 
 type FileRecord = {
   id: string;
@@ -44,6 +20,9 @@ type FileRecord = {
   type: string | null;
   createdAt: string;
   updatedAt: string;
+  isCompleted: boolean;
+  completedAt: string | null;
+  folderName?: string | null;
 };
 
 type Notification = {
@@ -91,12 +70,8 @@ export default function UserDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [profileLoading, setProfileLoading] = useState(false);
-  const [profileError, setProfileError] = useState<string | null>(null);
-  const [editContact, setEditContact] = useState(false);
-  const [contactNumber, setContactNumber] = useState("");
-  const [savingContact, setSavingContact] = useState(false);
+  const [currentPath, setCurrentPath] = useState("");
+  const [tempFolders, setTempFolders] = useState<string[]>([]);
 
   const fetchData = async () => {
     try {
@@ -131,27 +106,9 @@ export default function UserDashboard() {
     }
   };
 
-  // Fetch user profile info
-  const fetchProfile = async () => {
-    setProfileLoading(true);
-    setProfileError(null);
-    try {
-      const res = await fetch("/api/user/info");
-      if (!res.ok) throw new Error("Failed to fetch profile");
-      const data = await res.json();
-      setProfile(data);
-      setContactNumber(data.contactNumber || "");
-    } catch (err: any) {
-      setProfileError(err.message || "Failed to load profile");
-    } finally {
-      setProfileLoading(false);
-    }
-  };
-
   useEffect(() => {
     fetchData();
-    if (activeTab === "profile") fetchProfile();
-  }, [activeTab]);
+  }, []);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -226,6 +183,7 @@ export default function UserDashboard() {
           type: file.type,
           uploadedById: session.user.id,
           isAdminOnlyPrivateFile: false,
+          folderName: currentPath,
         }),
       });
 
@@ -248,8 +206,55 @@ export default function UserDashboard() {
     }
   };
 
+  const handleFolderCreate = (folderName: string) => {
+    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
+    setTempFolders((prev) => [...prev, newPath]);
+    toast.success(`Folder "${folderName}" created.`);
+  };
+
+  const { files: displayedFiles, folders: displayedFolders } = useMemo(() => {
+    const folders = new Set<string>();
+    const files: FileRecord[] = [];
+
+    const allFolderPaths = [
+      ...uploadedFiles.map((f) => f.folderName),
+      ...tempFolders,
+    ];
+
+    allFolderPaths.forEach((path) => {
+      if (!path) return;
+
+      if (currentPath === "") {
+        folders.add(path.split("/")[0]);
+      } else if (path.startsWith(`${currentPath}/`)) {
+        const subPath = path.substring(currentPath.length + 1);
+        if (subPath.split("/").length > 0) {
+          folders.add(subPath.split("/")[0]);
+        }
+      }
+    });
+
+    uploadedFiles.forEach((file) => {
+      const path = file.folderName || "";
+      if (path === currentPath) {
+        files.push(file);
+      }
+    });
+
+    return { files, folders: Array.from(folders) };
+  }, [uploadedFiles, currentPath, tempFolders]);
+
+  const managedFiles: ManagedFile[] = displayedFiles.map((file) => ({
+    id: file.id,
+    name: file.name || "Unnamed File",
+    url: file.url,
+    size: file.size,
+    createdAt: file.createdAt,
+    folderName: file.folderName,
+  }));
+
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-cyan-50">
       <UserDashboardHeader
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as typeof activeTab)}
@@ -260,15 +265,18 @@ export default function UserDashboard() {
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {activeTab === "upload" && (
-          <UploadTab
-            uploadedFiles={uploadedFiles}
+          <FileBrowser
+            files={managedFiles}
+            folders={displayedFolders}
             isLoading={isLoading}
-            selectedFile={selectedFile}
+            currentPath={currentPath}
+            onPathChange={setCurrentPath}
+            onFolderCreate={handleFolderCreate}
             isUploading={isUploading}
             handleFileSelect={handleFileSelect}
             handleFileUpload={handleFileUpload}
+            selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
-            fetchData={fetchData}
           />
         )}
         {activeTab === "responses" && (
@@ -285,120 +293,7 @@ export default function UserDashboard() {
             setIsLoading={setIsLoading}
           />
         )}
-        {activeTab === "profile" && (
-          <div className="flex flex-col items-center w-full">
-            <div className="w-full max-w-md bg-white rounded-2xl shadow-lg p-8 flex flex-col items-center relative">
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center mb-4 border-4 border-gray-200">
-                <User className="w-12 h-12 text-gray-400" />
-              </div>
-              <div className="text-2xl font-bold mb-1">
-                {profile?.name || "-"}
-              </div>
-              <div className="text-gray-500 mb-6">User Profile</div>
-              <div className="w-full flex flex-col gap-4">
-                <div className="flex items-center gap-3 border-b pb-4">
-                  <Mail className="w-5 h-5 text-gray-400" />
-                  <span className="font-medium text-gray-700">
-                    {profile?.email}
-                  </span>
-                </div>
-                <div className="flex items-center gap-3 border-b pb-4">
-                  <Phone className="w-5 h-5 text-gray-400" />
-                  {editContact ? (
-                    <>
-                      <input
-                        className="border rounded px-2 py-1 flex-1 text-gray-700"
-                        type="text"
-                        value={contactNumber}
-                        onChange={(e) => setContactNumber(e.target.value)}
-                        placeholder="Enter contact number"
-                        disabled={savingContact}
-                        autoFocus
-                      />
-                      <button
-                        className="ml-2 text-green-600 hover:text-green-800"
-                        onClick={async () => {
-                          setSavingContact(true);
-                          try {
-                            const res = await fetch("/api/user/info", {
-                              method: "PUT",
-                              headers: { "Content-Type": "application/json" },
-                              body: JSON.stringify({
-                                name: profile.name,
-                                contactNumber,
-                              }),
-                            });
-                            if (!res.ok) throw new Error("Failed to update");
-                            const data = await res.json();
-                            setProfile(data);
-                            setEditContact(false);
-                            toast.success("Contact number updated");
-                          } catch (err) {
-                            toast.error(
-                              (err as any).message || "Failed to update"
-                            );
-                          } finally {
-                            setSavingContact(false);
-                          }
-                        }}
-                        disabled={savingContact}
-                        title="Save"
-                      >
-                        <Check className="w-5 h-5" />
-                      </button>
-                      <button
-                        className="ml-1 text-gray-400 hover:text-gray-600"
-                        onClick={() => {
-                          setEditContact(false);
-                          setContactNumber(profile.contactNumber || "");
-                        }}
-                        disabled={savingContact}
-                        title="Cancel"
-                      >
-                        <X className="w-5 h-5" />
-                      </button>
-                    </>
-                  ) : (
-                    <>
-                      <span
-                        className={
-                          "font-medium text-gray-700 " +
-                          (profile?.contactNumber ? "" : "text-gray-400")
-                        }
-                      >
-                        {profile?.contactNumber || "Not set"}
-                      </span>
-                      <button
-                        className="ml-2 text-blue-600 hover:text-blue-800"
-                        onClick={() => setEditContact(true)}
-                        title={profile?.contactNumber ? "Edit" : "Add"}
-                      >
-                        <Pencil className="w-4 h-4" />
-                      </button>
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-3 pt-4">
-                  <span className="text-xs text-gray-400">
-                    Member since{" "}
-                    {profile?.createdAt
-                      ? new Date(profile.createdAt).toLocaleDateString()
-                      : "-"}
-                  </span>
-                </div>
-              </div>
-              <button
-                className="mt-8 w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-2 px-4 rounded-lg transition-all text-lg shadow"
-                onClick={async () => {
-                  await signOut({ callbackUrl: "/login" });
-                  router.push("/login");
-                }}
-              >
-                <LogOut className="w-5 h-5" /> Sign Out
-              </button>
-            </div>
-          </div>
-        )}
+        {activeTab === "profile" && <ProfileTab />}
       </div>
     </div>
   );

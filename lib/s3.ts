@@ -19,9 +19,17 @@ export const s3 = {
     return `user-uploads/${userId}/received/${filename}`;
   },
 
-  getAdminPrivateUploadPath: (adminId: string, userId: string, filename: string) => {
+  getAdminPrivateUploadPath: (
+    adminId: string,
+    userId: string,
+    filename: string
+  ) => {
     return `admin-private-uploads/${adminId}/${userId}/${filename}`;
-  }
+  },
+
+  getUserProfilePicturePath: (userId: string, filename: string) => {
+    return `user-uploads/${userId}/profile/${filename}`;
+  },
 };
 
 export const getSignedUrlFromPath = async (path: string) => {
@@ -36,6 +44,8 @@ export const getSignedUrlFromPath = async (path: string) => {
     Bucket: process.env.AWS_S3_BUCKET!,
     Key: path,
   });
-  const signedUrl = await getSignedUrl(s3, command, { expiresIn: 60 * 60 * 12 }); // 12 hours
+  const signedUrl = await getSignedUrl(s3, command, {
+    expiresIn: 60 * 60 * 12,
+  }); // 12 hours
   return signedUrl;
 };

@@ -17,6 +17,7 @@ export async function POST(request: NextRequest) {
       type,
       uploadedById,
       isAdminOnlyPrivateFile,
+      folderName,
     } = await request.json();
     console.log("filePath", filePath);
     console.log("url", url);
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     console.log("type", type);
     console.log("uploadedById", uploadedById);
     console.log("isAdminOnlyPrivateFile", isAdminOnlyPrivateFile);
+    console.log("folderName", folderName);
     const adminID = await prisma.user.findFirst({
       where: {
         isAdmin: true,
@@ -43,6 +45,7 @@ export async function POST(request: NextRequest) {
         uploadedById: uploadedById,
         receivedById: adminID.id,
         isAdminOnlyPrivateFile: isAdminOnlyPrivateFile,
+        folderName: folderName,
         createdAt: new Date(),
         updatedAt: new Date(),
       },

@@ -17,7 +17,8 @@ interface DashboardHeaderProps {
 }
 
 const menuItems: MenuItem[] = [
-  { key: "users", label: "User Management" },
+  { key: "users", label: "Users" },
+  { key: "files", label: "File Management" },
   { key: "notifications", label: "Notifications" },
   { key: "blogs", label: "Blogs" },
   { key: "contacts", label: "Open Contacts" },
@@ -70,16 +71,15 @@ export default function DashboardHeader({
               <button
                 key={item.key}
                 onClick={() => onTabChange(item.key)}
-                className={`text-white text-lg px-4 py-2 rounded-lg transition-colors ${
+                className={`text-white text-lg px-4 py-2 rounded-lg transition-colors cursor-pointer ${
                   activeTab === item.key
-                    ? "bg-cyan-600 hover:bg-cyan-700"
-                    : "hover:text-cyan-200"
+                    ? "bg-cyan-600 hover:bg-cyan-500"
+                    : "hover:text-white"
                 }`}
               >
                 {item.label}
               </button>
             ))}
-            <span className="text-white text-sm ml-4">Administrator</span>
             <Button
               variant="outline"
               size="sm"
@@ -111,16 +111,15 @@ export default function DashboardHeader({
                   onTabChange(item.key);
                   setIsMenuOpen(false);
                 }}
-                className={`block text-white text-lg px-4 py-2 rounded-lg text-left transition-colors ${
+                className={`block text-white text-lg px-4 py-2 rounded-lg text-left transition-colors cursor-pointer ${
                   activeTab === item.key
-                    ? "bg-cyan-600 hover:bg-cyan-700"
-                    : "hover:text-cyan-200"
+                    ? "bg-cyan-600 hover:bg-cyan-500"
+                    : "hover:text-white"
                 }`}
               >
                 {item.label}
               </button>
             ))}
-            <span className="text-white text-sm mt-2">Administrator</span>
             <Button
               variant="outline"
               size="sm"

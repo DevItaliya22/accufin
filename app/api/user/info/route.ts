@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import prisma from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { getSignedUrlFromPath } from "@/lib/s3";
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions);
@@ -17,15 +18,23 @@ export async function GET(req: NextRequest) {
       email: true,
       name: true,
       contactNumber: true,
+      address: true,
+      occupation: true,
       isAdmin: true,
       createdAt: true,
+      profileUrl: true,
       updatedAt: true,
+      provider: true,
     },
   });
   if (!user) {
     return NextResponse.json({ error: "User not found" }, { status: 404 });
   }
-  return NextResponse.json(user);
+  let signedUrl = null;
+  if (user.profileUrl) {
+    signedUrl = await getSignedUrlFromPath(user.profileUrl);
+  }
+  return NextResponse.json({ ...user, profileImageUrl: signedUrl });
 }
 
 export async function PUT(req: NextRequest) {
@@ -33,22 +42,34 @@ export async function PUT(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { name, contactNumber } = await req.json();
+  const { name, contactNumber, address, occupation, profileUrl } =
+    await req.json();
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
       name,
       contactNumber,
+      address,
+      occupation,
+      profileUrl,
     },
     select: {
       id: true,
       email: true,
       name: true,
       contactNumber: true,
+      address: true,
+      occupation: true,
+      profileUrl: true,
       isAdmin: true,
       createdAt: true,
       updatedAt: true,
+      provider: true,
     },
   });
-  return NextResponse.json(user);
+  let signedUrl = null;
+  if (user.profileUrl) {
+    signedUrl = await getSignedUrlFromPath(user.profileUrl);
+  }
+  return NextResponse.json({ ...user, profileImageUrl: signedUrl });
 }

@@ -22,7 +22,9 @@ model User {
   isAdmin   Boolean  @default(false)
   provider  String? @default("credentials")
   contactNumber String?
-
+  profileUrl String?
+  address   String?
+  occupation String?
   uploadedFiles File[] @relation("UserUploadedFiles")
   receivedFiles File[] @relation("UserReceivedFiles")
 
@@ -35,11 +37,12 @@ model User {
 model File {
   id        String   @id @default(uuid())
 
-  url String
-  path String
+  url String?
+  path String?
   name String?
   size String?
   type String?
+  isArchived Boolean @default(false)
 
   folderName String?
 
