@@ -6,9 +6,28 @@ import prisma from "@/lib/prisma";
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.user) {
+    if (!session?.user || !session.user.isAdmin) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const body = await request.json();
+
+    // Handle Folder Creation
+    if (body.isFolderCreation) {
+      const { folderName, parentPath, userId } = body;
+      const newFolder = await prisma.file.create({
+        data: {
+          name: folderName,
+          type: "folder",
+          folderName: parentPath,
+          uploadedById: session.user.id,
+          receivedById: userId,
+          isAdminOnlyPrivateFile: false,
+        },
+      });
+      return NextResponse.json(newFolder, { status: 200 });
+    }
+
+    // Handle File Upload
     const {
       filePath,
       url,
@@ -18,7 +37,7 @@ export async function POST(request: NextRequest) {
       uploadedById,
       isAdminOnlyPrivateFile,
       receivedById,
-    } = await request.json();
+    } = body;
     console.log("filePath", filePath);
     console.log("url", url);
     console.log("name", name);

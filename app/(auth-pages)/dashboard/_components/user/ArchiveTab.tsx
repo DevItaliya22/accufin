@@ -1,36 +1,39 @@
 import FileBrowser from "@/app/_component/FileBrowser";
 import { ManagedFile } from "@/types/files";
 
-type ResponsesTabProps = {
-  responseFiles: ManagedFile[];
+type ArchiveTabProps = {
+  archivedFiles: ManagedFile[];
   folders: string[];
   isLoading: boolean;
   currentPath: string;
   onPathChange: (path: string) => void;
+  onFileUnarchive: (fileId: string) => void;
 };
 
-export default function ResponsesTab({
-  responseFiles,
+export default function ArchiveTab({
+  archivedFiles,
   folders,
   isLoading,
   currentPath,
   onPathChange,
-}: ResponsesTabProps) {
+  onFileUnarchive,
+}: ArchiveTabProps) {
   return (
     <FileBrowser
-      files={responseFiles}
+      files={archivedFiles}
       folders={folders}
       isLoading={isLoading}
       currentPath={currentPath}
       onPathChange={onPathChange}
-      // The following props are for read-only mode
+      onFileUnarchive={onFileUnarchive}
+      // Read-only mode for most actions
+      showUploadButton={false}
+      showAddFolderButton={false}
       isUploading={false}
       handleFileSelect={() => {}}
       handleFileUpload={() => {}}
       selectedFile={null}
       setSelectedFile={() => {}}
-      showUploadButton={false}
-      showAddFolderButton={false}
     />
   );
 }

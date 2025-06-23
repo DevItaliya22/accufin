@@ -13,12 +13,13 @@ export async function GET(request: NextRequest) {
     const files = await prisma.file.findMany({
       where: {
         uploadedById: session.user.id,
-        isArchived: false,
+        isArchived: true,
       },
       orderBy: {
-        createdAt: "desc",
+        updatedAt: "desc",
       },
     });
+
     const signedFiles = await Promise.all(
       files.map(async (file) => {
         if (file.type !== "folder" && file.path) {
@@ -31,6 +32,7 @@ export async function GET(request: NextRequest) {
         return file;
       })
     );
+
     return NextResponse.json(signedFiles, { status: 200 });
   } catch (e) {
     console.log(e);

@@ -350,6 +350,7 @@ export default function AdminDashboard() {
             onResponseFileSelect={handleResponseFileSelect}
             onPrivateUpload={handlePrivateUpload}
             onResponseUpload={handleResponseUpload}
+            onRefreshUserDetails={() => {}}
           />
         )}
         {activeTab === "notifications" && (

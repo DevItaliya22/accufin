@@ -8,8 +8,9 @@ import ResponsesTab from "./ResponsesTab";
 import FormsTab from "./FormsTab";
 import NotificationsTab from "./NotificationsTab";
 import ProfileTab from "./ProfileTab";
-import FileBrowser from "@/app/_component/FileBrowser";
 import { ManagedFile } from "@/types/files";
+import FileBrowser from "@/app/_component/FileBrowser";
+import ArchiveTab from "./ArchiveTab";
 
 type FileRecord = {
   id: string;
@@ -23,9 +24,11 @@ type FileRecord = {
   isCompleted: boolean;
   completedAt: string | null;
   folderName?: string | null;
+  isArchived: boolean;
+  file: globalThis.File;
 };
 
-type Notification = {
+type NotificationRecord = {
   id: string;
   title: string;
   message: string;
@@ -59,48 +62,73 @@ type FormWithStatus = {
 
 export default function UserDashboard() {
   const [activeTab, setActiveTab] = useState<
-    "upload" | "responses" | "notifications" | "forms" | "profile"
+    "upload" | "responses" | "notifications" | "forms" | "profile" | "archive"
   >("upload");
   const router = useRouter();
   const { data: session } = useSession();
   const [uploadedFiles, setUploadedFiles] = useState<FileRecord[]>([]);
   const [responseFiles, setResponseFiles] = useState<FileRecord[]>([]);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [forms, setForms] = useState<FormWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [currentPath, setCurrentPath] = useState("");
-  const [tempFolders, setTempFolders] = useState<string[]>([]);
+  const [currentResponsePath, setCurrentResponsePath] = useState("");
+  const [archivedFilesList, setArchivedFilesList] = useState<FileRecord[]>([]);
+  const [currentArchivePath, setCurrentArchivePath] = useState("");
 
   const fetchData = async () => {
     try {
-      const [uploadedFilesRes, responseFilesRes, notificationsRes, formsRes] =
-        await Promise.all([
-          fetch("/api/user/listUploadedFile"),
-          fetch("/api/user/listResponseFile"),
-          fetch("/api/user/notification"),
-          fetch("/api/user/forms"),
-        ]);
+      const [
+        uploadedFilesRes,
+        responseFilesRes,
+        notificationsRes,
+        formsRes,
+        archivedFilesRes,
+      ] = await Promise.all([
+        fetch("/api/user/listUploadedFile"),
+        fetch("/api/user/listResponseFile"),
+        fetch("/api/user/notification"),
+        fetch("/api/user/forms"),
+        fetch("/api/user/archived-files"),
+      ]);
 
       const [
         uploadedFilesData,
         responseFilesData,
         notificationsData,
         formsData,
+        archivedFilesData,
       ] = await Promise.all([
         uploadedFilesRes.json(),
         responseFilesRes.json(),
         notificationsRes.json(),
         formsRes.json(),
+        archivedFilesRes.json(),
       ]);
 
-      setUploadedFiles(uploadedFilesData);
-      setResponseFiles(responseFilesData);
-      setNotifications(notificationsData);
-      setForms(formsData);
+      setUploadedFiles(
+        Array.isArray(uploadedFilesData) ? uploadedFilesData : []
+      );
+      setResponseFiles(
+        Array.isArray(responseFilesData) ? responseFilesData : []
+      );
+      setNotifications(
+        Array.isArray(notificationsData) ? notificationsData : []
+      );
+      setForms(Array.isArray(formsData) ? formsData : []);
+      setArchivedFilesList(
+        Array.isArray(archivedFilesData) ? archivedFilesData : []
+      );
     } catch (error) {
       console.error("Error fetching data:", error);
+      // Ensure state is an array even on catastrophic failure
+      setUploadedFiles([]);
+      setResponseFiles([]);
+      setNotifications([]);
+      setForms([]);
+      setArchivedFilesList([]);
     } finally {
       setIsLoading(false);
     }
@@ -206,43 +234,192 @@ export default function UserDashboard() {
     }
   };
 
-  const handleFolderCreate = (folderName: string) => {
-    const newPath = currentPath ? `${currentPath}/${folderName}` : folderName;
-    setTempFolders((prev) => [...prev, newPath]);
-    toast.success(`Folder "${folderName}" created.`);
+  const handleFolderCreate = async (folderName: string) => {
+    if (!session?.user?.id) {
+      toast.error("You must be logged in to create a folder.");
+      return;
+    }
+
+    try {
+      const res = await fetch("/api/s3/db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isFolderCreation: true,
+          folderName: folderName,
+          parentPath: currentPath,
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error("Failed to create folder.");
+      }
+
+      toast.success(`Folder "${folderName}" created successfully!`);
+      await fetchData(); // Refresh data
+    } catch (error) {
+      toast.error("Failed to create folder. Please try again.");
+      console.error("Error creating folder:", error);
+    }
+  };
+
+  const handleArchiveFile = async (fileId: string) => {
+    const fileToMove = uploadedFiles.find((f) => f.id === fileId);
+    if (!fileToMove) return;
+
+    // Optimistic UI update
+    setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+    setArchivedFilesList((prev) => [
+      ...prev,
+      { ...fileToMove, isArchived: true },
+    ]);
+    toast.success("File archived.");
+
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/archive`, {
+        method: "PATCH",
+      });
+      if (!res.ok) {
+        toast.error("Failed to archive file.");
+        // Revert on error
+        setUploadedFiles((prev) => [...prev, fileToMove]);
+        setArchivedFilesList((prev) => prev.filter((f) => f.id !== fileId));
+      }
+    } catch (error) {
+      toast.error("Failed to archive file. Please try again.");
+      setUploadedFiles((prev) => [...prev, fileToMove]);
+      setArchivedFilesList((prev) => prev.filter((f) => f.id !== fileId));
+    }
+  };
+
+  const handleUnarchiveFile = async (fileId: string) => {
+    const fileToMove = archivedFilesList.find((f) => f.id === fileId);
+    if (!fileToMove) return;
+
+    // Optimistic UI update
+    setArchivedFilesList((prev) => prev.filter((f) => f.id !== fileId));
+    setUploadedFiles((prev) => [...prev, { ...fileToMove, isArchived: false }]);
+    toast.success("File unarchived.");
+
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/unarchive`, {
+        method: "PATCH",
+      });
+      if (!res.ok) {
+        toast.error("Failed to unarchive file.");
+        // Revert on error
+        setArchivedFilesList((prev) => [...prev, fileToMove]);
+        setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+      }
+    } catch (error) {
+      toast.error("Failed to unarchive file. Please try again.");
+      setArchivedFilesList((prev) => [...prev, fileToMove]);
+      setUploadedFiles((prev) => prev.filter((f) => f.id !== fileId));
+    }
   };
 
   const { files: displayedFiles, folders: displayedFolders } = useMemo(() => {
     const folders = new Set<string>();
     const files: FileRecord[] = [];
 
-    const allFolderPaths = [
-      ...uploadedFiles.map((f) => f.folderName),
-      ...tempFolders,
-    ];
-
-    allFolderPaths.forEach((path) => {
-      if (!path) return;
+    uploadedFiles.forEach((file) => {
+      const path = file.folderName || "";
 
       if (currentPath === "") {
-        folders.add(path.split("/")[0]);
-      } else if (path.startsWith(`${currentPath}/`)) {
-        const subPath = path.substring(currentPath.length + 1);
-        if (subPath.split("/").length > 0) {
-          folders.add(subPath.split("/")[0]);
+        if (path === "") {
+          if (file.type === "folder" && file.name) {
+            folders.add(file.name);
+          } else if (file.type !== "folder") {
+            files.push(file);
+          }
+        } else {
+          const topLevelFolder = path.split("/")[0];
+          if (topLevelFolder) {
+            folders.add(topLevelFolder);
+          }
+        }
+      } else {
+        if (path === currentPath) {
+          if (file.type === "folder" && file.name) {
+            folders.add(file.name);
+          } else if (file.type !== "folder") {
+            files.push(file);
+          }
+        } else if (path.startsWith(`${currentPath}/`)) {
+          const remainingPath = path.substring(currentPath.length + 1);
+          const nextLevelFolder = remainingPath.split("/")[0];
+          if (nextLevelFolder) {
+            folders.add(nextLevelFolder);
+          }
         }
       }
     });
 
-    uploadedFiles.forEach((file) => {
-      const path = file.folderName || "";
-      if (path === currentPath) {
-        files.push(file);
-      }
-    });
+    return {
+      files,
+      folders: Array.from(folders),
+    };
+  }, [uploadedFiles, currentPath]);
 
-    return { files, folders: Array.from(folders) };
-  }, [uploadedFiles, currentPath, tempFolders]);
+  const { files: displayedResponseFiles, folders: displayedResponseFolders } =
+    useMemo(() => {
+      const folders = new Set<string>();
+      const files: FileRecord[] = [];
+
+      responseFiles.forEach((file) => {
+        const path = file.folderName || "";
+        if (currentResponsePath === "") {
+          if (path === "") {
+            if (file.type === "folder" && file.name) folders.add(file.name);
+            else if (file.type !== "folder") files.push(file);
+          } else {
+            const topLevelFolder = path.split("/")[0];
+            if (topLevelFolder) folders.add(topLevelFolder);
+          }
+        } else {
+          if (path === currentResponsePath) {
+            if (file.type === "folder" && file.name) folders.add(file.name);
+            else if (file.type !== "folder") files.push(file);
+          } else if (path.startsWith(`${currentResponsePath}/`)) {
+            const remainingPath = path.substring(
+              currentResponsePath.length + 1
+            );
+            const nextLevelFolder = remainingPath.split("/")[0];
+            if (nextLevelFolder) folders.add(nextLevelFolder);
+          }
+        }
+      });
+      return { files, folders: Array.from(folders) };
+    }, [responseFiles, currentResponsePath]);
+
+  const { files: displayedArchivedFiles, folders: displayedArchivedFolders } =
+    useMemo(() => {
+      const folders = new Set<string>();
+      const files: FileRecord[] = [];
+
+      archivedFilesList.forEach((file) => {
+        const path = file.folderName || "";
+        if (currentArchivePath === "") {
+          if (path === "") {
+            if (file.type === "folder" && file.name) folders.add(file.name);
+            else if (file.type !== "folder") files.push(file);
+          } else {
+            const topLevelFolder = path.split("/")[0];
+            if (topLevelFolder) folders.add(topLevelFolder);
+          }
+        } else {
+          if (path === currentArchivePath) {
+            if (file.type === "folder" && file.name) folders.add(file.name);
+            else if (file.type !== "folder") files.push(file);
+          } else if (path.startsWith(`${currentArchivePath}/`)) {
+            const remainingPath = path.substring(currentArchivePath.length + 1);
+            const nextLevelFolder = remainingPath.split("/")[0];
+            if (nextLevelFolder) folders.add(nextLevelFolder);
+          }
+        }
+      });
+      return { files, folders: Array.from(folders) };
+    }, [archivedFilesList, currentArchivePath]);
 
   const managedFiles: ManagedFile[] = displayedFiles.map((file) => ({
     id: file.id,
@@ -252,6 +429,28 @@ export default function UserDashboard() {
     createdAt: file.createdAt,
     folderName: file.folderName,
   }));
+
+  const managedResponseFiles: ManagedFile[] = displayedResponseFiles.map(
+    (file) => ({
+      id: file.id,
+      name: file.name || "Unnamed File",
+      url: file.url,
+      size: file.size,
+      createdAt: file.createdAt,
+      folderName: file.folderName,
+    })
+  );
+
+  const managedArchivedFiles: ManagedFile[] = displayedArchivedFiles.map(
+    (file) => ({
+      id: file.id,
+      name: file.name || "Unnamed File",
+      url: file.url,
+      size: file.size,
+      createdAt: file.createdAt,
+      folderName: file.folderName,
+    })
+  );
 
   return (
     <div className="min-h-screen bg-cyan-50">
@@ -277,10 +476,17 @@ export default function UserDashboard() {
             handleFileUpload={handleFileUpload}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
+            onFileArchive={handleArchiveFile}
           />
         )}
         {activeTab === "responses" && (
-          <ResponsesTab responseFiles={responseFiles} isLoading={isLoading} />
+          <ResponsesTab
+            responseFiles={managedResponseFiles}
+            folders={displayedResponseFolders}
+            isLoading={isLoading}
+            currentPath={currentResponsePath}
+            onPathChange={setCurrentResponsePath}
+          />
         )}
         {activeTab === "forms" && (
           <FormsTab forms={forms} isLoading={isLoading} router={router} />
@@ -291,6 +497,16 @@ export default function UserDashboard() {
             isLoading={isLoading}
             setNotifications={setNotifications}
             setIsLoading={setIsLoading}
+          />
+        )}
+        {activeTab === "archive" && (
+          <ArchiveTab
+            archivedFiles={managedArchivedFiles}
+            folders={displayedArchivedFolders}
+            isLoading={isLoading}
+            currentPath={currentArchivePath}
+            onPathChange={setCurrentArchivePath}
+            onFileUnarchive={handleUnarchiveFile}
           />
         )}
         {activeTab === "profile" && <ProfileTab />}

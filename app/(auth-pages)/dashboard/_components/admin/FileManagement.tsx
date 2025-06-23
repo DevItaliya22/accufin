@@ -14,10 +14,15 @@ import {
   Users,
   EyeOff,
   Eye,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader } from "@/components/ui/loader";
-import { useRef } from "react";
+import { useMemo, useState } from "react";
+import FileBrowser from "@/app/_component/FileBrowser";
+import { ManagedFile } from "@/types/files";
+import { toast } from "react-hot-toast";
 
 interface User {
   id: string;
@@ -25,28 +30,21 @@ interface User {
   uploadedFiles: number;
 }
 
+interface FileDetail {
+  id: string;
+  name: string;
+  size: string;
+  url: string;
+  createdAt?: string;
+  folderName?: string;
+  type?: string;
+}
+
 interface UserDetails {
-  userUploadedFiles?: Array<{
-    id: string;
-    name: string;
-    size: string;
-    url: string;
-    createdAt?: string;
-  }>;
-  userPrivateFiles?: Array<{
-    id: string;
-    name: string;
-    size: string;
-    url: string;
-    createdAt?: string;
-  }>;
-  userReceivedFiles?: Array<{
-    id: string;
-    name: string;
-    size: string;
-    url: string;
-    createdAt?: string;
-  }>;
+  userUploadedFiles?: FileDetail[];
+  userPrivateFiles?: FileDetail[];
+  userReceivedFiles?: FileDetail[];
+  userArchivedFiles?: FileDetail[];
 }
 
 interface FileManagementProps {
@@ -68,7 +66,51 @@ interface FileManagementProps {
   onResponseFileSelect: (file: File | null) => void;
   onPrivateUpload: () => Promise<void>;
   onResponseUpload: () => Promise<void>;
+  onRefreshUserDetails: () => void;
 }
+
+const processFiles = (
+  allFiles: FileDetail[] | undefined,
+  currentPath: string
+) => {
+  const folders = new Set<string>();
+  const files: FileDetail[] = [];
+  if (!allFiles) {
+    return { files: [], folders: [] };
+  }
+
+  allFiles.forEach((file) => {
+    const path = file.folderName || "";
+    if (currentPath === "") {
+      if (path === "") {
+        if (file.type === "folder" && file.name) folders.add(file.name);
+        else if (file.type !== "folder") files.push(file);
+      } else {
+        const topLevelFolder = path.split("/")[0];
+        if (topLevelFolder) folders.add(topLevelFolder);
+      }
+    } else {
+      if (path === currentPath) {
+        if (file.type === "folder" && file.name) folders.add(file.name);
+        else if (file.type !== "folder") files.push(file);
+      } else if (path.startsWith(`${currentPath}/`)) {
+        const remainingPath = path.substring(currentPath.length + 1);
+        const nextLevelFolder = remainingPath.split("/")[0];
+        if (nextLevelFolder) folders.add(nextLevelFolder);
+      }
+    }
+  });
+
+  const managedFiles: ManagedFile[] = files.map((file) => ({
+    id: file.id,
+    name: file.name || "Unnamed File",
+    url: file.url,
+    size: file.size,
+    createdAt: file.createdAt,
+    folderName: file.folderName,
+  }));
+  return { files: managedFiles, folders: Array.from(folders) };
+};
 
 export default function FileManagement({
   users,
@@ -89,26 +131,86 @@ export default function FileManagement({
   onResponseFileSelect,
   onPrivateUpload,
   onResponseUpload,
+  onRefreshUserDetails,
 }: FileManagementProps) {
-  const privateFileInputRef = useRef<HTMLInputElement>(null);
-  const responseFileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFilesPath, setUploadedFilesPath] = useState("");
+  const [archivedFilesPath, setArchivedFilesPath] = useState("");
+  const [privateFilesPath, setPrivateFilesPath] = useState("");
+  const [responseFilesPath, setResponseFilesPath] = useState("");
 
-  const handlePrivateFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    onPrivateFileSelect(file || null);
+  const { files: processedUploadedFiles, folders: processedUploadedFolders } =
+    useMemo(
+      () => processFiles(userDetails?.userUploadedFiles, uploadedFilesPath),
+      [userDetails?.userUploadedFiles, uploadedFilesPath]
+    );
+
+  const { files: processedArchivedFiles, folders: processedArchivedFolders } =
+    useMemo(
+      () => processFiles(userDetails?.userArchivedFiles, archivedFilesPath),
+      [userDetails?.userArchivedFiles, archivedFilesPath]
+    );
+
+  const { files: processedPrivateFiles, folders: processedPrivateFolders } =
+    useMemo(
+      () => processFiles(userDetails?.userPrivateFiles, privateFilesPath),
+      [userDetails?.userPrivateFiles, privateFilesPath]
+    );
+
+  const { files: processedResponseFiles, folders: processedResponseFolders } =
+    useMemo(
+      () => processFiles(userDetails?.userReceivedFiles, responseFilesPath),
+      [userDetails?.userReceivedFiles, responseFilesPath]
+    );
+
+  const handleAdminFolderCreate = async (
+    folderName: string,
+    parentPath: string,
+    type: "private" | "response"
+  ) => {
+    if (!selectedUser) return;
+    try {
+      const res = await fetch("/api/s3/admin-db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          isFolderCreation: true,
+          folderName,
+          parentPath,
+          userId: selectedUser,
+          isAdminOnlyPrivateFile: type === "private",
+        }),
+      });
+      if (!res.ok) throw new Error("Failed to create folder");
+      toast.success("Folder created successfully");
+      onRefreshUserDetails();
+    } catch (err) {
+      toast.error("Failed to create folder");
+    }
   };
 
-  const handleResponseFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    onResponseFileSelect(file || null);
+  const handleArchiveFile = async (fileId: string) => {
+    try {
+      const res = await fetch(`/api/admin/files/${fileId}/archive`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error("Failed to archive file");
+      toast.success("File archived successfully");
+      onRefreshUserDetails();
+    } catch (err) {
+      toast.error("Failed to archive file");
+    }
   };
-
-  const openPrivateFilePicker = () => {
-    privateFileInputRef.current?.click();
-  };
-
-  const openResponseFilePicker = () => {
-    responseFileInputRef.current?.click();
+  const handleUnarchiveFile = async (fileId: string) => {
+    try {
+      const res = await fetch(`/api/admin/files/${fileId}/unarchive`, {
+        method: "PATCH",
+      });
+      if (!res.ok) throw new Error("Failed to unarchive file");
+      toast.success("File unarchived successfully");
+      onRefreshUserDetails();
+    } catch (err) {
+      toast.error("Failed to unarchive file");
+    }
   };
 
   return (
@@ -186,53 +288,50 @@ export default function FileManagement({
             <div className="space-y-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Uploaded Files</CardTitle>
-                  <CardDescription>Files uploaded by the user</CardDescription>
+                  <CardTitle>Files from User</CardTitle>
+                  <CardDescription>
+                    Files uploaded by the user, and their archived files.
+                  </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {userDetails.userUploadedFiles &&
-                    userDetails.userUploadedFiles.length > 0 ? (
-                      userDetails.userUploadedFiles.map((file: any) => (
-                        <div
-                          key={file.id}
-                          className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-blue-50"
-                        >
-                          <div className="flex items-center space-x-3 min-w-0 flex-1">
-                            <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                            <div className="min-w-0">
-                              <p className="font-medium break-all">
-                                {file.name}
-                              </p>
-                              <p className="text-sm text-gray-500 break-all">
-                                {file.size}•{" "}
-                                {file.createdAt
-                                  ? new Date(
-                                      file.createdAt
-                                    ).toLocaleDateString()
-                                  : ""}
-                              </p>
-                            </div>
-                          </div>
-                          <Button variant="outline" size="sm" asChild>
-                            <a
-                              href={file.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              <Download className="w-4 h-4 mr-2" />
-                              Download
-                            </a>
-                          </Button>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                        <FileText className="w-16 h-16 mb-2 opacity-20" />
-                        <span>No files uploaded</span>
-                      </div>
-                    )}
-                  </div>
+                  <Tabs defaultValue="uploaded">
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="uploaded">Uploaded</TabsTrigger>
+                      <TabsTrigger value="archived">Archived</TabsTrigger>
+                    </TabsList>
+                    <TabsContent value="uploaded" className="pt-4">
+                      <FileBrowser
+                        files={processedUploadedFiles}
+                        folders={processedUploadedFolders}
+                        isLoading={userDetailsLoading}
+                        currentPath={uploadedFilesPath}
+                        onPathChange={setUploadedFilesPath}
+                        showAddFolderButton={false}
+                        showUploadButton={false}
+                        isUploading={false}
+                        handleFileSelect={() => {}}
+                        handleFileUpload={() => {}}
+                        selectedFile={null}
+                        setSelectedFile={() => {}}
+                      />
+                    </TabsContent>
+                    <TabsContent value="archived" className="pt-4">
+                      <FileBrowser
+                        files={processedArchivedFiles}
+                        folders={processedArchivedFolders}
+                        isLoading={userDetailsLoading}
+                        currentPath={archivedFilesPath}
+                        onPathChange={setArchivedFilesPath}
+                        showAddFolderButton={false}
+                        showUploadButton={false}
+                        isUploading={false}
+                        handleFileSelect={() => {}}
+                        handleFileUpload={() => {}}
+                        selectedFile={null}
+                        setSelectedFile={() => {}}
+                      />
+                    </TabsContent>
+                  </Tabs>
                 </CardContent>
               </Card>
 
@@ -262,202 +361,54 @@ export default function FileManagement({
                       </TabsTrigger>
                     </TabsList>
 
-                    <TabsContent value="private" className="space-y-4">
-                      <div className="border-2 border-dashed border-red-300 rounded-lg p-6 text-center bg-red-50">
-                        <Shield className="w-8 h-8 text-red-600 mx-auto mb-2" />
-                        <p className="font-medium text-red-900 mb-2">
-                          Upload Private Documents
-                        </p>
-                        <p className="text-sm text-red-700 mb-4">
-                          Only visible to administrators
-                        </p>
-                        <input
-                          type="file"
-                          className="hidden"
-                          ref={privateFileInputRef}
-                          onChange={handlePrivateFileSelect}
-                          disabled={privateUploadLoading}
-                        />
-                        <Button
-                          variant="outline"
-                          className="cursor-pointer border-red-300 text-red-700 hover:bg-red-100"
-                          disabled={privateUploadLoading}
-                          onClick={openPrivateFilePicker}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Choose File
-                        </Button>
-                        {privateUploadFile && (
-                          <div className="mt-4 flex flex-col items-center space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <FileText className="w-5 h-5 text-red-600" />
-                              <span className="font-medium">
-                                {privateUploadFile.name}
-                              </span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onPrivateFileSelect(null)}
-                              disabled={privateUploadLoading}
-                            >
-                              Remove
-                            </Button>
-                            <Button
-                              onClick={onPrivateUpload}
-                              disabled={privateUploadLoading}
-                              className="mt-2"
-                            >
-                              {privateUploadLoading
-                                ? "Uploading..."
-                                : "Upload Private"}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="font-medium">Private Documents</h4>
-                        {userDetails.userPrivateFiles &&
-                        userDetails.userPrivateFiles.length > 0 ? (
-                          userDetails.userPrivateFiles.map((doc: any) => (
-                            <div
-                              key={doc.id}
-                              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-red-50 border-red-200"
-                            >
-                              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <Shield className="w-6 h-6 text-red-600" />
-                                <div>
-                                  <p className="font-medium truncate">
-                                    {doc.name}
-                                  </p>
-                                  <p className="text-sm text-gray-500 truncate">
-                                    {doc.size}•{" "}
-                                    {doc.createdAt
-                                      ? new Date(
-                                          doc.createdAt
-                                        ).toLocaleDateString()
-                                      : ""}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button variant="outline" size="sm" asChild>
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </a>
-                              </Button>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                            <Shield className="w-16 h-16 mb-2 opacity-20" />
-                            <span>No private documents</span>
-                          </div>
-                        )}
-                      </div>
+                    <TabsContent value="private" className="space-y-4 pt-4">
+                      <FileBrowser
+                        files={processedPrivateFiles}
+                        folders={processedPrivateFolders}
+                        isLoading={userDetailsLoading}
+                        currentPath={privateFilesPath}
+                        onPathChange={setPrivateFilesPath}
+                        onFileArchive={handleArchiveFile}
+                        onFolderCreate={(name) =>
+                          handleAdminFolderCreate(
+                            name,
+                            privateFilesPath,
+                            "private"
+                          )
+                        }
+                        isUploading={privateUploadLoading}
+                        handleFileSelect={(e) =>
+                          onPrivateFileSelect(e.target.files?.[0] || null)
+                        }
+                        handleFileUpload={onPrivateUpload}
+                        selectedFile={privateUploadFile}
+                        setSelectedFile={() => onPrivateFileSelect(null)}
+                      />
                     </TabsContent>
 
-                    <TabsContent value="response" className="space-y-4">
-                      <div className="border-2 border-dashed border-green-300 rounded-lg p-6 text-center bg-green-50">
-                        <FileText className="w-8 h-8 text-green-600 mx-auto mb-2" />
-                        <p className="font-medium text-green-900 mb-2">
-                          Upload Response Documents
-                        </p>
-                        <p className="text-sm text-green-700 mb-4">
-                          Visible to user as responses
-                        </p>
-                        <input
-                          type="file"
-                          className="hidden"
-                          ref={responseFileInputRef}
-                          onChange={handleResponseFileSelect}
-                          disabled={responseUploadLoading}
-                        />
-                        <Button
-                          variant="outline"
-                          className="cursor-pointer border-green-300 text-green-700 hover:bg-green-100"
-                          disabled={responseUploadLoading}
-                          onClick={openResponseFilePicker}
-                        >
-                          <Upload className="w-4 h-4 mr-2" />
-                          Choose File
-                        </Button>
-                        {responseUploadFile && (
-                          <div className="mt-4 flex flex-col items-center space-y-2">
-                            <div className="flex items-center space-x-2">
-                              <FileText className="w-5 h-5 text-green-600" />
-                              <span className="font-medium">
-                                {responseUploadFile.name}
-                              </span>
-                            </div>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => onResponseFileSelect(null)}
-                              disabled={responseUploadLoading}
-                            >
-                              Remove
-                            </Button>
-                            <Button
-                              onClick={onResponseUpload}
-                              disabled={responseUploadLoading}
-                              className="mt-2"
-                            >
-                              {responseUploadLoading
-                                ? "Uploading..."
-                                : "Upload Response"}
-                            </Button>
-                          </div>
-                        )}
-                      </div>
-                      <div className="space-y-3">
-                        <h4 className="font-medium">Response Documents</h4>
-                        {userDetails.userReceivedFiles &&
-                        userDetails.userReceivedFiles.length > 0 ? (
-                          userDetails.userReceivedFiles.map((doc: any) => (
-                            <div
-                              key={doc.id}
-                              className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border rounded-lg bg-green-50 border-green-200"
-                            >
-                              <div className="flex items-center space-x-3 min-w-0 flex-1">
-                                <FileText className="w-6 h-6 text-green-600" />
-                                <div>
-                                  <p className="font-medium truncate">
-                                    {doc.name}
-                                  </p>
-                                  <p className="text-sm text-gray-500 truncate">
-                                    {doc.size}•{" "}
-                                    {doc.createdAt
-                                      ? new Date(
-                                          doc.createdAt
-                                        ).toLocaleDateString()
-                                      : ""}
-                                  </p>
-                                </div>
-                              </div>
-                              <Button variant="outline" size="sm" asChild>
-                                <a
-                                  href={doc.url}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                >
-                                  <Download className="w-4 h-4 mr-2" />
-                                  Download
-                                </a>
-                              </Button>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="flex flex-col items-center justify-center py-8 text-gray-400">
-                            <FileText className="w-16 h-16 mb-2 opacity-20" />
-                            <span>No response documents</span>
-                          </div>
-                        )}
-                      </div>
+                    <TabsContent value="response" className="space-y-4 pt-4">
+                      <FileBrowser
+                        files={processedResponseFiles}
+                        folders={processedResponseFolders}
+                        isLoading={userDetailsLoading}
+                        currentPath={responseFilesPath}
+                        onFileUnarchive={handleUnarchiveFile}
+                        onPathChange={setResponseFilesPath}
+                        onFolderCreate={(name) =>
+                          handleAdminFolderCreate(
+                            name,
+                            responseFilesPath,
+                            "response"
+                          )
+                        }
+                        isUploading={responseUploadLoading}
+                        handleFileSelect={(e) =>
+                          onResponseFileSelect(e.target.files?.[0] || null)
+                        }
+                        handleFileUpload={onResponseUpload}
+                        selectedFile={responseUploadFile}
+                        setSelectedFile={() => onResponseFileSelect(null)}
+                      />
                     </TabsContent>
                   </Tabs>
                 </CardContent>

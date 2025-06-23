@@ -6,8 +6,18 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import { FileText, Upload, Download, Folder, ChevronRight } from "lucide-react";
-import React from "react";
+import {
+  FileText,
+  Upload,
+  Download,
+  Folder,
+  ChevronRight,
+  Plus,
+  Archive,
+} from "lucide-react";
+import React, { useState } from "react";
+import { Input } from "@/components/ui/input";
+import { toast } from "react-hot-toast";
 
 type FileRecord = {
   id: string;
@@ -22,15 +32,7 @@ type FileRecord = {
 };
 
 type SelectedFile = {
-  id: string;
-  url: string;
-  path: string;
   name: string;
-  size: string;
-  type: string;
-  createdAt: string;
-  updatedAt: string;
-  file: globalThis.File;
 };
 
 type UploadTabProps = {
@@ -41,10 +43,11 @@ type UploadTabProps = {
   isUploading: boolean;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFileUpload: () => void;
-  setSelectedFile: (file: SelectedFile | null) => void;
-  fetchData: () => void;
+  setSelectedFile: (file: null) => void;
   currentPath: string;
-  setCurrentPath: (path: string) => void;
+  onPathChange: (path: string) => void;
+  onFolderCreate: (folderName: string) => void;
+  onFileArchive: (fileId: string) => void;
 };
 
 const Breadcrumbs = ({
@@ -88,25 +91,114 @@ export default function UploadTab({
   handleFileUpload,
   setSelectedFile,
   currentPath,
-  setCurrentPath,
+  onPathChange,
+  onFolderCreate,
+  onFileArchive,
 }: UploadTabProps) {
+  const [newFolderName, setNewFolderName] = useState("");
+  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+
   const handleFolderDoubleClick = (folderName: string) => {
-    setCurrentPath(currentPath ? `${currentPath}/${folderName}` : folderName);
+    onPathChange(currentPath ? `${currentPath}/${folderName}` : folderName);
   };
 
+  const handleCreateFolder = () => {
+    if (newFolderName.trim()) {
+      if (newFolderName.includes("/")) {
+        toast.error("Folder name cannot contain '/'");
+        return;
+      }
+      onFolderCreate(newFolderName.trim());
+      setNewFolderName("");
+      setShowNewFolderInput(false);
+    }
+  };
   return (
     <div className="space-y-6">
+      {/* Action Bar */}
       <Card>
         <CardHeader>
-          <CardTitle>File Management</CardTitle>
+          <CardTitle>Actions</CardTitle>
           <CardDescription>
-            Double-click folders to open them, and upload files to the current
-            directory.
+            Create new folders or upload files to the current directory (
+            {currentPath || "root"}).
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex flex-wrap gap-2 items-center">
+            <Button
+              variant="outline"
+              onClick={() => setShowNewFolderInput(!showNewFolderInput)}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              New Folder
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => document.getElementById("file-upload")?.click()}
+            >
+              <Upload className="w-4 h-4 mr-2" />
+              Upload File
+            </Button>
+            <input
+              type="file"
+              onChange={handleFileSelect}
+              id="file-upload"
+              className="hidden"
+            />
+          </div>
+
+          {showNewFolderInput && (
+            <div className="flex gap-2 p-4 border rounded-lg">
+              <Input
+                type="text"
+                value={newFolderName}
+                onChange={(e) => setNewFolderName(e.target.value)}
+                placeholder="Folder name"
+                onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
+              />
+              <Button size="sm" onClick={handleCreateFolder}>
+                Create
+              </Button>
+            </div>
+          )}
+
+          {selectedFile && (
+            <div className="flex items-center justify-between p-2 mt-4 bg-gray-50 rounded-lg border">
+              <div className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <p className="font-medium text-sm">{selectedFile.name}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleFileUpload}
+                  disabled={isUploading}
+                >
+                  {isUploading ? "Uploading..." : "Confirm Upload"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
+      {/* File Browser */}
+      <Card>
+        <CardHeader>
+          <CardTitle>My Files</CardTitle>
+          <CardDescription>
+            Double-click folders to open them. Manage your uploaded files here.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <Breadcrumbs path={currentPath} setPath={setCurrentPath} />
-
+          <Breadcrumbs path={currentPath} setPath={onPathChange} />
           {isLoading ? (
             <div className="text-center py-8 text-gray-500">Loading...</div>
           ) : (
@@ -126,17 +218,19 @@ export default function UploadTab({
                 ))}
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-2">
                 {uploadedFiles.map((file) => (
                   <div
-                    className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 border rounded-lg"
+                    className="flex items-center justify-between gap-3 p-2 border rounded-lg"
                     key={file.id}
                   >
                     <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-blue-600 flex-shrink-0" />
+                      <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
                       <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate">{file.name}</p>
-                        <p className="text-sm text-gray-500 truncate">
+                        <p className="font-medium truncate text-sm">
+                          {file.name}
+                        </p>
+                        <p className="text-xs text-gray-500 truncate">
                           {file.size} •{" "}
                           {new Date(file.createdAt).toLocaleDateString()}
                         </p>
@@ -158,6 +252,14 @@ export default function UploadTab({
                           Download
                         </a>
                       </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onFileArchive(file.id)}
+                      >
+                        <Archive className="w-4 h-4 mr-2" />
+                        Archive
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -175,62 +277,6 @@ export default function UploadTab({
                 )}
             </>
           )}
-
-          {/* Upload Section */}
-          <div className="mt-8 border-t pt-8">
-            <div className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center">
-              <Upload className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-              <p className="text-lg font-medium text-gray-900 mb-2">
-                Drop files here or click to browse
-              </p>
-              <p className="text-sm text-gray-500 mb-4">
-                Files will be uploaded to the current folder
-              </p>
-              <div className="relative">
-                <input
-                  type="file"
-                  onChange={handleFileSelect}
-                  id="file-upload"
-                  accept="*"
-                  className="hidden"
-                />
-                <Button
-                  variant="outline"
-                  className="cursor-pointer"
-                  onClick={() =>
-                    document.getElementById("file-upload")?.click()
-                  }
-                >
-                  Choose File
-                </Button>
-              </div>
-              {selectedFile && (
-                <div className="space-y-4 mt-4">
-                  <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center space-x-3">
-                      <FileText className="w-6 h-6 text-blue-600" />
-                      <div>
-                        <p className="font-medium">{selectedFile?.name}</p>
-                        <p className="text-sm text-gray-500">
-                          {selectedFile?.size}
-                        </p>
-                      </div>
-                    </div>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedFile(null)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                  <Button onClick={handleFileUpload} disabled={isUploading}>
-                    {isUploading ? "Uploading..." : "Upload File"}
-                  </Button>
-                </div>
-              )}
-            </div>
-          </div>
         </CardContent>
       </Card>
     </div>

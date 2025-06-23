@@ -13,11 +13,21 @@ import {
   Folder,
   ChevronRight,
   Plus,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import React, { useState } from "react";
 import { ManagedFile } from "@/types/files";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogClose,
+} from "@/components/ui/dialog";
 
 type FileBrowserProps = {
   files: ManagedFile[];
@@ -31,6 +41,10 @@ type FileBrowserProps = {
   handleFileUpload: () => void;
   selectedFile: { name: string } | null;
   setSelectedFile: (file: null) => void;
+  onFileArchive?: (fileId: string) => void;
+  onFileUnarchive?: (fileId: string) => void;
+  showUploadButton?: boolean;
+  showAddFolderButton?: boolean;
 };
 
 const Breadcrumbs = ({
@@ -76,9 +90,13 @@ export default function FileBrowser({
   handleFileUpload,
   selectedFile,
   setSelectedFile,
+  onFileArchive,
+  onFileUnarchive,
+  showUploadButton = true,
+  showAddFolderButton = true,
 }: FileBrowserProps) {
   const [newFolderName, setNewFolderName] = useState("");
-  const [showNewFolderInput, setShowNewFolderInput] = useState(false);
+  const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
 
   const handleFolderDoubleClick = (folderName: string) => {
     onPathChange(currentPath ? `${currentPath}/${folderName}` : folderName);
@@ -92,51 +110,18 @@ export default function FileBrowser({
       }
       onFolderCreate(newFolderName.trim());
       setNewFolderName("");
-      setShowNewFolderInput(false);
+      setShowNewFolderDialog(false);
     }
   };
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>File Management</CardTitle>
-        <CardDescription>
-          Organize your documents in folders and upload new files.
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <div className="flex justify-between items-center mb-4">
-          <Breadcrumbs path={currentPath} setPath={onPathChange} />
-          <div className="flex gap-2">
-            {onFolderCreate && (
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => setShowNewFolderInput(!showNewFolderInput)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                New Folder
-              </Button>
-            )}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => document.getElementById("file-upload")?.click()}
-            >
-              <Upload className="w-4 h-4 mr-2" />
-              Upload File
-            </Button>
-            <input
-              type="file"
-              onChange={handleFileSelect}
-              id="file-upload"
-              className="hidden"
-            />
-          </div>
-        </div>
-
-        {showNewFolderInput && (
-          <div className="flex gap-2 mb-4">
+    <>
+      <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Create New Folder</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
             <Input
               type="text"
               value={newFolderName}
@@ -144,106 +129,174 @@ export default function FileBrowser({
               placeholder="Folder name"
               onKeyDown={(e) => e.key === "Enter" && handleCreateFolder()}
             />
-            <Button size="sm" onClick={handleCreateFolder}>
-              Create
-            </Button>
           </div>
-        )}
-
-        {selectedFile && (
-          <div className="flex items-center justify-between p-2 mb-4 bg-gray-50 rounded-lg border">
-            <div className="flex items-center space-x-2">
-              <FileText className="w-5 h-5 text-blue-600" />
-              <p className="font-medium text-sm">{selectedFile.name}</p>
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline">Cancel</Button>
+            </DialogClose>
+            <Button onClick={handleCreateFolder}>Create</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Card>
+        <CardHeader>
+          <div className="flex justify-between items-start">
+            <div>
+              <CardTitle>File Management</CardTitle>
+              <Breadcrumbs path={currentPath} setPath={onPathChange} />
             </div>
-            <div className="flex items-center gap-2">
-              <Button
-                size="sm"
-                onClick={handleFileUpload}
-                disabled={isUploading}
-              >
-                {isUploading ? "Uploading..." : "Upload"}
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setSelectedFile(null)}
-              >
-                Cancel
-              </Button>
+            <div className="flex gap-2">
+              {showAddFolderButton && onFolderCreate && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowNewFolderDialog(true)}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New Folder
+                </Button>
+              )}
+              {showUploadButton && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() =>
+                    document.getElementById("file-upload")?.click()
+                  }
+                >
+                  <Upload className="w-4 h-4 mr-2" />
+                  Upload File
+                </Button>
+              )}
+              {showUploadButton && (
+                <input
+                  type="file"
+                  onChange={handleFileSelect}
+                  id="file-upload"
+                  className="hidden"
+                />
+              )}
             </div>
           </div>
-        )}
-
-        {isLoading ? (
-          <div className="text-center py-8 text-gray-500">Loading...</div>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-              {folders.map((folder) => (
-                <div
-                  key={folder}
-                  onDoubleClick={() => handleFolderDoubleClick(folder)}
-                  className="flex flex-col items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+        </CardHeader>
+        <CardContent>
+          {selectedFile && (
+            <div className="flex items-center justify-between p-2 mb-4 bg-gray-50 rounded-lg border">
+              <div className="flex items-center space-x-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <p className="font-medium text-sm">{selectedFile.name}</p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  onClick={handleFileUpload}
+                  disabled={isUploading}
                 >
-                  <Folder className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500" />
-                  <span className="mt-2 text-sm font-medium text-center truncate w-full">
-                    {folder}
-                  </span>
-                </div>
-              ))}
+                  {isUploading ? "Uploading..." : "Confirm Upload"}
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedFile(null)}
+                >
+                  Cancel
+                </Button>
+              </div>
             </div>
+          )}
 
-            <div className="space-y-2">
-              {files.map((file) => (
-                <div
-                  className="flex items-center justify-between gap-3 p-2 border rounded-lg"
-                  key={file.id}
-                >
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <p className="font-medium truncate text-sm">
-                        {file.name}
-                      </p>
-                      {file.size && file.createdAt && (
-                        <p className="text-xs text-gray-500 truncate">
-                          {file.size} •{" "}
-                          {new Date(file.createdAt).toLocaleDateString()}
+          {isLoading ? (
+            <div className="text-center py-8 text-gray-500">Loading...</div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                {folders.map((folder) => (
+                  <div
+                    key={folder}
+                    onDoubleClick={() => handleFolderDoubleClick(folder)}
+                    className="flex flex-col items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                  >
+                    <Folder className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500" />
+                    <span className="mt-2 text-sm font-medium text-center truncate w-full">
+                      {folder}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2">
+                {files.map((file) => (
+                  <div
+                    className="flex items-center justify-between gap-3 p-2 border rounded-lg"
+                    key={file.id}
+                  >
+                    <div className="flex items-center space-x-3 min-w-0 flex-1">
+                      <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-medium truncate text-sm">
+                          {file.name}
                         </p>
+                        {file.size && file.createdAt && (
+                          <p className="text-xs text-gray-500 truncate">
+                            {file.size} •{" "}
+                            {new Date(file.createdAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="whitespace-nowrap"
+                        asChild
+                      >
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </a>
+                      </Button>
+                      {onFileArchive && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onFileArchive(file.id)}
+                        >
+                          <Archive className="w-4 h-4 mr-2" />
+                          Archive
+                        </Button>
+                      )}
+                      {onFileUnarchive && (
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => onFileUnarchive(file.id)}
+                        >
+                          <ArchiveRestore className="w-4 h-4 mr-2" />
+                          Unarchive
+                        </Button>
                       )}
                     </div>
                   </div>
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className="whitespace-nowrap"
-                      asChild
-                    >
-                      <a
-                        href={file.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
-                        <Download className="w-4 h-4 mr-2" />
-                        Download
-                      </a>
-                    </Button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {!isLoading && files.length === 0 && folders.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium mb-2">This folder is empty</p>
+                ))}
               </div>
-            )}
-          </>
-        )}
-      </CardContent>
-    </Card>
+
+              {!isLoading && files.length === 0 && folders.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                  <p className="text-lg font-medium mb-2">
+                    This folder is empty
+                  </p>
+                </div>
+              )}
+            </>
+          )}
+        </CardContent>
+      </Card>
+    </>
   );
 }

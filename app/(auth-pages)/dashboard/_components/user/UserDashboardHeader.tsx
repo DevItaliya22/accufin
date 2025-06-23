@@ -19,6 +19,7 @@ const menuItems: MenuItem[] = [
   { key: "responses", label: "Admin Responses" },
   { key: "forms", label: "Forms" },
   { key: "notifications", label: "Notifications" },
+  { key: "archive", label: "Archive" },
   { key: "profile", label: "Profile" },
 ];
 

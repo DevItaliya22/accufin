@@ -9,6 +9,32 @@ export async function POST(request: NextRequest) {
     if (!session?.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    const body = await request.json();
+
+    const admin = await prisma.user.findFirst({
+      where: { isAdmin: true },
+    });
+    if (!admin) {
+      return NextResponse.json({ error: "Admin not found" }, { status: 404 });
+    }
+
+    // Handle Folder Creation
+    if (body.isFolderCreation) {
+      const { folderName, parentPath } = body;
+      const newFolder = await prisma.file.create({
+        data: {
+          name: folderName,
+          type: "folder",
+          folderName: parentPath,
+          uploadedById: session.user.id,
+          receivedById: admin.id,
+          isAdminOnlyPrivateFile: false,
+        },
+      });
+      return NextResponse.json(newFolder, { status: 200 });
+    }
+
+    // Handle File Upload
     const {
       filePath,
       url,
@@ -18,7 +44,8 @@ export async function POST(request: NextRequest) {
       uploadedById,
       isAdminOnlyPrivateFile,
       folderName,
-    } = await request.json();
+    } = body;
+
     console.log("filePath", filePath);
     console.log("url", url);
     console.log("name", name);
@@ -27,14 +54,7 @@ export async function POST(request: NextRequest) {
     console.log("uploadedById", uploadedById);
     console.log("isAdminOnlyPrivateFile", isAdminOnlyPrivateFile);
     console.log("folderName", folderName);
-    const adminID = await prisma.user.findFirst({
-      where: {
-        isAdmin: true,
-      },
-    });
-    if (!adminID) {
-      return NextResponse.json({ error: "Admin not found" }, { status: 404 });
-    }
+
     const file = await prisma.file.create({
       data: {
         path: filePath,
@@ -43,7 +63,7 @@ export async function POST(request: NextRequest) {
         size: size,
         type: type,
         uploadedById: uploadedById,
-        receivedById: adminID.id,
+        receivedById: admin.id,
         isAdminOnlyPrivateFile: isAdminOnlyPrivateFile,
         folderName: folderName,
         createdAt: new Date(),
@@ -55,7 +75,7 @@ export async function POST(request: NextRequest) {
       data: {
         title: "New File Uploaded",
         message: `A new file '${name}' has been uploaded for you by ${session.user.name}`,
-        userId: adminID.id,
+        userId: admin.id,
       },
     });
     // // Create notification for uploader

@@ -19,50 +19,58 @@ export async function GET(
     const { id } = await params;
 
     const userUploadedFiles = await prisma.file.findMany({
-      where : {
-        uploadedById : id,
-      }
-    })
+      where: {
+        uploadedById: id,
+        isArchived: false,
+      },
+    });
     const userReceivedFiles = await prisma.file.findMany({
-      where : {
-        receivedById : id,
-        isAdminOnlyPrivateFile : false,
-      }
-    })
+      where: {
+        receivedById: id,
+        isAdminOnlyPrivateFile: false,
+        isArchived: false,
+      },
+    });
     const userPrivateFiles = await prisma.file.findMany({
-      where : {
-        receivedById : id,
-        isAdminOnlyPrivateFile : true,
+      where: {
+        receivedById: id,
+        isAdminOnlyPrivateFile: true,
+        isArchived: false,
+      },
+    });
+    const userArchivedFiles = await prisma.file.findMany({
+      where: {
+        isArchived: true,
+        uploadedById: id,
+      },
+    });
+
+    const getSignedUrlForFile = async (file: any) => {
+      if (file.type !== "folder" && file.path) {
+        const signedUrl = await getSignedUrlFromPath(file.path);
+        return { ...file, url: signedUrl };
       }
-    })
+      return file;
+    };
 
-    const signedUserUploadedFiles = await Promise.all(userUploadedFiles.map(async (file) => {
-      const signedUrl = await getSignedUrlFromPath(file.path);
-      return {
-        ...file,
-        url: signedUrl,
-      };
-    }))
-    const signedUserReceivedFiles = await Promise.all(userReceivedFiles.map(async (file) => {
-      const signedUrl = await getSignedUrlFromPath(file.path);
-      return {
-        ...file,
-        url: signedUrl,
-      };
-    }))
+    const signedUserUploadedFiles = await Promise.all(
+      userUploadedFiles.map(getSignedUrlForFile)
+    );
+    const signedUserReceivedFiles = await Promise.all(
+      userReceivedFiles.map(getSignedUrlForFile)
+    );
+    const signedUserPrivateFiles = await Promise.all(
+      userPrivateFiles.map(getSignedUrlForFile)
+    );
+    const signedUserArchivedFiles = await Promise.all(
+      userArchivedFiles.map(getSignedUrlForFile)
+    );
 
-    const signedUserPrivateFiles = await Promise.all(userPrivateFiles.map(async (file) => {
-      const signedUrl = await getSignedUrlFromPath(file.path);
-      return {
-        ...file,
-        url: signedUrl,
-      };
-    }))
-    
     return NextResponse.json({
-      userUploadedFiles : signedUserUploadedFiles,
-      userReceivedFiles : signedUserReceivedFiles,
-      userPrivateFiles : signedUserPrivateFiles,
+      userUploadedFiles: signedUserUploadedFiles,
+      userReceivedFiles: signedUserReceivedFiles,
+      userPrivateFiles: signedUserPrivateFiles,
+      userArchivedFiles: signedUserArchivedFiles,
     });
   } catch (e) {
     return NextResponse.json(

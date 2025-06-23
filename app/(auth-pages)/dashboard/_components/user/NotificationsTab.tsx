@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import React from "react";
 import toast from "react-hot-toast";
 
-type Notification = {
+type NotificationRecord = {
   id: string;
   title: string;
   message: string;
@@ -20,9 +20,9 @@ type Notification = {
 };
 
 type NotificationsTabProps = {
-  notifications: Notification[];
+  notifications: NotificationRecord[];
   isLoading: boolean;
-  setNotifications: (notifications: Notification[]) => void;
+  setNotifications: (notifications: NotificationRecord[]) => void;
   setIsLoading: (isLoading: boolean) => void;
 };
 
