@@ -5,7 +5,7 @@ import prisma from "@/lib/prisma";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -13,9 +13,9 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const fileId = params.id;
+    const { id } = await params;
     const file = await prisma.file.findUnique({
-      where: { id: fileId },
+      where: { id },
     });
 
     if (!file) {
@@ -23,7 +23,7 @@ export async function PATCH(
     }
 
     const updatedFile = await prisma.file.update({
-      where: { id: fileId },
+      where: { id },
       data: { isArchived: false },
     });
 
