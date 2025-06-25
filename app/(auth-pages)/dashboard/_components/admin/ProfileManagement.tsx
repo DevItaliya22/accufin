@@ -65,6 +65,7 @@ export default function ProfileManagement() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImageUploading, setProfileImageUploading] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchProfile = async () => {
@@ -92,10 +93,12 @@ export default function ProfileManagement() {
   }, []);
 
   useEffect(() => {
-    if (profile?.profileUrl) {
-      setProfileImageUrl(profile.profileUrl);
+    if (profile?.profileImageUrl) {
+      setProfileImageUrl(profile.profileImageUrl);
+      setImageLoadError(false);
     } else {
       setProfileImageUrl(null);
+      setImageLoadError(false);
     }
   }, [profile]);
 
@@ -262,11 +265,22 @@ export default function ProfileManagement() {
         {/* Left: Avatar */}
         <div className="relative">
           <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg overflow-hidden">
-            {profileImageUrl ? (
+            {profileImageUrl && !imageLoadError ? (
               <img
                 src={profileImageUrl}
                 alt="Profile"
                 className="w-full h-full object-cover"
+                onError={() => {
+                  console.error(
+                    "Failed to load profile image:",
+                    profileImageUrl
+                  );
+                  setImageLoadError(true);
+                  toast.error(
+                    "Unable to load profile image. The file format may not be supported."
+                  );
+                }}
+                onLoad={() => setImageLoadError(false)}
               />
             ) : (
               <User className="w-20 h-20 text-white" />
@@ -285,9 +299,31 @@ export default function ProfileManagement() {
               type="file"
               className="hidden"
               ref={fileInputRef}
-              onChange={(e) => setProfileImageFile(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (file) {
+                  // Check if it's a supported image format
+                  const supportedFormats = [
+                    "image/jpeg",
+                    "image/jpg",
+                    "image/png",
+                    "image/webp",
+                    "image/gif",
+                  ];
+                  if (supportedFormats.includes(file.type)) {
+                    setProfileImageFile(file);
+                  } else {
+                    toast.error(
+                      "Please upload a supported image format (JPG, PNG, WebP, GIF)"
+                    );
+                    e.target.value = ""; // Clear the input
+                  }
+                } else {
+                  setProfileImageFile(null);
+                }
+              }}
               disabled={profileImageUploading}
-              accept="image/*"
+              accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
             />
             <Button
               variant="outline"

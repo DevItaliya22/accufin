@@ -7,14 +7,14 @@ export async function POST(request: NextRequest) {
     try{
         const session = await getServerSession(authOptions)
         if(!session?.user?.isAdmin){
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+            return NextResponse.json({ error: "Unauthorized" ,ok: false}, { status: 401 });
         }
         await prisma.notification.updateMany({
             where: { userId: session.user.id },
             data: { isRead: true },
         });
-        return NextResponse.json({ message: "Notifications marked as read" }, { status: 200 });
+        return NextResponse.json({ message: "Notifications marked as read" ,ok: true}, { status: 200 });
     }catch  (e){
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return NextResponse.json({ error: "Internal server error" ,ok: false}, { status: 500 });
     }
 }   

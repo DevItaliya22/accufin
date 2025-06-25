@@ -15,8 +15,9 @@ import {
   Plus,
   Archive,
   ArchiveRestore,
+  CloudUpload,
 } from "lucide-react";
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ManagedFile } from "@/types/files";
 import { Input } from "@/components/ui/input";
 import { toast } from "react-hot-toast";
@@ -98,6 +99,31 @@ export default function FileBrowser({
   const [newFolderName, setNewFolderName] = useState("");
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
 
+  // Simple drag and drop handlers - no UI feedback
+  const onDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+  };
+
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+
+    const files = Array.from(e.dataTransfer.files);
+    if (files.length > 0) {
+      // Create the exact same event structure that the file input would create
+      const fakeEvent = {
+        target: {
+          files: e.dataTransfer.files,
+        },
+      } as React.ChangeEvent<HTMLInputElement>;
+
+      handleFileSelect(fakeEvent);
+    }
+  };
+
   const handleFolderDoubleClick = (folderName: string) => {
     onPathChange(currentPath ? `${currentPath}/${folderName}` : folderName);
   };
@@ -138,165 +164,176 @@ export default function FileBrowser({
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Card>
-        <CardHeader>
-          <div className="flex justify-between items-start">
-            <div>
-              <CardTitle>File Management</CardTitle>
-              <Breadcrumbs path={currentPath} setPath={onPathChange} />
-            </div>
-            <div className="flex gap-2">
-              {showAddFolderButton && onFolderCreate && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowNewFolderDialog(true)}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  New Folder
-                </Button>
-              )}
-              {showUploadButton && (
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() =>
-                    document.getElementById("file-upload")?.click()
-                  }
-                >
-                  <Upload className="w-4 h-4 mr-2" />
-                  Upload File
-                </Button>
-              )}
-              {showUploadButton && (
-                <input
-                  type="file"
-                  onChange={handleFileSelect}
-                  id="file-upload"
-                  className="hidden"
-                />
-              )}
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          {selectedFile && (
-            <div className="flex items-center justify-between p-2 mb-4 bg-gray-50 rounded-lg border">
-              <div className="flex items-center space-x-2">
-                <FileText className="w-5 h-5 text-blue-600" />
-                <p className="font-medium text-sm">{selectedFile.name}</p>
-              </div>
-              <div className="flex items-center gap-2">
-                <Button
-                  size="sm"
-                  onClick={handleFileUpload}
-                  disabled={isUploading}
-                >
-                  {isUploading ? "Uploading..." : "Confirm Upload"}
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedFile(null)}
-                >
-                  Cancel
-                </Button>
-              </div>
-            </div>
-          )}
 
-          {isLoading ? (
-            <div className="text-center py-8 text-gray-500">Loading...</div>
-          ) : (
-            <>
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
-                {folders.map((folder) => (
-                  <div
-                    key={folder}
-                    onDoubleClick={() => handleFolderDoubleClick(folder)}
-                    className="flex flex-col items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
-                  >
-                    <Folder className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500" />
-                    <span className="mt-2 text-sm font-medium text-center truncate w-full">
-                      {folder}
-                    </span>
-                  </div>
-                ))}
+      <div
+        className="relative"
+        onDragOver={onDragOver}
+        onDragLeave={onDragLeave}
+        onDrop={onDrop}
+      >
+        <Card>
+          <CardHeader>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>File Management</CardTitle>
+                <Breadcrumbs path={currentPath} setPath={onPathChange} />
               </div>
-
-              <div className="space-y-2">
-                {files.map((file) => (
-                  <div
-                    className="flex items-center justify-between gap-3 p-2 border rounded-lg"
-                    key={file.id}
+              <div className="flex gap-2">
+                {showAddFolderButton && onFolderCreate && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowNewFolderDialog(true)}
                   >
-                    <div className="flex items-center space-x-3 min-w-0 flex-1">
-                      <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
-                      <div className="min-w-0 flex-1">
-                        <p className="font-medium truncate text-sm">
-                          {file.name}
-                        </p>
-                        {file.size && file.createdAt && (
-                          <p className="text-xs text-gray-500 truncate">
-                            {file.size} •{" "}
-                            {new Date(file.createdAt).toLocaleDateString()}
+                    <Plus className="w-4 h-4 mr-2" />
+                    New Folder
+                  </Button>
+                )}
+                {showUploadButton && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      document.getElementById("file-upload")?.click()
+                    }
+                  >
+                    <Upload className="w-4 h-4 mr-2" />
+                    Upload File
+                  </Button>
+                )}
+                {showUploadButton && (
+                  <input
+                    type="file"
+                    onChange={handleFileSelect}
+                    id="file-upload"
+                    className="hidden"
+                  />
+                )}
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {selectedFile && (
+              <div className="flex items-center justify-between p-2 mb-4 bg-gray-50 rounded-lg border">
+                <div className="flex items-center space-x-2">
+                  <FileText className="w-5 h-5 text-blue-600" />
+                  <p className="font-medium text-sm">{selectedFile.name}</p>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    size="sm"
+                    onClick={handleFileUpload}
+                    disabled={isUploading}
+                  >
+                    {isUploading ? "Uploading..." : "Confirm Upload"}
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setSelectedFile(null)}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {isLoading ? (
+              <div className="text-center py-8 text-gray-500">Loading...</div>
+            ) : (
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4 mb-6">
+                  {folders.map((folder) => (
+                    <div
+                      key={folder}
+                      onDoubleClick={() => handleFolderDoubleClick(folder)}
+                      className="flex flex-col items-center justify-center p-3 border rounded-lg cursor-pointer hover:bg-gray-100 transition-colors"
+                    >
+                      <Folder className="w-12 h-12 sm:w-16 sm:h-16 text-blue-500" />
+                      <span className="mt-2 text-sm font-medium text-center truncate w-full">
+                        {folder}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-2">
+                  {files.map((file) => (
+                    <div
+                      className="flex items-center justify-between gap-3 p-2 border rounded-lg"
+                      key={file.id}
+                    >
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <FileText className="w-6 h-6 text-blue-600 flex-shrink-0" />
+                        <div className="min-w-0 flex-1">
+                          <p className="font-medium truncate text-sm">
+                            {file.name}
                           </p>
+                          {file.size && file.createdAt && (
+                            <p className="text-xs text-gray-500 truncate">
+                              {file.size} •{" "}
+                              {new Date(file.createdAt).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="whitespace-nowrap"
+                          asChild
+                        >
+                          <a
+                            href={file.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                          >
+                            <Download className="w-4 h-4 mr-2" />
+                            Download
+                          </a>
+                        </Button>
+                        {onFileArchive && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onFileArchive(file.id)}
+                          >
+                            <Archive className="w-4 h-4 mr-2" />
+                            Archive
+                          </Button>
+                        )}
+                        {onFileUnarchive && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onFileUnarchive(file.id)}
+                          >
+                            <ArchiveRestore className="w-4 h-4 mr-2" />
+                            Unarchive
+                          </Button>
                         )}
                       </div>
                     </div>
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="whitespace-nowrap"
-                        asChild
-                      >
-                        <a
-                          href={file.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download
-                        </a>
-                      </Button>
-                      {onFileArchive && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onFileArchive(file.id)}
-                        >
-                          <Archive className="w-4 h-4 mr-2" />
-                          Archive
-                        </Button>
-                      )}
-                      {onFileUnarchive && (
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => onFileUnarchive(file.id)}
-                        >
-                          <ArchiveRestore className="w-4 h-4 mr-2" />
-                          Unarchive
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {!isLoading && files.length === 0 && folders.length === 0 && (
-                <div className="text-center py-8 text-gray-500">
-                  <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium mb-2">
-                    This folder is empty
-                  </p>
+                  ))}
                 </div>
-              )}
-            </>
-          )}
-        </CardContent>
-      </Card>
+
+                {!isLoading && files.length === 0 && folders.length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <Folder className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium mb-2">
+                      This folder is empty
+                    </p>
+                    <p className="text-sm">
+                      Drag and drop files here or use the upload button
+                    </p>
+                  </div>
+                )}
+              </>
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </>
   );
 }

@@ -6,17 +6,7 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import {
-  FileText,
-  Upload,
-  Download,
-  Shield,
-  Users,
-  EyeOff,
-  Eye,
-  Archive,
-  ArchiveRestore,
-} from "lucide-react";
+import { Users, EyeOff, Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader } from "@/components/ui/loader";
 import { useMemo, useState } from "react";
@@ -64,8 +54,8 @@ interface FileManagementProps {
   onSearchChange: (query: string) => void;
   onPrivateFileSelect: (file: File | null) => void;
   onResponseFileSelect: (file: File | null) => void;
-  onPrivateUpload: () => Promise<void>;
-  onResponseUpload: () => Promise<void>;
+  onPrivateUpload: (folderPath: string) => Promise<void>;
+  onResponseUpload: (folderPath: string) => Promise<void>;
   onRefreshUserDetails: () => void;
 }
 
@@ -137,6 +127,7 @@ export default function FileManagement({
   const [archivedFilesPath, setArchivedFilesPath] = useState("");
   const [privateFilesPath, setPrivateFilesPath] = useState("");
   const [responseFilesPath, setResponseFilesPath] = useState("");
+  const [isUsersCollapsed, setIsUsersCollapsed] = useState(false);
 
   const { files: processedUploadedFiles, folders: processedUploadedFolders } =
     useMemo(
@@ -214,63 +205,103 @@ export default function FileManagement({
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-      <Card className="lg:col-span-1">
-        <CardHeader>
-          <CardTitle>Users</CardTitle>
-          <CardDescription>
-            Select a user to manage their documents
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {loading ? (
-            <div className="flex flex-col items-center justify-center py-8 text-gray-500">
-              <Loader size={48} className="mb-2 text-blue-500" />
-              Loading users...
+    <div className="space-y-6">
+      <Card>
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <CardTitle>User Management</CardTitle>
+              {!isUsersCollapsed && (
+                <CardDescription>
+                  Select a user to manage their documents
+                </CardDescription>
+              )}
             </div>
-          ) : error ? (
-            <div className="text-center py-8 text-red-500">{error}</div>
-          ) : (
-            <div className="space-y-2">
-              <input
-                type="text"
-                placeholder="Search users"
-                className="w-full p-2 rounded-lg border border-gray-300"
-                value={searchQuery}
-                onChange={(e) => onSearchChange(e.target.value)}
-              />
-              {users
-                .filter((user) =>
-                  user.email.toLowerCase().includes(searchQuery.toLowerCase())
-                )
-                .map((user) => (
-                  <div
-                    key={user.id}
-                    onClick={() => onUserSelect(user.id)}
-                    className={`p-3 rounded-lg cursor-pointer transition-colors ${
-                      selectedUser === user.id
-                        ? "bg-blue-100 border-blue-300"
-                        : "bg-gray-50 hover:bg-gray-100"
-                    } border`}
-                  >
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <p className="text-sm text-gray-500">{user.email}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium">
-                          {user.uploadedFiles} files
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setIsUsersCollapsed(!isUsersCollapsed)}
+              className="h-8 w-8 p-0"
+            >
+              {isUsersCollapsed ? (
+                <ChevronDown className="h-4 w-4" />
+              ) : (
+                <ChevronUp className="h-4 w-4" />
+              )}
+            </Button>
+          </div>
+          {isUsersCollapsed && selectedUser && (
+            <div className="mt-2 flex items-center space-x-2 text-sm text-gray-600">
+              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center">
+                <Users className="w-3 h-3 text-blue-600" />
+              </div>
+              <span>
+                {users.find((u) => u.id === selectedUser)?.email ||
+                  "Selected user"}
+              </span>
             </div>
           )}
-        </CardContent>
+        </CardHeader>
+        {!isUsersCollapsed && (
+          <CardContent>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-8 text-gray-500">
+                <Loader size={48} className="mb-2 text-blue-500" />
+                Loading users...
+              </div>
+            ) : error ? (
+              <div className="text-center py-8 text-red-500">{error}</div>
+            ) : (
+              <div className="space-y-4">
+                <input
+                  type="text"
+                  placeholder="Search users by email..."
+                  className="w-full max-w-md p-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => onSearchChange(e.target.value)}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                  {users
+                    .filter((user) =>
+                      user.email
+                        .toLowerCase()
+                        .includes(searchQuery.toLowerCase())
+                    )
+                    .map((user) => (
+                      <div
+                        key={user.id}
+                        onClick={() => onUserSelect(user.id)}
+                        className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
+                          selectedUser === user.id
+                            ? "bg-blue-50 border-2 border-blue-300 shadow-md"
+                            : "bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                        }`}
+                      >
+                        <div className="space-y-2">
+                          <div className="flex items-center space-x-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <Users className="w-4 h-4 text-blue-600" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium text-gray-900 truncate">
+                                {user.email}
+                              </p>
+                            </div>
+                          </div>
+                          <div className="text-xs text-gray-500">
+                            {user.uploadedFiles} files uploaded
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        )}
       </Card>
 
-      <div className="lg:col-span-3">
+      <div>
         {selectedUser ? (
           userDetailsLoading ? (
             <Card>
@@ -368,7 +399,6 @@ export default function FileManagement({
                         isLoading={userDetailsLoading}
                         currentPath={privateFilesPath}
                         onPathChange={setPrivateFilesPath}
-                        onFileArchive={handleArchiveFile}
                         onFolderCreate={(name) =>
                           handleAdminFolderCreate(
                             name,
@@ -380,7 +410,9 @@ export default function FileManagement({
                         handleFileSelect={(e) =>
                           onPrivateFileSelect(e.target.files?.[0] || null)
                         }
-                        handleFileUpload={onPrivateUpload}
+                        handleFileUpload={() =>
+                          onPrivateUpload(privateFilesPath)
+                        }
                         selectedFile={privateUploadFile}
                         setSelectedFile={() => onPrivateFileSelect(null)}
                       />
@@ -392,7 +424,6 @@ export default function FileManagement({
                         folders={processedResponseFolders}
                         isLoading={userDetailsLoading}
                         currentPath={responseFilesPath}
-                        onFileUnarchive={handleUnarchiveFile}
                         onPathChange={setResponseFilesPath}
                         onFolderCreate={(name) =>
                           handleAdminFolderCreate(
@@ -405,7 +436,9 @@ export default function FileManagement({
                         handleFileSelect={(e) =>
                           onResponseFileSelect(e.target.files?.[0] || null)
                         }
-                        handleFileUpload={onResponseUpload}
+                        handleFileUpload={() =>
+                          onResponseUpload(responseFilesPath)
+                        }
                         selectedFile={responseUploadFile}
                         setSelectedFile={() => onResponseFileSelect(null)}
                       />
@@ -423,7 +456,7 @@ export default function FileManagement({
                 Select a User
               </h3>
               <p className="text-gray-500">
-                Choose a user from the left panel to manage their documents
+                Choose a user from above to manage their documents
               </p>
             </CardContent>
           </Card>

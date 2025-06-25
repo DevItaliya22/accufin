@@ -173,16 +173,9 @@ export default function AdminDashboard() {
   const handleMarkAllNotificationsAsRead = async () => {
     const res = await fetch("/api/admin/notification/read", { method: "POST" });
     if (!res.ok) throw new Error("Failed to mark as read");
-
-    // Refresh notifications
-    setLoading(true);
-    fetch("/api/admin/notification")
-      .then((res) => (res.ok ? res.json() : []))
-      .then((data) => setNotifications(data))
-      .finally(() => setLoading(false));
   };
 
-  const handlePrivateUpload = async () => {
+  const handlePrivateUpload = async (folderPath: string) => {
     if (!privateUploadFile || !session?.user?.id || !selectedUser) return;
     setPrivateUploadLoading(true);
     try {
@@ -226,6 +219,7 @@ export default function AdminDashboard() {
           uploadedById: session.user.id,
           isAdminOnlyPrivateFile: true,
           receivedById: selectedUser,
+          folderName: folderPath,
         }),
       });
       if (!dbRes.ok) {
@@ -247,7 +241,7 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResponseUpload = async () => {
+  const handleResponseUpload = async (folderPath: string) => {
     if (!responseUploadFile || !session?.user?.id || !selectedUser) return;
     setResponseUploadLoading(true);
     try {
@@ -293,6 +287,7 @@ export default function AdminDashboard() {
           uploadedById: session.user.id,
           receivedById: selectedUser,
           isAdminOnlyPrivateFile: false,
+          folderName: folderPath,
         }),
       });
       if (!dbRes.ok) {
@@ -350,15 +345,33 @@ export default function AdminDashboard() {
             onResponseFileSelect={handleResponseFileSelect}
             onPrivateUpload={handlePrivateUpload}
             onResponseUpload={handleResponseUpload}
-            onRefreshUserDetails={() => {}}
+            onRefreshUserDetails={() => {
+              if (selectedUser) {
+                fetch(`/api/admin/user-details/${selectedUser}`)
+                  .then((res) =>
+                    res.ok
+                      ? res.json()
+                      : Promise.reject("Failed to fetch user details")
+                  )
+                  .then((data) => {
+                    setUserDetails(data);
+                    setUserDetailsCache((prev) => ({
+                      ...prev,
+                      [selectedUser]: data,
+                    }));
+                  })
+                  .catch(() => {});
+              }
+            }}
           />
         )}
         {activeTab === "notifications" && (
           <NotificationManagement
+            handleMarkAllAsRead={handleMarkAllNotificationsAsRead}
             notifications={notifications}
-            loading={loading}
-            error={error}
-            onMarkAllAsRead={handleMarkAllNotificationsAsRead}
+            isLoading={loading}
+            setNotifications={setNotifications}
+            setIsLoading={setLoading}
           />
         )}
         {activeTab === "blogs" && <BlogManagement />}

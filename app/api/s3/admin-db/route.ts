@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
 
     // Handle Folder Creation
     if (body.isFolderCreation) {
-      const { folderName, parentPath, userId } = body;
+      const { folderName, parentPath, userId, isAdminOnlyPrivateFile } = body;
       const newFolder = await prisma.file.create({
         data: {
           name: folderName,
@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
           folderName: parentPath,
           uploadedById: session.user.id,
           receivedById: userId,
-          isAdminOnlyPrivateFile: false,
+          isAdminOnlyPrivateFile: isAdminOnlyPrivateFile || false,
         },
       });
       return NextResponse.json(newFolder, { status: 200 });
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
       uploadedById,
       isAdminOnlyPrivateFile,
       receivedById,
+      folderName,
     } = body;
     console.log("filePath", filePath);
     console.log("url", url);
@@ -55,6 +56,7 @@ export async function POST(request: NextRequest) {
         uploadedById: uploadedById,
         receivedById: receivedById,
         isAdminOnlyPrivateFile: isAdminOnlyPrivateFile,
+        folderName: folderName || "",
         createdAt: new Date(),
         updatedAt: new Date(),
       },

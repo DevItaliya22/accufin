@@ -1,5 +1,5 @@
 import Credentials from "next-auth/providers/credentials";
-import { compare, hash } from "bcryptjs";
+import { compare } from "bcryptjs";
 import { AuthOptions } from "next-auth";
 import prisma from "./prisma";
 import GoogleProvider from "next-auth/providers/google";
@@ -13,6 +13,7 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
+        //login 
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter both email and password");
         }
@@ -54,25 +55,8 @@ export const authOptions: AuthOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }) {
-      if (user) {
-        token.id = user.id;
-        token.name = user.name;
-        token.isAdmin = user.isAdmin;
-        token.email = user.email;
-      }
-      return token;
-    },
-    async session({ session, token }) {
-      if (session.user) {
-        session.user.id = token.id as string;
-        session.user.name = token.name as string;
-        session.user.email = token.email as string;
-        session.user.isAdmin = token.isAdmin as boolean;
-      }
-      return session;
-    },
     async signIn({ user, account, profile }) {
+      //this is for google sign in
       if (account?.provider === "google") {
         let dbUser = await prisma.user.findUnique({
           where: { email: user.email },
@@ -108,6 +92,26 @@ export const authOptions: AuthOptions = {
         user.email = dbUser.email;
       }
       return true;
+    },
+    async jwt({ token, user }) {
+      //frontend jwt callback
+      if (user) {
+        token.id = user.id;
+        token.name = user.name;
+        token.isAdmin = user.isAdmin;
+        token.email = user.email;
+      }
+      return token;
+    },
+    async session({ session, token }) {
+      //session session callback
+      if (session.user) {
+        session.user.id = token.id as string;
+        session.user.name = token.name as string;
+        session.user.email = token.email as string;
+        session.user.isAdmin = token.isAdmin as boolean;
+      }
+      return session;
     },
   },
   pages: {
