@@ -24,11 +24,18 @@ import {
   Calendar,
   Phone,
   Briefcase,
+  Upload,
+  Download,
+  FormInput,
 } from "lucide-react";
 import { User } from "@/lib/generated/prisma";
 import { useState, useMemo } from "react";
 interface UserManagementProps {
-  users: (User & { uploadedFiles: number })[];
+  users: (User & {
+    uploadedFiles: number;
+    formResponses: number;
+    filesReceivedFromAdmin: number;
+  })[];
   loading: boolean;
   error: string | null;
 }
@@ -101,142 +108,170 @@ export default function UserManagement({
           </div>
         </CardHeader>
         <div className=" p-6 bg-white">
-        <CardContent className="p-0 bg-gray-50">
-          <div className="bg-gradient-to-r from-gray-50 to-slate-50">
-            <Table>
-              <TableHeader>
-                <TableRow className="border-gray-200 p-6 ">
-                  <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
-                    User
-                  </TableHead>
-                  <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
-                    Contact Info
-                  </TableHead>
-                  <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
-                    Occupation
-                  </TableHead>
-                  <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
-                    Activity
-                  </TableHead>
-                  <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
-                    Joined
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredUsers.length === 0 ? (
-                  <TableRow className="p-6">
-                    <TableCell
-                      colSpan={5}
-                      className="py-12 text-center text-gray-500"
-                    >
-                      <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
-                      <div className="text-lg">No users found</div>
-                      <div className="text-sm">
-                        Try adjusting your search criteria
-                      </div>
-                    </TableCell>
+          <CardContent className="p-0 bg-gray-50">
+            <div className="bg-gradient-to-r from-gray-50 to-slate-50">
+              <Table>
+                <TableHeader>
+                  <TableRow className="border-gray-200 p-6 ">
+                    <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
+                      User
+                    </TableHead>
+                    <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
+                      Contact Info
+                    </TableHead>
+                    <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
+                      Occupation
+                    </TableHead>
+                    <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
+                      Activity
+                    </TableHead>
+                    <TableHead className="py-4 text-gray-700 font-semibold bg-slate-100">
+                      Joined
+                    </TableHead>
                   </TableRow>
-                ) : (
-                  filteredUsers.map((user, index) => (
-                    <TableRow
-                      key={user.id}
-                      className={`border-gray-100 hover:bg-emerald-25 transition-colors ${
-                        index % 2 === 0 ? "bg-slate-25" : "bg-white"
-                      }`}
-                    >
-                      <TableCell className="py-6">
-                        <div className="flex items-center space-x-4">
-                          <Avatar className="h-14 w-14 ring-2 ring-emerald-100">
-                            {user.profileUrl && (
-                              <AvatarImage
-                                src={user.profileUrl}
-                                alt={user.name || user.email}
-                                className="object-cover"
-                              />
-                            )}
-                            <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-semibold text-lg">
-                              {user.name
-                                ? user.name.charAt(0).toUpperCase()
-                                : user.email.charAt(0).toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <div className="font-semibold text-gray-900 text-lg">
-                              {user.name || "No name provided"}
-                            </div>
-                            <div className="text-emerald-600 font-medium">
-                              {user.email}
-                            </div>
-                          </div>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-6">
-                        <div className="space-y-2">
-                          {user.contactNumber ? (
-                            <div className="flex items-center space-x-2 text-gray-700">
-                              <Phone className="w-4 h-4 text-emerald-500" />
-                              <span>{user.contactNumber}</span>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400 text-sm">
-                              Not provided
-                            </span>
-                          )}
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-6">
-                        {user.occupation ? (
-                          <div className="flex items-center space-x-2">
-                            <Briefcase className="w-4 h-4 text-amber-500" />
-                            <Badge
-                              variant="outline"
-                              className="bg-amber-50 text-amber-700 border-amber-200"
-                            >
-                              {user.occupation}
-                            </Badge>
-                          </div>
-                        ) : (
-                          <span className="text-gray-400 text-sm">
-                            Not specified
-                          </span>
-                        )}
-                      </TableCell>
-                      <TableCell className="py-6">
-                        <div className="flex items-center space-x-2">
-                          <Badge
-                            variant="outline"
-                            className="bg-indigo-50 text-indigo-700 border-indigo-200 text-md"
-                          >
-                          <FileText className="w-4 h-4 text-indigo-500" />
-                            {user.uploadedFiles} files
-                          </Badge>
-                        </div>
-                      </TableCell>
-                      <TableCell className="py-6">
-                        <div className="flex items-center space-x-2 text-gray-600">
-                          <Calendar className="w-4 h-4 text-slate-500" />
-                          <span>
-                            {new Date(user.createdAt).toLocaleDateString(
-                              "en-US",
-                              {
-                                year: "numeric",
-                                month: "short",
-                                day: "numeric",
-                              }
-                            )}
-                          </span>
+                </TableHeader>
+                <TableBody>
+                  {filteredUsers.length === 0 ? (
+                    <TableRow className="p-6">
+                      <TableCell
+                        colSpan={5}
+                        className="py-12 text-center text-gray-500"
+                      >
+                        <Users className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                        <div className="text-lg">No users found</div>
+                        <div className="text-sm">
+                          Try adjusting your search criteria
                         </div>
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </div>
-        </CardContent>
+                  ) : (
+                    filteredUsers.map((user, index) => (
+                      <TableRow
+                        key={user.id}
+                        className={`border-gray-100 hover:bg-emerald-25 transition-colors ${
+                          index % 2 === 0 ? "bg-slate-25" : "bg-white"
+                        }`}
+                      >
+                        <TableCell className="py-6">
+                          <div className="flex items-center space-x-4">
+                            <Avatar className="h-14 w-14 ring-2 ring-emerald-100">
+                              {user.profileUrl && (
+                                <AvatarImage
+                                  src={user.profileUrl}
+                                  alt={user.name || user.email}
+                                  className="object-cover"
+                                />
+                              )}
+                              <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-semibold text-lg">
+                                {user.name
+                                  ? user.name.charAt(0).toUpperCase()
+                                  : user.email.charAt(0).toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <div>
+                              <div className="font-semibold text-gray-900 text-lg">
+                                {user.name || "No name provided"}
+                              </div>
+                              <div className="text-emerald-600 font-medium">
+                                {user.email}
+                              </div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6">
+                          <div className="space-y-2">
+                            {user.contactNumber ? (
+                              <div className="flex items-center space-x-2 text-gray-700">
+                                <Phone className="w-4 h-4 text-emerald-500" />
+                                <span>{user.contactNumber}</span>
+                              </div>
+                            ) : (
+                              <span className="text-gray-400 text-sm">
+                                Not provided
+                              </span>
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6">
+                          {user.occupation ? (
+                            <div className="flex items-center space-x-2">
+                              <Briefcase className="w-4 h-4 text-amber-500" />
+                              <Badge
+                                variant="outline"
+                                className="bg-amber-50 text-amber-700 border-amber-200"
+                              >
+                                {user.occupation}
+                              </Badge>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400 text-sm">
+                              Not specified
+                            </span>
+                          )}
+                        </TableCell>
+                        <TableCell className="py-6">
+                          <div className="flex flex-col space-y-2">
+                            {user.uploadedFiles > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="bg-indigo-50 text-indigo-700 border-indigo-200 text-sm flex items-center space-x-1"
+                              >
+                                <Upload className="w-3 h-3 text-indigo-500" />
+                                <span>{user.uploadedFiles} uploaded</span>
+                              </Badge>
+                            )}
+                            {user.filesReceivedFromAdmin > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="bg-emerald-50 text-emerald-700 border-emerald-200 text-sm flex items-center space-x-1"
+                              >
+                                <Download className="w-3 h-3 text-emerald-500" />
+                                <span>
+                                  {user.filesReceivedFromAdmin} received
+                                </span>
+                              </Badge>
+                            )}
+                            {user.formResponses > 0 && (
+                              <Badge
+                                variant="outline"
+                                className="bg-purple-50 text-purple-700 border-purple-200 text-sm flex items-center space-x-1"
+                              >
+                                <FormInput className="w-3 h-3 text-purple-500" />
+                                <span>{user.formResponses} forms</span>
+                              </Badge>
+                            )}
+                            {user.uploadedFiles === 0 &&
+                              user.filesReceivedFromAdmin === 0 &&
+                              user.formResponses === 0 && (
+                                <span className="text-gray-400 text-sm">
+                                  No activity
+                                </span>
+                              )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-6">
+                          <div className="flex items-center space-x-2 text-gray-600">
+                            <Calendar className="w-4 h-4 text-slate-500" />
+                            <span>
+                              {new Date(user.createdAt).toLocaleDateString(
+                                "en-US",
+                                {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                }
+                              )}
+                            </span>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </div>
+          </CardContent>
         </div>
-      
       </Card>
     </div>
   );

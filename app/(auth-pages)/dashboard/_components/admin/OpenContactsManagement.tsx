@@ -187,9 +187,11 @@ export default function OpenContactsManagement() {
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">
-            Open Contacts Management
+            Public Contact Information
           </h2>
-          <p className="text-gray-600">Manage contact information and links</p>
+          <p className="text-gray-600">
+            Manage public contact information and links
+          </p>
         </div>
       </div>
 

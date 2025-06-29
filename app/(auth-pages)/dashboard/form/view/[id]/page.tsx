@@ -4,6 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
+import DashboardHeader from "../../../_components/admin/DashboardHeader";
+import { signOut } from "next-auth/react";
 import {
   Card,
   CardHeader,
@@ -96,6 +98,19 @@ export default function AdminFormViewPage() {
     }
     fetchSubmission();
   }, [session, status, router, params.id]);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+    router.push("/login");
+  };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "forms") {
+      router.push("/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+  };
 
   if (!session?.user?.isAdmin) {
     return (
@@ -345,59 +360,65 @@ export default function AdminFormViewPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/dashboard")}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <h1 className="text-xl font-semibold text-gray-900">
-                {isEditMode ? "Edit Form Submission" : "View Form Submission"}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-2">
-              {!isEditMode ? (
+    <div className="min-h-screen bg-cyan-50">
+      {/* <DashboardHeader
+        activeTab="forms"
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+      /> */}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        {/* Page Header */}
+        <div className="bg-white shadow-sm border rounded-lg mb-6">
+          <div className="px-6 py-4">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center">
                 <Button
-                  onClick={() => setIsEditMode(true)}
-                  className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
+                  variant="ghost"
+                  onClick={() => router.push("/dashboard")}
+                  className="mr-4"
                 >
-                  <Edit className="w-4 h-4" />
-                  <span>Edit</span>
+                  <ArrowLeft className="w-4 h-4 mr-2" />
+                  Back to Dashboard
                 </Button>
-              ) : (
-                <div className="flex items-center space-x-2">
+                <h1 className="text-xl font-semibold text-gray-900">
+                  {isEditMode ? "Edit Form Submission" : "View Form Submission"}
+                </h1>
+              </div>
+              <div className="flex items-center space-x-2">
+                {!isEditMode ? (
                   <Button
-                    variant="outline"
-                    onClick={handleCancelEdit}
-                    className="flex items-center space-x-2"
+                    onClick={() => setIsEditMode(true)}
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700"
                   >
-                    <X className="w-4 h-4" />
-                    <span>Cancel</span>
+                    <Edit className="w-4 h-4" />
+                    <span>Edit</span>
                   </Button>
-                  <Button
-                    onClick={handleSave}
-                    disabled={saving}
-                    className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
-                  >
-                    <Save className="w-4 h-4" />
-                    <span>{saving ? "Saving..." : "Save"}</span>
-                  </Button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      onClick={handleCancelEdit}
+                      className="flex items-center space-x-2"
+                    >
+                      <X className="w-4 h-4" />
+                      <span>Cancel</span>
+                    </Button>
+                    <Button
+                      onClick={handleSave}
+                      disabled={saving}
+                      className="flex items-center space-x-2 bg-green-600 hover:bg-green-700"
+                    >
+                      <Save className="w-4 h-4" />
+                      <span>{saving ? "Saving..." : "Save"}</span>
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* User Info Sidebar */}
           <div className="lg:col-span-1">

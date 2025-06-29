@@ -29,27 +29,60 @@ export async function GET(request: Request) {
         _count: {
           select: {
             uploadedFiles: true,
+            formResponses: true,
           },
         },
       },
     });
 
-    const signedUrlUsers = await Promise.all(users.map(async (user) => {
-      if (user.profileUrl) {
-        const signedUrl = await getSignedUrlFromPath(user.profileUrl);
+    // Get files received from admin for each user
+    const usersWithFileCounts = await Promise.all(
+      users.map(async (user) => {
+        const filesReceivedFromAdmin = await prisma.file.count({
+          where: {
+            receivedById: user.id,
+            uploadedBy: {
+              isAdmin: true,
+            },
+          },
+        });
+
+        const filesUploadedToAdmin = await prisma.file.count({
+          where: {
+            uploadedById: user.id,
+            receivedBy: {
+              isAdmin: true,
+            },
+          },
+        });
+
+        return {
+          ...user,
+          filesReceivedFromAdmin,
+          filesUploadedToAdmin,
+        };
+      })
+    );
+
+    const signedUrlUsers = await Promise.all(
+      usersWithFileCounts.map(async (user) => {
+        if (user.profileUrl) {
+          const signedUrl = await getSignedUrlFromPath(user.profileUrl);
           return { ...user, profileUrl: signedUrl };
-      }
+        }
         return user;
       })
     );
 
-    const usersWithUploadedFiles = signedUrlUsers.map((user) => {
+    const usersWithAllCounts = signedUrlUsers.map((user) => {
       return {
         ...user,
-        uploadedFiles: user._count.uploadedFiles,
+        uploadedFiles: user.filesUploadedToAdmin,
+        formResponses: user._count.formResponses,
+        filesReceivedFromAdmin: user.filesReceivedFromAdmin
       };
     });
-    return NextResponse.json(usersWithUploadedFiles);
+    return NextResponse.json(usersWithAllCounts);
   } catch (e) {
     return NextResponse.json(
       { error: "Internal server error" },

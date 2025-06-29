@@ -5,6 +5,8 @@ import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
 import FormBuilder from "../../_components/FormBuilder";
+import DashboardHeader from "../../../_components/admin/DashboardHeader";
+import { signOut } from "next-auth/react";
 
 export default function EditFormPage() {
   const { data: session, status } = useSession();
@@ -27,6 +29,19 @@ export default function EditFormPage() {
 
     setLoading(false);
   }, [session, status, router]);
+
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+    router.push("/login");
+  };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "forms") {
+      router.push("/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+  };
 
   if (loading || status === "loading") {
     return (
@@ -56,5 +71,16 @@ export default function EditFormPage() {
     );
   }
 
-  return <FormBuilder mode="edit" formId={params.id as string} />;
+  return (
+    <div className="min-h-screen bg-cyan-50">
+      {/* <DashboardHeader
+        activeTab="forms"
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+      /> */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        <FormBuilder mode="edit" formId={params.id as string} />
+      </div>
+    </div>
+  );
 }

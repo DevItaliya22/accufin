@@ -4,6 +4,8 @@ import { useSession } from "next-auth/react";
 import { useRouter, useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
+import DashboardHeader from "../../../_components/admin/DashboardHeader";
+import { signOut } from "next-auth/react";
 import {
   Card,
   CardHeader,
@@ -89,6 +91,19 @@ export default function FormResponsesPage() {
     fetchFormResponses();
   }, [session, status, router, params.id]);
 
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+    router.push("/login");
+  };
+
+  const handleTabChange = (tab: string) => {
+    if (tab === "forms") {
+      router.push("/dashboard");
+    } else {
+      router.push("/dashboard");
+    }
+  };
+
   const fetchFormResponses = async () => {
     try {
       setLoading(true);
@@ -135,10 +150,15 @@ export default function FormResponsesPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
+      <div className="min-h-screen bg-cyan-50">
+        {/* <DashboardHeader
+          activeTab="forms"
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+        /> */}
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="bg-white shadow-sm border rounded-lg mb-6">
+            <div className="px-6 py-4">
               <div className="flex items-center">
                 <Button
                   variant="ghost"
@@ -155,8 +175,6 @@ export default function FormResponsesPage() {
               </div>
             </div>
           </div>
-        </header>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <Card>
             <CardContent className="text-center py-8 text-red-500">
               {error}
@@ -168,11 +186,17 @@ export default function FormResponsesPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
+    <div className="min-h-screen bg-cyan-50">
+      {/* <DashboardHeader
+        activeTab="forms"
+        onTabChange={handleTabChange}
+        onLogout={handleLogout}
+      /> */}
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+        {/* Page Header */}
+        <div className="bg-white shadow-sm border rounded-lg mb-6">
+          <div className="px-6 py-4">
             <div className="flex items-center">
               <Button
                 variant="ghost"
@@ -189,9 +213,6 @@ export default function FormResponsesPage() {
             </div>
           </div>
         </div>
-      </header>
-
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           {/* Form Info */}
           <Card>

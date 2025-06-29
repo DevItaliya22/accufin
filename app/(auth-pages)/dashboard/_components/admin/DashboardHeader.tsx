@@ -1,3 +1,4 @@
+"use client";
 import { useState, useRef, useEffect } from "react";
 import { FaBars, FaPhoneAlt } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
