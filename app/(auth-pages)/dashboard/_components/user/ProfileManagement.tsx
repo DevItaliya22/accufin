@@ -1,4 +1,5 @@
-import { useState, useEffect, useRef } from "react";
+"use client";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
   User,
   Mail,
@@ -13,6 +14,15 @@ import {
   Eye,
   EyeOff,
   Upload,
+  Archive,
+  Calendar,
+  Globe,
+  FileText,
+  Download,
+  Folder,
+  ChevronRight,
+  ArchiveRestore,
+  ChevronLeft,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { signOut } from "next-auth/react";
@@ -30,6 +40,23 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Button } from "@/components/ui/button";
 import { s3 } from "@/lib/s3";
+import { ManagedFile } from "@/types/files";
+
+type FileRecord = {
+  id: string;
+  url: string;
+  path: string;
+  name: string | null;
+  size: string | null;
+  type: string | null;
+  createdAt: string;
+  updatedAt: string;
+  isCompleted: boolean;
+  completedAt: string | null;
+  folderName?: string | null;
+  isArchived: boolean;
+  file: globalThis.File;
+};
 
 export default function ProfileManagement() {
   const router = useRouter();
@@ -65,7 +92,13 @@ export default function ProfileManagement() {
   const [profileImageUrl, setProfileImageUrl] = useState<string | null>(null);
   const [profileImageFile, setProfileImageFile] = useState<File | null>(null);
   const [profileImageUploading, setProfileImageUploading] = useState(false);
+  const [imageLoadError, setImageLoadError] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Archive related state
+  const [archivedFilesList, setArchivedFilesList] = useState<FileRecord[]>([]);
+  const [currentArchivePath, setCurrentArchivePath] = useState("");
+  const [archiveLoading, setArchiveLoading] = useState(false);
 
   const fetchProfile = async () => {
     setProfileLoading(true);
@@ -87,15 +120,34 @@ export default function ProfileManagement() {
     }
   };
 
+  const fetchArchivedFiles = async () => {
+    setArchiveLoading(true);
+    try {
+      const res = await fetch("/api/user/archived-files");
+      if (!res.ok) throw new Error("Failed to fetch archived files");
+      const data = await res.json();
+      setArchivedFilesList(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Error fetching archived files:", error);
+      setArchivedFilesList([]);
+      toast.error("Failed to load archived files");
+    } finally {
+      setArchiveLoading(false);
+    }
+  };
+
   useEffect(() => {
     fetchProfile();
+    fetchArchivedFiles();
   }, []);
 
   useEffect(() => {
     if (profile?.profileImageUrl) {
       setProfileImageUrl(profile.profileImageUrl);
+      setImageLoadError(false);
     } else {
       setProfileImageUrl(null);
+      setImageLoadError(false);
     }
   }, [profile]);
 
@@ -240,10 +292,97 @@ export default function ProfileManagement() {
     }
   };
 
+  const handleUnarchiveFile = async (fileId: string) => {
+    const fileToMove = archivedFilesList.find((f) => f.id === fileId);
+    if (!fileToMove) return;
+
+    // Optimistic UI update
+    setArchivedFilesList((prev) => prev.filter((f) => f.id !== fileId));
+    toast.success("File unarchived.");
+
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/unarchive`, {
+        method: "PATCH",
+      });
+      if (!res.ok) {
+        toast.error("Failed to unarchive file.");
+        // Revert on error
+        setArchivedFilesList((prev) => [...prev, fileToMove]);
+      } else {
+        // Refresh archived files to ensure consistency
+        await fetchArchivedFiles();
+      }
+    } catch (error) {
+      toast.error("Failed to unarchive file. Please try again.");
+      setArchivedFilesList((prev) => [...prev, fileToMove]);
+    }
+  };
+
+  const { files: displayedArchivedFiles, folders: displayedArchivedFolders } =
+    useMemo(() => {
+      const folders = new Set<string>();
+      const files: FileRecord[] = [];
+
+      archivedFilesList.forEach((file) => {
+        const path = file.folderName || "";
+        if (currentArchivePath === "") {
+          if (path === "") {
+            if (file.type === "folder" && file.name) {
+              folders.add(file.name);
+            } else if (file.type !== "folder") {
+              files.push(file);
+            }
+          } else {
+            const topLevelFolder = path.split("/")[0];
+            if (topLevelFolder) {
+              folders.add(topLevelFolder);
+            }
+          }
+        } else {
+          if (path === currentArchivePath) {
+            if (file.type === "folder" && file.name) {
+              folders.add(file.name);
+            } else if (file.type !== "folder") {
+              files.push(file);
+            }
+          } else if (path.startsWith(`${currentArchivePath}/`)) {
+            const remainingPath = path.substring(currentArchivePath.length + 1);
+            const nextLevelFolder = remainingPath.split("/")[0];
+            if (nextLevelFolder) {
+              folders.add(nextLevelFolder);
+            }
+          }
+        }
+      });
+
+      return { files, folders: Array.from(folders) };
+    }, [archivedFilesList, currentArchivePath]);
+
+  const managedArchivedFiles: ManagedFile[] = displayedArchivedFiles.map(
+    (file) => ({
+      id: file.id,
+      name: file.name || "Unnamed File",
+      url: file.url,
+      size: file.size,
+      createdAt: file.createdAt,
+      folderName: file.folderName,
+    })
+  );
+
+  // Get user initials for avatar
+  const getUserInitials = (name: string) => {
+    if (!name) return "U";
+    const names = name.split(" ");
+    if (names.length >= 2) {
+      return (names[0][0] + names[1][0]).toUpperCase();
+    }
+    return name[0].toUpperCase();
+  };
+
   if (profileLoading) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Loading...
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
       </div>
     );
   }
@@ -251,228 +390,569 @@ export default function ProfileManagement() {
   if (profileError) {
     return (
       <div className="flex justify-center items-center h-screen">
-        Error: {profileError}
+        <div className="text-red-500 text-center">
+          <h3 className="text-lg font-semibold">Error loading profile</h3>
+          <p>{profileError}</p>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto bg-white rounded-2xl shadow-xl p-8 space-y-8">
-      <div className="flex flex-col md:flex-row items-center gap-8 border-b pb-8 mb-8">
-        {/* Left: Avatar */}
-        <div className="relative">
-          <div className="w-32 h-32 rounded-full bg-gradient-to-tr from-cyan-400 to-blue-500 flex items-center justify-center shadow-lg overflow-hidden">
-            {profileImageUrl ? (
-              <img
-                src={profileImageUrl}
-                alt="Profile"
-                className="w-full h-full object-cover"
+    <div className="min-h-screen bg-gradient-to-br bg-transparent p-4">
+      <div className="w-full max-w-4xl mx-auto">
+        {/* Header Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex flex-col md:flex-row items-center gap-6">
+            {/* Profile Avatar */}
+            <div className="relative">
+              <div className="w-24 h-24 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 flex items-center justify-center shadow-lg overflow-hidden">
+                {profileImageUrl && !imageLoadError ? (
+                  <img
+                    src={profileImageUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                    onError={() => {
+                      console.error(
+                        "Failed to load profile image:",
+                        profileImageUrl
+                      );
+                      setImageLoadError(true);
+                      toast.error(
+                        "Unable to load profile image. The file format may not be supported."
+                      );
+                    }}
+                    onLoad={() => setImageLoadError(false)}
+                  />
+                ) : (
+                  <span className="text-white text-2xl font-bold">
+                    {getUserInitials(profile?.name || "")}
+                  </span>
+                )}
+              </div>
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="absolute -bottom-1 -right-1 w-8 h-8 bg-blue-600 hover:bg-blue-700 rounded-full flex items-center justify-center text-white shadow-lg transition-colors"
+                disabled={profileImageUploading}
+              >
+                <Upload className="w-4 h-4" />
+              </button>
+              <input
+                type="file"
+                className="hidden"
+                ref={fileInputRef}
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    const supportedFormats = [
+                      "image/jpeg",
+                      "image/jpg",
+                      "image/png",
+                      "image/webp",
+                      "image/gif",
+                    ];
+                    if (supportedFormats.includes(file.type)) {
+                      setProfileImageFile(file);
+                    } else {
+                      toast.error(
+                        "Please upload a supported image format (JPG, PNG, WebP, GIF)"
+                      );
+                      e.target.value = "";
+                    }
+                  } else {
+                    setProfileImageFile(null);
+                  }
+                }}
+                disabled={profileImageUploading}
+                accept="image/jpeg,image/jpg,image/png,image/webp,image/gif"
               />
-            ) : (
-              <User className="w-20 h-20 text-white" />
-            )}
-          </div>
-        </div>
+            </div>
 
-        {/* Right: Info and Actions */}
-        <div className="flex-1 text-center md:text-left">
-          <h1 className="text-3xl font-bold text-gray-800">
-            {profile?.name || "-"}
-          </h1>
-          <p className="text-gray-500 mb-4">User Profile</p>
-          <div className="flex items-center justify-center md:justify-start gap-4">
-            <input
-              type="file"
-              className="hidden"
-              ref={fileInputRef}
-              onChange={(e) => setProfileImageFile(e.target.files?.[0] || null)}
-              disabled={profileImageUploading}
-              accept="image/*"
-            />
+            {/* Profile Info */}
+            <div className="flex-1 text-center md:text-left">
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">
+                {profile?.name || "Unknown User"}
+              </h1>
+              <p className="text-gray-600 mb-2">
+                {formValues.occupation || "User Profile"}
+              </p>
+              <div className="flex items-center justify-center md:justify-start text-sm text-gray-500 mb-4">
+                <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                Active since{" "}
+                {profile?.createdAt
+                  ? new Date(profile.createdAt).toLocaleDateString("en-US", {
+                      year: "numeric",
+                      month: "long",
+                    })
+                  : "-"}
+              </div>
+
+              {profileImageFile && (
+                <div className="mb-4">
+                  <div className="text-sm text-gray-600 mb-2">
+                    Selected: {profileImageFile.name}
+                  </div>
+                  <div className="flex justify-center md:justify-start gap-2">
+                    <Button
+                      onClick={handleProfileImageUpload}
+                      disabled={profileImageUploading}
+                      size="sm"
+                      className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
+                    >
+                      {profileImageUploading ? "Uploading..." : "Upload"}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setProfileImageFile(null)}
+                      disabled={profileImageUploading}
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Edit Profile Button */}
             <Button
-              variant="outline"
-              size="sm"
-              className="cursor-pointer"
-              disabled={profileImageUploading}
-              onClick={() => fileInputRef.current?.click()}
+              className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-6 py-2 rounded-xl shadow-lg"
+              onClick={() => window.scrollTo({ top: 400, behavior: "smooth" })}
             >
-              <Upload className="w-4 h-4 mr-2" />
-              Change Picture
+              <Pencil className="w-4 h-4 mr-2" />
+              Edit Profile
             </Button>
-            {profileImageFile && (
-              <Button
-                onClick={handleProfileImageUpload}
-                disabled={profileImageUploading}
-                size="sm"
-              >
-                {profileImageUploading ? "Uploading..." : "Upload"}
-              </Button>
-            )}
           </div>
-          {profileImageFile && (
-            <div className="mt-2 text-sm text-gray-600">
-              Selected: {profileImageFile.name}
-              <Button
-                variant="link"
-                className="text-red-500 hover:text-red-700 p-0 h-auto ml-2"
-                onClick={() => setProfileImageFile(null)}
-                disabled={profileImageUploading}
-              >
-                (Remove)
-              </Button>
+        </div>
+
+        {/* Personal Information Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-blue-600 rounded-lg flex items-center justify-center mr-3">
+              <User className="w-5 h-5 text-white" />
             </div>
-          )}
+            <h2 className="text-2xl font-bold text-gray-900">
+              Personal Information
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            <ModernInfoCard
+              icon={User}
+              iconGradient="from-blue-500 to-blue-600"
+              label="FULL NAME"
+              value={profile?.name || ""}
+              isEditing={false}
+            />
+
+            {/* Commented out for future use */}
+            {/* <ModernInfoCard
+              icon={Calendar}
+              iconGradient="from-indigo-500 to-indigo-600"
+              label="DATE OF BIRTH"
+              value={profile?.dateOfBirth || "1990-06-15"}
+              isEditing={false}
+            /> */}
+
+            <ModernInfoCard
+              icon={Briefcase}
+              iconGradient="from-purple-500 to-purple-600"
+              label="OCCUPATION"
+              value={formValues.occupation}
+              isEditing={editStates.occupation}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("occupation", isEditing)
+              }
+              onSave={() => handleUpdate("occupation")}
+              onChange={handleInputChange}
+              name="occupation"
+              isSaving={savingStates.occupation}
+              placeholder="Product Designer"
+            />
+
+            {/* Commented out for future use */}
+            {/* <ModernInfoCard
+              icon={Globe}
+              iconGradient="from-cyan-500 to-cyan-600"
+              label="COMPANY"
+              value={profile?.company || "Tech Solutions Inc."}
+              isEditing={false}
+            /> */}
+          </div>
+        </div>
+
+        {/* Contact Information Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-teal-600 rounded-lg flex items-center justify-center mr-3">
+              <Mail className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Contact Information
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            <ModernInfoCard
+              icon={Mail}
+              iconGradient="from-blue-500 to-blue-600"
+              label="EMAIL ADDRESS"
+              value={profile?.email || ""}
+              isEditing={false}
+            />
+
+            {/* Commented out for future use */}
+            {/* <ModernInfoCard
+              icon={Globe}
+              iconGradient="from-cyan-500 to-cyan-600"
+              label="WEBSITE"
+              value={profile?.website || "www.alexjohnson.dev"}
+              isEditing={false}
+            /> */}
+
+            <ModernInfoCard
+              icon={Phone}
+              iconGradient="from-green-500 to-green-600"
+              label="PHONE NUMBER"
+              value={formValues.contactNumber}
+              isEditing={editStates.contact}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("contact", isEditing)
+              }
+              onSave={() => handleUpdate("contact")}
+              onChange={handleInputChange}
+              name="contactNumber"
+              isSaving={savingStates.contact}
+              placeholder="+1 (555) 123-4567"
+            />
+
+            <ModernInfoCard
+              icon={Home}
+              iconGradient="from-red-500 to-pink-600"
+              label="ADDRESS"
+              value={formValues.address}
+              isEditing={editStates.address}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("address", isEditing)
+              }
+              onSave={() => handleUpdate("address")}
+              onChange={handleInputChange}
+              name="address"
+              isSaving={savingStates.address}
+              placeholder="123 Main Street, San Francisco, CA 94105"
+            />
+          </div>
+        </div>
+
+        {/* Archive Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center mr-3">
+              <Archive className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Document Archive
+            </h2>
+          </div>
+
+          <ProfileArchiveViewer
+            files={managedArchivedFiles}
+            folders={displayedArchivedFolders}
+            isLoading={archiveLoading}
+            currentPath={currentArchivePath}
+            onPathChange={setCurrentArchivePath}
+            onFileUnarchive={handleUnarchiveFile}
+          />
+        </div>
+
+        {/* Security Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-gray-600 to-gray-800 rounded-lg flex items-center justify-center mr-3">
+              <Lock className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">Security</h2>
+          </div>
+
+          {profile?.provider === "credentials" &&
+            (!showPassword ? (
+              <div className="flex items-center justify-between p-6 bg-gray-50 rounded-xl">
+                <div className="flex items-center">
+                  <div className="w-10 h-10 bg-gradient-to-r from-gray-500 to-gray-600 rounded-lg flex items-center justify-center mr-4">
+                    <Lock className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="text-sm text-gray-500 uppercase tracking-wide">
+                      PASSWORD
+                    </div>
+                    <div className="font-medium text-gray-800">••••••••••</div>
+                  </div>
+                </div>
+                <Button
+                  onClick={() => setShowPassword(true)}
+                  className="bg-gradient-to-r from-gray-600 to-gray-800 hover:from-gray-700 hover:to-gray-900 text-white"
+                >
+                  Change Password
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <PasswordRow
+                  label="Current Password"
+                  name="currentPassword"
+                  value={passwordValues.currentPassword}
+                  onChange={handlePasswordInputChange}
+                  isSaving={passwordSaving}
+                />
+                <PasswordRow
+                  label="New Password"
+                  name="newPassword"
+                  value={passwordValues.newPassword}
+                  onChange={handlePasswordInputChange}
+                  isSaving={passwordSaving}
+                />
+                <PasswordRow
+                  label="Confirm New Password"
+                  name="confirmPassword"
+                  value={passwordValues.confirmPassword}
+                  onChange={handlePasswordInputChange}
+                  isSaving={passwordSaving}
+                />
+                <div className="flex justify-end space-x-3">
+                  <Button
+                    variant="outline"
+                    onClick={() => setShowPassword(false)}
+                    disabled={passwordSaving}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={handlePasswordSubmit}
+                    disabled={passwordSaving}
+                    className="bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white"
+                  >
+                    {passwordSaving ? "Saving..." : "Save Password"}
+                  </Button>
+                </div>
+              </div>
+            ))}
+        </div>
+
+        {/* Sign Out Button */}
+        <div className="text-center">
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 text-white px-8 py-3 rounded-xl shadow-lg text-lg">
+                <LogOut className="w-5 h-5 mr-2" />
+                Sign Out
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action will sign you out of your account.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    await signOut({ redirect: false });
+                    router.push("/login");
+                  }}
+                  className="bg-red-500 hover:bg-red-600"
+                >
+                  Sign Out
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
-
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">
-          Personal Information
-        </h2>
-        <InfoRow
-          icon={Mail}
-          label="Email"
-          value={profile?.email}
-          isEditing={false}
-        />
-        <InfoRow
-          icon={Phone}
-          label="Contact Number"
-          value={formValues.contactNumber}
-          isEditing={editStates.contact}
-          onEditToggle={(isEditing) => handleEditToggle("contact", isEditing)}
-          onSave={() => handleUpdate("contact")}
-          onChange={handleInputChange}
-          name="contactNumber"
-          isSaving={savingStates.contact}
-          placeholder="Enter contact number"
-        />
-        <InfoRow
-          icon={Home}
-          label="Address"
-          value={formValues.address}
-          isEditing={editStates.address}
-          onEditToggle={(isEditing) => handleEditToggle("address", isEditing)}
-          onSave={() => handleUpdate("address")}
-          onChange={handleInputChange}
-          name="address"
-          isSaving={savingStates.address}
-          placeholder="Enter address"
-        />
-        <InfoRow
-          icon={Briefcase}
-          label="Occupation"
-          value={formValues.occupation}
-          isEditing={editStates.occupation}
-          onEditToggle={(isEditing) =>
-            handleEditToggle("occupation", isEditing)
-          }
-          onSave={() => handleUpdate("occupation")}
-          onChange={handleInputChange}
-          name="occupation"
-          isSaving={savingStates.occupation}
-          placeholder="Enter occupation"
-        />
-      </div>
-
-      <div className="space-y-6">
-        <h2 className="text-xl font-semibold text-gray-700 border-b pb-2">
-          Security
-        </h2>
-        {profile?.provider === "credentials" &&
-          (!showPassword ? (
-            <div className="flex items-center">
-              <Lock className="w-6 h-6 text-gray-400 mr-4" />
-              <div className="flex-1">
-                <div className="text-sm text-gray-500">Password</div>
-                <div className="font-medium text-gray-800">**********</div>
-              </div>
-              <Button onClick={() => setShowPassword(true)}>
-                Change Password
-              </Button>
-            </div>
-          ) : (
-            <div className="space-y-4">
-              <PasswordRow
-                label="Current Password"
-                name="currentPassword"
-                value={passwordValues.currentPassword}
-                onChange={handlePasswordInputChange}
-                isSaving={passwordSaving}
-              />
-              <PasswordRow
-                label="New Password"
-                name="newPassword"
-                value={passwordValues.newPassword}
-                onChange={handlePasswordInputChange}
-                isSaving={passwordSaving}
-              />
-              <PasswordRow
-                label="Confirm New Password"
-                name="confirmPassword"
-                value={passwordValues.confirmPassword}
-                onChange={handlePasswordInputChange}
-                isSaving={passwordSaving}
-              />
-              <div className="flex justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  onClick={() => setShowPassword(false)}
-                  disabled={passwordSaving}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={handlePasswordSubmit}
-                  disabled={passwordSaving}
-                >
-                  {passwordSaving ? "Saving..." : "Save Password"}
-                </Button>
-              </div>
-            </div>
-          ))}
-      </div>
-
-      <div className="text-center text-sm text-gray-400 pt-4">
-        Member since{" "}
-        {profile?.createdAt
-          ? new Date(profile.createdAt).toLocaleDateString()
-          : "-"}
-      </div>
-
-      <AlertDialog>
-        <AlertDialogTrigger asChild>
-          <button className="w-full flex items-center justify-center gap-2 bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-4 rounded-lg transition-all text-lg shadow-md hover:shadow-lg">
-            <LogOut className="w-5 h-5" /> Sign Out
-          </button>
-        </AlertDialogTrigger>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action will sign you out of your account.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                await signOut({ redirect: false });
-                router.push("/login");
-              }}
-              className="bg-red-500 hover:bg-red-600"
-            >
-              Sign Out
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 }
 
-interface InfoRowProps {
+interface ProfileArchiveViewerProps {
+  files: ManagedFile[];
+  folders: string[];
+  isLoading: boolean;
+  currentPath: string;
+  onPathChange: (path: string) => void;
+  onFileUnarchive: (fileId: string) => void;
+}
+
+const ProfileArchiveViewer: React.FC<ProfileArchiveViewerProps> = ({
+  files,
+  folders,
+  isLoading,
+  currentPath,
+  onPathChange,
+  onFileUnarchive,
+}) => {
+  const handleFolderClick = (folderName: string) => {
+    onPathChange(currentPath ? `${currentPath}/${folderName}` : folderName);
+  };
+
+  const handleBackClick = () => {
+    const pathParts = currentPath.split("/");
+    pathParts.pop();
+    onPathChange(pathParts.join("/"));
+  };
+
+  return (
+    <div className="space-y-4">
+      {/* Breadcrumbs */}
+      <div className="flex items-center space-x-2 text-sm">
+        <button
+          onClick={() => onPathChange("")}
+          className="text-orange-600 hover:text-orange-700 font-medium"
+        >
+          Archive Root
+        </button>
+        {currentPath
+          .split("/")
+          .filter(Boolean)
+          .map((part, index, arr) => {
+            const path = arr.slice(0, index + 1).join("/");
+            return (
+              <React.Fragment key={index}>
+                <ChevronRight className="w-4 h-4 text-gray-400" />
+                <button
+                  onClick={() => onPathChange(path)}
+                  className="text-orange-600 hover:text-orange-700 font-medium"
+                >
+                  {part}
+                </button>
+              </React.Fragment>
+            );
+          })}
+      </div>
+
+      {currentPath && (
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={handleBackClick}
+          className="mb-4"
+        >
+          <ChevronLeft className="w-4 h-4 mr-2" />
+          Back
+        </Button>
+      )}
+
+      {isLoading ? (
+        <div className="flex justify-center items-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-600"></div>
+        </div>
+      ) : (
+        <>
+          {/* Folders */}
+          {folders.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Folders
+              </h4>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6">
+                {folders.map((folder) => (
+                  <div
+                    key={folder}
+                    onClick={() => handleFolderClick(folder)}
+                    className="flex flex-col items-center p-4 bg-gradient-to-r from-orange-50 to-red-50 rounded-xl cursor-pointer hover:from-orange-100 hover:to-red-100 transition-all duration-200 border border-orange-200"
+                  >
+                    <Folder className="w-8 h-8 text-orange-600 mb-2" />
+                    <span className="text-sm font-medium text-gray-700 truncate w-full text-center">
+                      {folder}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Files */}
+          {files.length > 0 && (
+            <div>
+              <h4 className="text-sm font-semibold text-gray-700 mb-3">
+                Files
+              </h4>
+              <div className="space-y-3">
+                {files.map((file) => (
+                  <div
+                    key={file.id}
+                    className="flex items-center justify-between p-4 bg-gradient-to-r from-gray-50 to-orange-50 rounded-xl border border-gray-200 hover:border-orange-300 transition-all duration-200"
+                  >
+                    <div className="flex items-center space-x-4 min-w-0 flex-1">
+                      <div className="w-10 h-10 bg-gradient-to-r from-orange-500 to-red-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                        <FileText className="w-5 h-5 text-white" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-semibold text-gray-900 truncate">
+                          {file.name}
+                        </p>
+                        {file.size && file.createdAt && (
+                          <p className="text-sm text-gray-500 truncate">
+                            {file.size} • Archived on{" "}
+                            {new Date(file.createdAt).toLocaleDateString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-3 flex-shrink-0">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="border-orange-300 text-orange-700 hover:bg-orange-50"
+                        asChild
+                      >
+                        <a
+                          href={file.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Download className="w-4 h-4 mr-2" />
+                          Download
+                        </a>
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => onFileUnarchive(file.id)}
+                        className="border-green-300 text-green-700 hover:bg-green-50"
+                      >
+                        <ArchiveRestore className="w-4 h-4 mr-2" />
+                        Restore
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {files.length === 0 && folders.length === 0 && (
+            <div className="text-center py-12">
+              <Archive className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+              <h3 className="text-lg font-semibold text-gray-700 mb-2">
+                No archived files
+              </h3>
+              <p className="text-sm text-gray-500">
+                {currentPath
+                  ? "This folder is empty"
+                  : "You haven't archived any files yet"}
+              </p>
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+};
+
+interface ModernInfoCardProps {
   icon: React.ElementType;
+  iconGradient: string;
   label: string;
   value: string;
   isEditing: boolean;
@@ -484,8 +964,9 @@ interface InfoRowProps {
   placeholder?: string;
 }
 
-const InfoRow: React.FC<InfoRowProps> = ({
+const ModernInfoCard: React.FC<ModernInfoCardProps> = ({
   icon: Icon,
+  iconGradient,
   label,
   value,
   isEditing,
@@ -497,19 +978,28 @@ const InfoRow: React.FC<InfoRowProps> = ({
   placeholder,
 }) => {
   return (
-    <div className="flex items-center border-b border-gray-200 pb-4">
-      <Icon className="w-6 h-6 text-gray-400 mr-4" />
+    <div className="flex items-center p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500">
+      <div
+        className={`w-12 h-12 bg-gradient-to-r ${iconGradient} rounded-lg flex items-center justify-center mr-4 shadow-lg`}
+      >
+        <Icon className="w-6 h-6 text-white" />
+      </div>
+
       <div className="flex-1">
-        <div className="text-sm text-gray-500">{label}</div>
+        <div className="text-xs text-gray-500 uppercase tracking-wide font-semibold mb-1">
+          {label}
+        </div>
         {!isEditing ? (
           <div
-            className={`font-medium text-gray-800 ${!value && "text-gray-400"}`}
+            className={`text-lg font-medium ${
+              !value ? "text-gray-400" : "text-gray-900"
+            }`}
           >
-            {value || "Not set"}
+            {value || "Not provided"}
           </div>
         ) : (
           <input
-            className="border-b-2 border-cyan-400 focus:outline-none w-full py-1 text-gray-800"
+            className="text-lg font-medium bg-white border-2 border-blue-300 focus:border-blue-500 focus:outline-none rounded-lg px-3 py-2 w-full"
             type="text"
             name={name}
             value={value}
@@ -520,35 +1010,40 @@ const InfoRow: React.FC<InfoRowProps> = ({
           />
         )}
       </div>
-      {onEditToggle &&
-        (!isEditing ? (
-          <button
-            className="ml-4 text-blue-600 hover:text-blue-800"
-            onClick={() => onEditToggle(true)}
-            title={value ? "Edit" : "Add"}
-          >
-            <Pencil className="w-5 h-5" />
-          </button>
-        ) : (
-          <div className="flex items-center ml-4 space-x-2">
-            <button
-              className="text-green-600 hover:text-green-800"
-              onClick={onSave}
-              disabled={isSaving}
-              title="Save"
+
+      {onEditToggle && (
+        <div className="ml-4">
+          {!isEditing ? (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => onEditToggle(true)}
+              className="hover:bg-blue-50 hover:border-blue-300"
             >
-              <Check className="w-5 h-5" />
-            </button>
-            <button
-              className="text-gray-500 hover:text-gray-700"
-              onClick={() => onEditToggle(false)}
-              disabled={isSaving}
-              title="Cancel"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
-        ))}
+              <Pencil className="w-4 h-4" />
+            </Button>
+          ) : (
+            <div className="flex space-x-2">
+              <Button
+                size="sm"
+                onClick={onSave}
+                disabled={isSaving}
+                className="bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700 text-white"
+              >
+                <Check className="w-4 h-4" />
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => onEditToggle(false)}
+                disabled={isSaving}
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 };
@@ -571,8 +1066,8 @@ const PasswordRow: React.FC<PasswordRowProps> = ({
   const [isVisible, setIsVisible] = useState(false);
 
   return (
-    <div className="flex items-center">
-      <label className="w-1/3 text-sm text-gray-500">{label}</label>
+    <div className="flex items-center p-4 bg-gray-50 rounded-xl">
+      <label className="w-1/3 text-sm font-medium text-gray-700">{label}</label>
       <div className="relative flex-1">
         <input
           type={isVisible ? "text" : "password"}
@@ -580,7 +1075,7 @@ const PasswordRow: React.FC<PasswordRowProps> = ({
           value={value}
           onChange={onChange}
           disabled={isSaving}
-          className="w-full border-b-2 border-gray-300 focus:border-cyan-400 focus:outline-none py-1 pr-10"
+          className="w-full bg-white border-2 border-gray-200 focus:border-blue-500 focus:outline-none rounded-lg px-4 py-2 pr-12"
         />
         <button
           type="button"
