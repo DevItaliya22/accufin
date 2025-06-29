@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import { signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { s3 } from "@/lib/s3";
 import toast from "react-hot-toast";
@@ -16,6 +16,7 @@ import UserManagement from "./UserManagement";
 
 export default function AdminDashboard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState<
     | "users"
     | "files"
@@ -25,6 +26,25 @@ export default function AdminDashboard() {
     | "forms"
     | "profile"
   >("users");
+
+  // Check for tab parameter in URL and set active tab
+  useEffect(() => {
+    const tabParam = searchParams.get("tab");
+    if (
+      tabParam &&
+      [
+        "users",
+        "files",
+        "notifications",
+        "blogs",
+        "contacts",
+        "forms",
+        "profile",
+      ].includes(tabParam)
+    ) {
+      setActiveTab(tabParam as any);
+    }
+  }, [searchParams]);
 
   // Loading and error states
   const [loading, setLoading] = useState(true);

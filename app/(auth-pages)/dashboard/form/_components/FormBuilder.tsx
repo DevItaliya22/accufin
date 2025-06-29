@@ -153,7 +153,12 @@ function SortableField({
       {isEditing ? (
         <div className="space-y-4 border-t pt-4">
           <div>
-            <Label htmlFor="field-label" className="text-sm font-medium text-gray-700 mb-2">Field Label</Label>
+            <Label
+              htmlFor="field-label"
+              className="text-sm font-medium text-gray-700 mb-2"
+            >
+              Field Label
+            </Label>
             <Input
               id="field-label"
               value={editProps.editLabel}
@@ -172,7 +177,12 @@ function SortableField({
 
           {field.type === "input" && (
             <div>
-              <Label htmlFor="input-type" className="text-sm font-medium text-gray-700 mb-2">Input Type</Label>
+              <Label
+                htmlFor="input-type"
+                className="text-sm font-medium text-gray-700 mb-2"
+              >
+                Input Type
+              </Label>
               <Select
                 value={editProps.editInputType}
                 onValueChange={editProps.setEditInputType}
@@ -194,7 +204,12 @@ function SortableField({
 
           {(field.type === "selection" || field.type === "multipleChoice") && (
             <div>
-              <Label htmlFor="options" className="text-sm font-medium text-gray-700 mb-2">Options</Label>
+              <Label
+                htmlFor="options"
+                className="text-sm font-medium text-gray-700 mb-2"
+              >
+                Options
+              </Label>
               <div className="space-y-2">
                 {editProps.editOptions.map((option: string, index: number) => (
                   <div key={index} className="flex items-center space-x-2">
@@ -231,7 +246,12 @@ function SortableField({
 
           {field.type === "multipleChoice" && (
             <div>
-              <Label htmlFor="max-choices" className="text-sm font-medium text-gray-700 mb-2">Maximum Choices</Label>
+              <Label
+                htmlFor="max-choices"
+                className="text-sm font-medium text-gray-700 mb-2"
+              >
+                Maximum Choices
+              </Label>
               <Input
                 id="max-choices"
                 type="number"
@@ -573,260 +593,228 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Button
-                variant="ghost"
-                onClick={() => router.push("/dashboard")}
-                className="mr-4"
-              >
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Back to Dashboard
-              </Button>
-              <Shield className="w-8 h-8 text-red-600 mr-3" />
-              <h1 className="text-xl font-semibold text-gray-900">
-                {mode === "create" ? "Create Form" : "Edit Form"}
-              </h1>
-            </div>
-            <div className="flex items-center space-x-4">
-              {/* <Button
-                variant="outline"
-                onClick={() => setPreviewMode(!previewMode)}
-                className="flex items-center space-x-2"
-              >
-                <Eye className="w-4 h-4" />
-                <span>{previewMode ? "Edit" : "Preview"}</span>
-              </Button> */}
-              <Button
-                onClick={saveForm}
-                disabled={saving}
-                className="flex items-center space-x-2"
-              >
-                <Save className="w-4 h-4" />
-                <span>
-                  {saving
-                    ? "Saving..."
-                    : mode === "create"
-                    ? "Create Form"
-                    : "Update Form"}
-                </span>
-              </Button>
-            </div>
-          </div>
-        </div>
-      </header>
+    <div className="py-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Form Settings */}
+        <div className="lg:col-span-1">
+          <Card>
+            <CardHeader>
+              <CardTitle>Form Settings</CardTitle>
+              <CardDescription>Configure your form details</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label htmlFor="title">Form Title</Label>
+                <Input
+                  id="title"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter form title"
+                />
+              </div>
+              <div>
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  placeholder="Enter form description"
+                  rows={3}
+                />
+              </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Form Settings */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle>Form Settings</CardTitle>
-                <CardDescription>Configure your form details</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Form Title</Label>
-                  <Input
-                    id="title"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Enter form title"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="description">Description (Optional)</Label>
-                  <Textarea
-                    id="description"
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    placeholder="Enter form description"
-                    rows={3}
-                  />
-                </div>
-
-                <div className="border-t pt-4">
-                  <h3 className="font-medium mb-3">Privacy Consent</h3>
-                  <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <div className="flex items-center space-x-2 mb-2">
-                      <Shield className="w-4 h-4 text-yellow-600" />
-                      <span className="text-sm font-medium text-yellow-800">
-                        Mandatory Privacy Checkbox
-                      </span>
-                    </div>
-                    <p className="text-xs text-yellow-700 mb-3">
-                      This checkbox is automatically added to every form and
-                      cannot be removed. Users must check this to submit the
-                      form.
-                    </p>
-                    <div>
-                      <Label htmlFor="privacy-label" className="text-sm">
-                        Privacy Consent Label
-                      </Label>
-                      <Textarea
-                        id="privacy-label"
-                        value={privacyLabel}
-                        onChange={(e) => setPrivacyLabel(e.target.value)}
-                        placeholder="Enter privacy consent text"
-                        rows={3}
-                        className="mt-1"
-                      />
-                    </div>
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3">Privacy Consent</h3>
+                <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Shield className="w-4 h-4 text-yellow-600" />
+                    <span className="text-sm font-medium text-yellow-800">
+                      Mandatory Privacy Checkbox
+                    </span>
+                  </div>
+                  <p className="text-xs text-yellow-700 mb-3">
+                    This checkbox is automatically added to every form and
+                    cannot be removed. Users must check this to submit the form.
+                  </p>
+                  <div>
+                    <Label htmlFor="privacy-label" className="text-sm">
+                      Privacy Consent Label
+                    </Label>
+                    <Textarea
+                      id="privacy-label"
+                      value={privacyLabel}
+                      onChange={(e) => setPrivacyLabel(e.target.value)}
+                      placeholder="Enter privacy consent text"
+                      rows={3}
+                      className="mt-1"
+                    />
                   </div>
                 </div>
+              </div>
 
-                  <>
-                    <div className="border-t pt-4">
-                      <h3 className="font-medium mb-3">Add Fields</h3>
-                      <div className="space-y-2">
-                        <Button
-                          variant="outline"
-                          onClick={() => addField("input")}
-                          className="w-full justify-start"
-                        >
-                          <Type className="w-4 h-4 mr-2" />
-                          Add Text Input
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => addField("selection")}
-                          className="w-full justify-start"
-                        >
-                          <CircleDot className="w-4 h-4 mr-2" />
-                          Add Radio Button
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => addField("multipleChoice")}
-                          className="w-full justify-start"
-                        >
-                          <CheckSquare className="w-4 h-4 mr-2" />
-                          Add Checkbox
-                        </Button>
-                      </div>
-                    </div>
-                  </>
-             
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Form Builder */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>
-                  {"Form Builder"}
-                </CardTitle>
-                <CardDescription>
-                  {"Drag and drop fields to build your form"}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 min-h-96 bg-gray-50">
-                  {fields.length === 0 ? (
-                    <div className="text-center py-12">
-                      <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
-                        <Plus className="w-8 h-8 text-gray-400" />
-                      </div>
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">
-                        No fields added yet
-                      </h3>
-                      <p className="text-gray-500">
-                        Add fields from the left panel to start building your
-                        form
-                      </p>
-                    </div>
-                  ) : (
-                    <DndContext
-                      sensors={sensors}
-                      collisionDetection={closestCenter}
-                      onDragEnd={handleDragEnd}
+              <>
+                <div className="border-t pt-4">
+                  <h3 className="font-medium mb-3">Add Fields</h3>
+                  <div className="space-y-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("input")}
+                      className="w-full justify-start"
                     >
-                      <div className="space-y-4">
-                        <div className="mb-6 p-4 bg-white rounded-lg border">
-                          <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                            {title || "Form Title"}
-                          </h2>
-                          {description && (
-                            <p className="text-gray-600">{description}</p>
-                          )}
+                      <Type className="w-4 h-4 mr-2" />
+                      Add Text Input
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("selection")}
+                      className="w-full justify-start"
+                    >
+                      <CircleDot className="w-4 h-4 mr-2" />
+                      Add Radio Button
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("multipleChoice")}
+                      className="w-full justify-start"
+                    >
+                      <CheckSquare className="w-4 h-4 mr-2" />
+                      Add Checkbox
+                    </Button>
+                  </div>
+                </div>
+              </>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Form Builder */}
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>{"Form Builder"}</CardTitle>
+              <CardDescription>
+                {"Drag and drop fields to build your form"}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 min-h-96 bg-gray-50">
+                {fields.length === 0 ? (
+                  <div className="text-center py-12">
+                    <div className="w-16 h-16 mx-auto mb-4 bg-gray-200 rounded-full flex items-center justify-center">
+                      <Plus className="w-8 h-8 text-gray-400" />
+                    </div>
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                      No fields added yet
+                    </h3>
+                    <p className="text-gray-500">
+                      Add fields from the left panel to start building your form
+                    </p>
+                  </div>
+                ) : (
+                  <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                  >
+                    <div className="space-y-4">
+                      <div className="mb-6 p-4 bg-white rounded-lg border">
+                        <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                          {title || "Form Title"}
+                        </h2>
+                        {description && (
+                          <p className="text-gray-600">{description}</p>
+                        )}
+                      </div>
+
+                      <SortableContext
+                        items={fields.map((field) => field.id)}
+                        strategy={verticalListSortingStrategy}
+                      >
+                        <div className="space-y-4">
+                          {fields.map((field, index) => (
+                            <SortableField
+                              key={field.id}
+                              field={field}
+                              index={index}
+                              onEdit={startEditField}
+                              onRemove={removeField}
+                              isEditing={editingField === field.id}
+                              editProps={{
+                                editLabel,
+                                setEditLabel,
+                                editRequired,
+                                setEditRequired,
+                                editInputType,
+                                setEditInputType,
+                                editOptions,
+                                setEditOptions,
+                                editMaxChoices,
+                                setEditMaxChoices,
+                                addOption,
+                                updateOption,
+                                removeOption,
+                                saveFieldEdit,
+                                setEditingField,
+                              }}
+                            />
+                          ))}
                         </div>
+                      </SortableContext>
 
-                        <SortableContext
-                          items={fields.map((field) => field.id)}
-                          strategy={verticalListSortingStrategy}
-                        >
-                          <div className="space-y-4">
-                            {fields.map((field, index) => (
-                              <SortableField
-                                key={field.id}
-                                field={field}
-                                index={index}
-                                onEdit={startEditField}
-                                onRemove={removeField}
-                                isEditing={editingField === field.id}
-                                editProps={{
-                                  editLabel,
-                                  setEditLabel,
-                                  editRequired,
-                                  setEditRequired,
-                                  editInputType,
-                                  setEditInputType,
-                                  editOptions,
-                                  setEditOptions,
-                                  editMaxChoices,
-                                  setEditMaxChoices,
-                                  addOption,
-                                  updateOption,
-                                  removeOption,
-                                  saveFieldEdit,
-                                  setEditingField,
-                                }}
-                              />
-                            ))}
+                      {/* Mandatory Privacy Checkbox */}
+                      <div className="border-2 border-yellow-300 rounded-lg p-4 bg-yellow-50">
+                        <div className="flex items-center justify-between mb-3">
+                          <div className="flex items-center space-x-2">
+                            <Shield className="w-4 h-4 text-yellow-600" />
+                            <span className="font-medium text-yellow-800">
+                              Privacy Consent (Mandatory)
+                            </span>
+                            <span className="text-red-500 text-sm">*</span>
                           </div>
-                        </SortableContext>
-
-                        {/* Mandatory Privacy Checkbox */}
-                        <div className="border-2 border-yellow-300 rounded-lg p-4 bg-yellow-50">
-                          <div className="flex items-center justify-between mb-3">
-                            <div className="flex items-center space-x-2">
-                              <Shield className="w-4 h-4 text-yellow-600" />
-                              <span className="font-medium text-yellow-800">
-                                Privacy Consent (Mandatory)
-                              </span>
-                              <span className="text-red-500 text-sm">*</span>
-                            </div>
-                            <Badge variant="secondary" className="text-xs">
-                              Cannot be removed
-                            </Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            Cannot be removed
+                          </Badge>
+                        </div>
+                        <div className="space-y-2">
+                          <div className="flex items-start space-x-2">
+                            <Checkbox disabled className="mt-1" />
+                            <span className="text-sm text-gray-700 leading-relaxed">
+                              {privacyLabel}
+                            </span>
                           </div>
-                          <div className="space-y-2">
-                            <div className="flex items-start space-x-2">
-                              <Checkbox disabled className="mt-1" />
-                              <span className="text-sm text-gray-700 leading-relaxed">
-                                {privacyLabel}
-                              </span>
-                            </div>
-                            <p className="text-xs text-yellow-700 italic">
-                              This checkbox must be checked for users to submit
-                              the form
-                            </p>
-                          </div>
+                          <p className="text-xs text-yellow-700 italic">
+                            This checkbox must be checked for users to submit
+                            the form
+                          </p>
                         </div>
                       </div>
-                    </DndContext>
-                  )}
+                    </div>
+                  </DndContext>
+                )}
+              </div>
+
+              {/* Create/Update Form Button */}
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex justify-end">
+                  <Button
+                    onClick={saveForm}
+                    disabled={saving}
+                    size="lg"
+                    className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 px-8 py-3"
+                  >
+                    <Save className="w-5 h-5" />
+                    <span>
+                      {saving
+                        ? "Saving..."
+                        : mode === "create"
+                        ? "Create Form"
+                        : "Update Form"}
+                    </span>
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

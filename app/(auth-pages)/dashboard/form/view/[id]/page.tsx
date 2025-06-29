@@ -105,10 +105,11 @@ export default function AdminFormViewPage() {
   };
 
   const handleTabChange = (tab: string) => {
+    // Navigate to the specific dashboard tab with URL parameter
     if (tab === "forms") {
-      router.push("/dashboard");
+      router.push("/dashboard?tab=forms");
     } else {
-      router.push("/dashboard");
+      router.push(`/dashboard?tab=${tab}`);
     }
   };
 
@@ -300,10 +301,37 @@ export default function AdminFormViewPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <Loader size={48} className="mb-4 text-blue-500" />
-          <p className="text-gray-600">Loading submission...</p>
+      <div className="min-h-screen bg-cyan-50">
+        <DashboardHeader
+          activeTab="forms"
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* View Form Submission Content */}
+          <div className="bg-white shadow-sm border rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h1 className="text-xl font-semibold text-gray-900">
+                  View Form Submission
+                </h1>
+                <button
+                  onClick={() => router.push("/dashboard?tab=forms")}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  ← Back to Forms
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center">
+                  <Loader size={32} className="mb-3 text-blue-500" />
+                  <p className="text-gray-600">Loading submission...</p>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -316,7 +344,7 @@ export default function AdminFormViewPage() {
           <h1 className="text-6xl font-bold text-gray-900 mb-4">404</h1>
           <p className="text-xl text-gray-600 mb-8">Page not found</p>
           <button
-            onClick={() => router.push("/dashboard")}
+            onClick={() => router.push("/dashboard?tab=forms")}
             className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
           >
             Go to Dashboard
@@ -328,32 +356,32 @@ export default function AdminFormViewPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gray-50">
-        <header className="bg-white shadow-sm border-b">
-          <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex justify-between items-center h-16">
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push("/dashboard")}
-                  className="mr-4"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Dashboard
-                </Button>
+      <div className="min-h-screen bg-cyan-50">
+        <DashboardHeader
+          activeTab="forms"
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* View Form Submission Content */}
+          <div className="bg-white shadow-sm border rounded-lg">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center justify-between">
                 <h1 className="text-xl font-semibold text-gray-900">
                   View Form Submission
                 </h1>
+                <button
+                  onClick={() => router.push("/dashboard?tab=forms")}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  ← Back to Forms
+                </button>
               </div>
             </div>
+            <div className="p-6">
+              <div className="text-center py-8 text-red-500">{error}</div>
+            </div>
           </div>
-        </header>
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <Card>
-            <CardContent className="text-center py-8 text-red-500">
-              {error}
-            </CardContent>
-          </Card>
         </div>
       </div>
     );
@@ -361,31 +389,27 @@ export default function AdminFormViewPage() {
 
   return (
     <div className="min-h-screen bg-cyan-50">
-      {/* <DashboardHeader
+      <DashboardHeader
         activeTab="forms"
         onTabChange={handleTabChange}
         onLogout={handleLogout}
-      /> */}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        {/* Page Header */}
-        <div className="bg-white shadow-sm border rounded-lg mb-6">
-          <div className="px-6 py-4">
-            <div className="flex justify-between items-center">
-              <div className="flex items-center">
-                <Button
-                  variant="ghost"
-                  onClick={() => router.push("/dashboard")}
-                  className="mr-4"
-                >
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Back to Dashboard
-                </Button>
-                <h1 className="text-xl font-semibold text-gray-900">
-                  {isEditMode ? "Edit Form Submission" : "View Form Submission"}
-                </h1>
-              </div>
+        {/* View Form Submission Content */}
+        <div className="bg-white shadow-sm border rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-gray-900">
+                {isEditMode ? "Edit Form Submission" : "View Form Submission"}
+              </h1>
               <div className="flex items-center space-x-2">
+                <button
+                  onClick={() => router.push("/dashboard?tab=forms")}
+                  className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                >
+                  ← Back to Forms
+                </button>
                 {!isEditMode ? (
                   <Button
                     onClick={() => setIsEditMode(true)}
@@ -417,278 +441,288 @@ export default function AdminFormViewPage() {
               </div>
             </div>
           </div>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* User Info Sidebar */}
-          <div className="lg:col-span-1">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <User className="w-5 h-5" />
-                  <span>Submission Details</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">
-                    User
-                  </Label>
-                  <p className="text-sm text-gray-900">
-                    {submission?.userName}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {submission?.userEmail}
-                  </p>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">
-                    Submitted
-                  </Label>
-                  <div className="flex items-center space-x-2 text-sm text-gray-900">
-                    <Calendar className="w-4 h-4" />
-                    <span>
-                      {submission
-                        ? new Date(submission.submittedAt).toLocaleDateString()
-                        : ""}{" "}
-                      at{" "}
-                      {submission
-                        ? new Date(submission.submittedAt).toLocaleTimeString()
-                        : ""}
-                    </span>
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">
-                    Form Type
-                  </Label>
-                  <div className="flex items-center space-x-2">
-                    {submission?.isCompulsory ? (
-                      <Badge variant="destructive" className="text-xs">
-                        Required
-                      </Badge>
-                    ) : (
-                      <Badge variant="secondary" className="text-xs">
-                        Optional
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-                <div>
-                  <Label className="text-sm font-medium text-gray-600">
-                    Privacy Consent
-                  </Label>
-                  <div className="flex items-center space-x-2">
-                    {(
-                      isEditMode ? editPrivacyConsent : submission?.isChecked
-                    ) ? (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-green-100 text-green-800"
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Granted
-                      </Badge>
-                    ) : (
-                      <Badge
-                        variant="secondary"
-                        className="text-xs bg-red-100 text-red-800"
-                      >
-                        <AlertCircle className="w-3 h-3 mr-1" />
-                        Denied
-                      </Badge>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Form Content */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-3">
-                  <span>{submission?.formTitle}</span>
-                  <div className="flex items-center space-x-1">
-                    {isEditMode ? (
-                      <Edit className="w-4 h-4 text-blue-600" />
-                    ) : (
-                      <Eye className="w-4 h-4 text-gray-600" />
-                    )}
-                  </div>
-                </CardTitle>
-                {submission?.formDescription && (
-                  <CardDescription>
-                    {submission.formDescription}
-                  </CardDescription>
-                )}
-              </CardHeader>
-              <CardContent className="space-y-6">
-                {/* Form Fields */}
-                {submission?.fields.map((field) => {
-                  const currentValue = getCurrentFieldValue(field);
-
-                  return (
-                    <div key={field.id} className="space-y-2">
-                      <Label className="text-sm font-medium text-gray-700">
-                        {field.label}
-                        {field.required && (
-                          <span className="text-red-500 ml-1">*</span>
-                        )}
+          <div className="p-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              {/* User Info Sidebar */}
+              <div className="lg:col-span-1">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-2">
+                      <User className="w-5 h-5" />
+                      <span>Submission Details</span>
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        User
                       </Label>
-
-                      {/* Input Field */}
-                      {field.type === "input" &&
-                        (isEditMode ? (
-                          <Input
-                            type={field.inputType || "text"}
-                            value={currentValue as string}
-                            onChange={(e) =>
-                              handleEditInputChange(field.id, e.target.value)
-                            }
-                            placeholder={`Enter ${field.label.toLowerCase()}`}
-                          />
-                        ) : (
-                          <div className="bg-gray-50 p-3 rounded border">
-                            <p className="text-gray-900">
-                              {currentValue || "No response"}
-                            </p>
-                          </div>
-                        ))}
-
-                      {/* Radio Button (Selection) */}
-                      {field.type === "selection" &&
-                        field.options &&
-                        (isEditMode ? (
-                          <RadioGroup
-                            value={currentValue as string}
-                            onValueChange={(value) =>
-                              handleEditInputChange(field.id, value)
-                            }
-                            className="space-y-2"
-                          >
-                            {field.options.map((option, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center space-x-2"
-                              >
-                                <RadioGroupItem
-                                  value={option}
-                                  id={`${field.id}-${index}`}
-                                />
-                                <Label
-                                  htmlFor={`${field.id}-${index}`}
-                                  className="text-sm"
-                                >
-                                  {option}
-                                </Label>
-                              </div>
-                            ))}
-                          </RadioGroup>
-                        ) : (
-                          <div className="bg-gray-50 p-3 rounded border">
-                            <p className="text-gray-900">
-                              {currentValue || "No selection"}
-                            </p>
-                          </div>
-                        ))}
-
-                      {/* Multiple Choice (Checkbox) */}
-                      {field.type === "multipleChoice" &&
-                        field.options &&
-                        (isEditMode ? (
-                          <div className="space-y-2">
-                            {field.options.map((option, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center space-x-2"
-                              >
-                                <Checkbox
-                                  id={`${field.id}-${index}`}
-                                  checked={(currentValue as string[]).includes(
-                                    option
-                                  )}
-                                  onCheckedChange={(checked) =>
-                                    handleEditMultipleChoiceChange(
-                                      field.id,
-                                      option,
-                                      checked as boolean
-                                    )
-                                  }
-                                />
-                                <Label
-                                  htmlFor={`${field.id}-${index}`}
-                                  className="text-sm"
-                                >
-                                  {option}
-                                </Label>
-                              </div>
-                            ))}
-                            <p className="text-xs text-gray-500">
-                              Maximum {field.maxChoices} choice(s) allowed
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="bg-gray-50 p-3 rounded border">
-                            <p className="text-gray-900">
-                              {Array.isArray(currentValue) &&
-                              currentValue.length > 0
-                                ? currentValue.join(", ")
-                                : "No selections"}
-                            </p>
-                          </div>
-                        ))}
+                      <p className="text-sm text-gray-900">
+                        {submission?.userName}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {submission?.userEmail}
+                      </p>
                     </div>
-                  );
-                })}
-
-                {/* Privacy Consent */}
-                <div className="border-t pt-6">
-                  <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <div className="flex items-start space-x-3">
-                      {isEditMode ? (
-                        <Checkbox
-                          id="privacy-consent-edit"
-                          checked={editPrivacyConsent}
-                          onCheckedChange={(checked) =>
-                            setEditPrivacyConsent(checked as boolean)
-                          }
-                        />
-                      ) : (
-                        <div className="mt-1">
-                          {submission?.isChecked ? (
-                            <CheckCircle className="w-4 h-4 text-green-600" />
-                          ) : (
-                            <AlertCircle className="w-4 h-4 text-red-600" />
-                          )}
-                        </div>
-                      )}
-                      <div className="flex-1">
-                        <Label
-                          htmlFor={
-                            isEditMode ? "privacy-consent-edit" : undefined
-                          }
-                          className={`text-sm font-medium text-gray-900 ${
-                            isEditMode ? "cursor-pointer" : ""
-                          }`}
-                        >
-                          <div className="flex items-center space-x-2 mb-2">
-                            <Shield className="w-4 h-4 text-yellow-600" />
-                            <span>Privacy Consent</span>
-                            <span className="text-red-500">*</span>
-                          </div>
-                        </Label>
-                        <p className="text-sm text-gray-700 leading-relaxed">
-                          I consent to the processing of my personal data and
-                          agree to the privacy policy
-                        </p>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Submitted
+                      </Label>
+                      <div className="flex items-center space-x-2 text-sm text-gray-900">
+                        <Calendar className="w-4 h-4" />
+                        <span>
+                          {submission
+                            ? new Date(
+                                submission.submittedAt
+                              ).toLocaleDateString()
+                            : ""}{" "}
+                          at{" "}
+                          {submission
+                            ? new Date(
+                                submission.submittedAt
+                              ).toLocaleTimeString()
+                            : ""}
+                        </span>
                       </div>
                     </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Form Type
+                      </Label>
+                      <div className="flex items-center space-x-2">
+                        {submission?.isCompulsory ? (
+                          <Badge variant="destructive" className="text-xs">
+                            Required
+                          </Badge>
+                        ) : (
+                          <Badge variant="secondary" className="text-xs">
+                            Optional
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                    <div>
+                      <Label className="text-sm font-medium text-gray-600">
+                        Privacy Consent
+                      </Label>
+                      <div className="flex items-center space-x-2">
+                        {(
+                          isEditMode
+                            ? editPrivacyConsent
+                            : submission?.isChecked
+                        ) ? (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-green-100 text-green-800"
+                          >
+                            <CheckCircle className="w-3 h-3 mr-1" />
+                            Granted
+                          </Badge>
+                        ) : (
+                          <Badge
+                            variant="secondary"
+                            className="text-xs bg-red-100 text-red-800"
+                          >
+                            <AlertCircle className="w-3 h-3 mr-1" />
+                            Denied
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Form Content */}
+              <div className="lg:col-span-2">
+                <Card>
+                  <CardHeader>
+                    <CardTitle className="flex items-center space-x-3">
+                      <span>{submission?.formTitle}</span>
+                      <div className="flex items-center space-x-1">
+                        {isEditMode ? (
+                          <Edit className="w-4 h-4 text-blue-600" />
+                        ) : (
+                          <Eye className="w-4 h-4 text-gray-600" />
+                        )}
+                      </div>
+                    </CardTitle>
+                    {submission?.formDescription && (
+                      <CardDescription>
+                        {submission.formDescription}
+                      </CardDescription>
+                    )}
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                    {/* Form Fields */}
+                    {submission?.fields.map((field) => {
+                      const currentValue = getCurrentFieldValue(field);
+
+                      return (
+                        <div key={field.id} className="space-y-2">
+                          <Label className="text-sm font-medium text-gray-700">
+                            {field.label}
+                            {field.required && (
+                              <span className="text-red-500 ml-1">*</span>
+                            )}
+                          </Label>
+
+                          {/* Input Field */}
+                          {field.type === "input" &&
+                            (isEditMode ? (
+                              <Input
+                                type={field.inputType || "text"}
+                                value={currentValue as string}
+                                onChange={(e) =>
+                                  handleEditInputChange(
+                                    field.id,
+                                    e.target.value
+                                  )
+                                }
+                                placeholder={`Enter ${field.label.toLowerCase()}`}
+                              />
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <p className="text-gray-900">
+                                  {currentValue || "No response"}
+                                </p>
+                              </div>
+                            ))}
+
+                          {/* Radio Button (Selection) */}
+                          {field.type === "selection" &&
+                            field.options &&
+                            (isEditMode ? (
+                              <RadioGroup
+                                value={currentValue as string}
+                                onValueChange={(value) =>
+                                  handleEditInputChange(field.id, value)
+                                }
+                                className="space-y-2"
+                              >
+                                {field.options.map((option, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <RadioGroupItem
+                                      value={option}
+                                      id={`${field.id}-${index}`}
+                                    />
+                                    <Label
+                                      htmlFor={`${field.id}-${index}`}
+                                      className="text-sm"
+                                    >
+                                      {option}
+                                    </Label>
+                                  </div>
+                                ))}
+                              </RadioGroup>
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <p className="text-gray-900">
+                                  {currentValue || "No selection"}
+                                </p>
+                              </div>
+                            ))}
+
+                          {/* Multiple Choice (Checkbox) */}
+                          {field.type === "multipleChoice" &&
+                            field.options &&
+                            (isEditMode ? (
+                              <div className="space-y-2">
+                                {field.options.map((option, index) => (
+                                  <div
+                                    key={index}
+                                    className="flex items-center space-x-2"
+                                  >
+                                    <Checkbox
+                                      id={`${field.id}-${index}`}
+                                      checked={(
+                                        currentValue as string[]
+                                      ).includes(option)}
+                                      onCheckedChange={(checked) =>
+                                        handleEditMultipleChoiceChange(
+                                          field.id,
+                                          option,
+                                          checked as boolean
+                                        )
+                                      }
+                                    />
+                                    <Label
+                                      htmlFor={`${field.id}-${index}`}
+                                      className="text-sm"
+                                    >
+                                      {option}
+                                    </Label>
+                                  </div>
+                                ))}
+                                <p className="text-xs text-gray-500">
+                                  Maximum {field.maxChoices} choice(s) allowed
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <p className="text-gray-900">
+                                  {Array.isArray(currentValue) &&
+                                  currentValue.length > 0
+                                    ? currentValue.join(", ")
+                                    : "No selections"}
+                                </p>
+                              </div>
+                            ))}
+                        </div>
+                      );
+                    })}
+
+                    {/* Privacy Consent */}
+                    <div className="border-t pt-6">
+                      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                        <div className="flex items-start space-x-3">
+                          {isEditMode ? (
+                            <Checkbox
+                              id="privacy-consent-edit"
+                              checked={editPrivacyConsent}
+                              onCheckedChange={(checked) =>
+                                setEditPrivacyConsent(checked as boolean)
+                              }
+                            />
+                          ) : (
+                            <div className="mt-1">
+                              {submission?.isChecked ? (
+                                <CheckCircle className="w-4 h-4 text-green-600" />
+                              ) : (
+                                <AlertCircle className="w-4 h-4 text-red-600" />
+                              )}
+                            </div>
+                          )}
+                          <div className="flex-1">
+                            <Label
+                              htmlFor={
+                                isEditMode ? "privacy-consent-edit" : undefined
+                              }
+                              className={`text-sm font-medium text-gray-900 ${
+                                isEditMode ? "cursor-pointer" : ""
+                              }`}
+                            >
+                              <div className="flex items-center space-x-2 mb-2">
+                                <Shield className="w-4 h-4 text-yellow-600" />
+                                <span>Privacy Consent</span>
+                                <span className="text-red-500">*</span>
+                              </div>
+                            </Label>
+                            <p className="text-sm text-gray-700 leading-relaxed">
+                              I consent to the processing of my personal data
+                              and agree to the privacy policy
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

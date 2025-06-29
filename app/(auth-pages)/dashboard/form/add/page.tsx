@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Loader } from "@/components/ui/loader";
 import FormBuilder from "../_components/FormBuilder";
+import DashboardHeader from "../../_components/admin/DashboardHeader";
+import { signOut } from "next-auth/react";
 
 export default function AddFormPage() {
   const { data: session, status } = useSession();
@@ -27,25 +29,46 @@ export default function AddFormPage() {
     setLoading(false);
   }, [session, status, router]);
 
-  // const handleLogout = async () => {
-  //   await signOut({ callbackUrl: "/login" });
-  //   router.push("/login");
-  // };
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: "/login" });
+    router.push("/login");
+  };
 
-  // const handleTabChange = (tab: string) => {
-  //   if (tab === "forms") {
-  //     router.push("/dashboard");
-  //   } else {
-  //     router.push("/dashboard");
-  //   }
-  // };
+  const handleTabChange = (tab: string) => {
+    // Navigate to the specific dashboard tab with URL parameter
+    if (tab === "forms") {
+      router.push("/dashboard?tab=forms");
+    } else {
+      router.push(`/dashboard?tab=${tab}`);
+    }
+  };
 
   if (loading || status === "loading") {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="flex flex-col items-center">
-          <Loader size={48} className="mb-4 text-blue-500" />
-          <p className="text-gray-600">Loading...</p>
+      <div className="min-h-screen bg-cyan-50">
+        <DashboardHeader
+          activeTab="forms"
+          onTabChange={handleTabChange}
+          onLogout={handleLogout}
+        />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          {/* Page Header */}
+          <div className="bg-white shadow-sm border rounded-lg mb-6">
+            <div className="px-6 py-4">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Add New Form
+              </h1>
+            </div>
+          </div>
+          {/* Loading Content */}
+          <div className="bg-white shadow-sm border rounded-lg">
+            <div className="flex items-center justify-center py-12">
+              <div className="flex flex-col items-center">
+                <Loader size={32} className="mb-3 text-blue-500" />
+                <p className="text-gray-600">Loading form builder...</p>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     );
@@ -70,13 +93,31 @@ export default function AddFormPage() {
 
   return (
     <div className="min-h-screen bg-cyan-50">
-      {/* <DashboardHeader
+      <DashboardHeader
         activeTab="forms"
         onTabChange={handleTabChange}
         onLogout={handleLogout}
-      /> */}
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-        <FormBuilder mode="create" />
+        {/* Form Builder Content */}
+        <div className="bg-white shadow-sm border rounded-lg">
+          <div className="px-6 py-4 border-b border-gray-200">
+            <div className="flex items-center justify-between">
+              <h1 className="text-xl font-semibold text-gray-900">
+                Add New Form
+              </h1>
+              <button
+                onClick={() => router.push("/dashboard?tab=forms")}
+                className="inline-flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                ← Back to Forms
+              </button>
+            </div>
+          </div>
+          <div className="p-6">
+            <FormBuilder mode="create" />
+          </div>
+        </div>
       </div>
     </div>
   );
