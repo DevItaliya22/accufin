@@ -16,19 +16,10 @@ import {
   EyeOff,
   FileText,
   AlertCircle,
-  MoreVertical,
   Calendar,
   BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader } from "@/components/ui/loader";
@@ -232,13 +223,13 @@ export default function FormsManagement() {
               </p>
             </div>
           ) : (
-            <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            <div className="space-y-4">
               {forms.map((form) => (
                 <Card
                   key={form.id}
                   className="hover:shadow-lg transition-shadow duration-200"
                 >
-                  <CardHeader className="pb-3">
+                  <CardHeader className="pb-4">
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <div className="flex items-center space-x-2 mb-2">
@@ -254,86 +245,20 @@ export default function FormsManagement() {
                             </Badge>
                           )}
                         </div>
-                        <CardTitle className="text-lg leading-tight">
+                        <CardTitle className="text-xl leading-tight">
                           {form.title}
                         </CardTitle>
                         {form.description && (
-                          <CardDescription className="mt-1">
+                          <CardDescription className="mt-2 text-base">
                             {form.description}
                           </CardDescription>
                         )}
                       </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-8 w-8 p-0"
-                          >
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(`/dashboard/form/edit/${form.id}`)
-                            }
-                          >
-                            <Edit className="w-4 h-4 mr-2" />
-                            Edit Form
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              router.push(
-                                `/dashboard/form/responses/${form.id}`
-                              )
-                            }
-                          >
-                            <FileText className="w-4 h-4 mr-2" />
-                            View Responses
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleToggleActive(form.id, form.isActive)
-                            }
-                            disabled={togglingId === form.id}
-                          >
-                            {form.isActive ? (
-                              <EyeOff className="w-4 h-4 mr-2" />
-                            ) : (
-                              <Eye className="w-4 h-4 mr-2" />
-                            )}
-                            {form.isActive ? "Deactivate" : "Activate"}
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() =>
-                              handleToggleCompulsory(form.id, form.isCompulsory)
-                            }
-                            disabled={togglingCompulsoryId === form.id}
-                          >
-                            <AlertCircle className="w-4 h-4 mr-2" />
-                            {form.isCompulsory
-                              ? "Make Optional"
-                              : "Make Required"}
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            onClick={() => handleDelete(form.id)}
-                            disabled={deletingId === form.id}
-                            className="text-red-600 focus:text-red-600"
-                          >
-                            <Trash2 className="w-4 h-4 mr-2" />
-                            Delete Form
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
                     </div>
                   </CardHeader>
                   <CardContent className="pt-0">
-                    <div className="space-y-3">
-                      <div className="grid grid-cols-2 gap-4 text-sm">
+                    <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                      <div className="flex flex-wrap gap-6 text-sm">
                         <div className="flex items-center space-x-2 text-gray-600">
                           <FormInput className="w-4 h-4" />
                           <span>
@@ -347,13 +272,84 @@ export default function FormsManagement() {
                           <BarChart3 className="w-4 h-4" />
                           <span>{form._count.formResponses} responses</span>
                         </div>
+                        <div className="flex items-center space-x-2 text-xs text-gray-500">
+                          <Calendar className="w-3 h-3" />
+                          <span>
+                            Created{" "}
+                            {new Date(form.createdAt).toLocaleDateString()}
+                          </span>
+                        </div>
                       </div>
-                      <div className="flex items-center space-x-2 text-xs text-gray-500">
-                        <Calendar className="w-3 h-3" />
-                        <span>
-                          Created{" "}
-                          {new Date(form.createdAt).toLocaleDateString()}
-                        </span>
+
+                      <div className="flex flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(`/dashboard/form/edit/${form.id}`)
+                          }
+                          className="flex items-center space-x-1"
+                        >
+                          <Edit className="w-4 h-4" />
+                          <span>Edit</span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            router.push(`/dashboard/form/responses/${form.id}`)
+                          }
+                          className="flex items-center space-x-1"
+                        >
+                          <FileText className="w-4 h-4" />
+                          <span>Responses</span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleToggleActive(form.id, form.isActive)
+                          }
+                          disabled={togglingId === form.id}
+                          className="flex items-center space-x-1"
+                        >
+                          {form.isActive ? (
+                            <EyeOff className="w-4 h-4" />
+                          ) : (
+                            <Eye className="w-4 h-4" />
+                          )}
+                          <span>
+                            {form.isActive ? "Deactivate" : "Activate"}
+                          </span>
+                        </Button>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleToggleCompulsory(form.id, form.isCompulsory)
+                          }
+                          disabled={togglingCompulsoryId === form.id}
+                          className="flex items-center space-x-1"
+                        >
+                          <AlertCircle className="w-4 h-4" />
+                          <span>
+                            {form.isCompulsory ? "Optional" : "Required"}
+                          </span>
+                        </Button>
+
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(form.id)}
+                          disabled={deletingId === form.id}
+                          className="flex items-center space-x-1"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>Delete</span>
+                        </Button>
                       </div>
                     </div>
                   </CardContent>
