@@ -23,7 +23,7 @@ model User {
   provider  String? @default("credentials")
   contactNumber String?
   profileUrl String?
-  address   String?
+  address   String? 
   occupation String?
   uploadedFiles File[] @relation("UserUploadedFiles")
   receivedFiles File[] @relation("UserReceivedFiles")

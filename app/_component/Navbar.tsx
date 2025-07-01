@@ -107,13 +107,11 @@ export default function NewHeader() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <span className="text-white text-5xl font-bold">G</span>
-            <div>
-              <span className="text-white text-4xl font-bold">audit</span>
-              <div className="text-xs text-white tracking-widest">
-                ACCOUNTING FIRM
-              </div>
-            </div>
+            <img
+              src="/image-000.png"
+              alt="Accufin Logo"
+              className="h-16 w-auto"
+            />
           </Link>
 
           {/* Desktop Navigation */}
@@ -162,11 +160,11 @@ export default function NewHeader() {
               </Link>
             ) : (
               <Link
-              href="/login"
-              className="text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
-            >
-              Login
-            </Link>
+                href="/login"
+                className="text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
+              >
+                Login
+              </Link>
             )}
           </nav>
 
