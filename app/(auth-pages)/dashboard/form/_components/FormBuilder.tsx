@@ -30,6 +30,7 @@ import {
   GripVertical,
   Save,
   Eye,
+  Users,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -37,6 +38,17 @@ import toast from "react-hot-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  MultiSelectCombobox,
+  Option,
+} from "@/components/ui/multi-select-combobox";
 import {
   DndContext,
   closestCenter,
@@ -68,6 +80,12 @@ interface FormField {
 interface FormBuilderProps {
   mode: "create" | "edit";
   formId?: string;
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string;
 }
 
 // Sortable Field Component
@@ -334,6 +352,9 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
   const [fields, setFields] = useState<FormField[]>([]);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [users, setUsers] = useState<User[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   // const [previewMode, setPreviewMode] = useState(false);
 
   // Drag and drop sensors
@@ -357,12 +378,26 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
   const [editOptions, setEditOptions] = useState<string[]>([""]);
   const [editMaxChoices, setEditMaxChoices] = useState<number>(1);
 
-  // Load form data if editing
+  // Load form data if editing and fetch users
   useEffect(() => {
+    fetchUsers();
     if (mode === "edit" && formId) {
       loadFormData();
     }
   }, [mode, formId]);
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/admin/get-users");
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
+    }
+  };
 
   const loadFormData = async () => {
     try {
@@ -379,6 +414,11 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
         formData.privacyLabel ||
           "I consent to the processing of my personal data and agree to the privacy policy"
       );
+
+      // Load assigned users
+      if (formData.assignedUsers) {
+        setSelectedUserIds(formData.assignedUsers.map((user: User) => user.id));
+      }
 
       // Convert form data to fields
       const loadedFields: FormField[] = [];
@@ -541,6 +581,7 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
         title: title.trim(),
         description: description.trim() || null,
         privacyLabel: privacyLabel.trim(),
+        assignedUserIds: selectedUserIds,
         fields: fields.map((field) => ({
           type: field.type,
           label: field.label,
@@ -648,6 +689,72 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
                       rows={3}
                       className="mt-1"
                     />
+                  </div>
+                </div>
+              </div>
+
+              <div className="border-t pt-4">
+                <h3 className="font-medium mb-3">User Assignment</h3>
+                <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <div className="flex items-center space-x-2 mb-2">
+                    <Users className="w-4 h-4 text-blue-600" />
+                    <span className="text-sm font-medium text-blue-800">
+                      Assign Users to Form
+                    </span>
+                  </div>
+                  <p className="text-xs text-blue-700 mb-3">
+                    Select which users can see and fill this form. Leave empty
+                    to make it available to all users.
+                  </p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-700">
+                        {selectedUserIds.length} user
+                        {selectedUserIds.length !== 1 ? "s" : ""} assigned
+                      </span>
+                      <Dialog
+                        open={isUserModalOpen}
+                        onOpenChange={setIsUserModalOpen}
+                      >
+                        <DialogTrigger asChild>
+                          <Button variant="outline" size="sm">
+                            <Users className="w-4 h-4 mr-2" />
+                            Select Users
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-md">
+                          <DialogHeader>
+                            <DialogTitle>Assign Users to Form</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-4">
+                            <div className="space-y-2">
+                              <MultiSelectCombobox
+                                options={users.map((user) => ({
+                                  value: user.id,
+                                  label: user.name || user.email,
+                                }))}
+                                selectedValues={selectedUserIds}
+                                onSelectionChange={setSelectedUserIds}
+                                placeholder="Select users..."
+                                searchPlaceholder="Search users..."
+                                emptyMessage="No users found."
+                              />
+                            </div>
+                            <div className="flex justify-end space-x-2">
+                              <Button
+                                variant="outline"
+                                onClick={() => setIsUserModalOpen(false)}
+                              >
+                                Cancel
+                              </Button>
+                              <Button onClick={() => setIsUserModalOpen(false)}>
+                                Done
+                              </Button>
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    </div>
                   </div>
                 </div>
               </div>

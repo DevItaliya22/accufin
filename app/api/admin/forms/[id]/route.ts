@@ -23,6 +23,13 @@ export async function GET(
         inputs: true,
         selections: true,
         multipleChoice: true,
+        assignedUsers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
         _count: {
           select: {
             formResponses: true,
@@ -60,7 +67,7 @@ export async function PUT(
     const { id } = await params;
 
     const body = await request.json();
-    const { title, description, privacyLabel, fields } = body;
+    const { title, description, privacyLabel, fields, assignedUserIds } = body;
 
     if (!title || !fields || !Array.isArray(fields)) {
       return NextResponse.json(
@@ -132,6 +139,16 @@ export async function PUT(
             privacyLabel ||
             "I consent to the processing of my personal data and agree to the privacy policy",
           sequence,
+          assignedUsers:
+            assignedUserIds && assignedUserIds.length > 0
+              ? {
+                  set: assignedUserIds.map((userId: string) => ({
+                    id: userId,
+                  })),
+                }
+              : {
+                  set: [],
+                },
         },
       });
 

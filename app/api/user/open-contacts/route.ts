@@ -11,6 +11,11 @@ export async function GET() {
             createdAt: "asc",
           },
         },
+        importantDates: {
+          orderBy: {
+            date: "asc",
+          },
+        },
       },
     });
 

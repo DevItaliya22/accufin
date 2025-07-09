@@ -12,6 +12,11 @@ export async function GET() {
             createdAt: "asc",
           },
         },
+        importantDates: {
+          orderBy: {
+            date: "asc",
+          },
+        },
       },
     });
 
@@ -46,7 +51,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { address, phone1, phone2, email, links } = await request.json();
+    const { address, phone1, phone2, email, links, importantDates } =
+      await request.json();
 
     const openContact = await prisma.openContact.create({
       data: {
@@ -61,9 +67,24 @@ export async function POST(request: NextRequest) {
               url: link.url,
             })) || [],
         },
+        importantDates: {
+          create:
+            importantDates?.map(
+              (date: {
+                title: string;
+                description?: string;
+                date: string;
+              }) => ({
+                title: date.title,
+                description: date.description,
+                date: new Date(date.date),
+              })
+            ) || [],
+        },
       },
       include: {
         links: true,
+        importantDates: true,
       },
     });
 
@@ -98,10 +119,15 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const { id, address, phone1, phone2, email, links } = await request.json();
+    const { id, address, phone1, phone2, email, links, importantDates } =
+      await request.json();
 
-    // Delete existing links and create new ones
+    // Delete existing links and important dates, then create new ones
     await prisma.link.deleteMany({
+      where: { openContactId: id },
+    });
+
+    await prisma.importantDate.deleteMany({
       where: { openContactId: id },
     });
 
@@ -119,9 +145,24 @@ export async function PUT(request: NextRequest) {
               url: link.url,
             })) || [],
         },
+        importantDates: {
+          create:
+            importantDates?.map(
+              (date: {
+                title: string;
+                description?: string;
+                date: string;
+              }) => ({
+                title: date.title,
+                description: date.description,
+                date: new Date(date.date),
+              })
+            ) || [],
+        },
       },
       include: {
         links: true,
+        importantDates: true,
       },
     });
 

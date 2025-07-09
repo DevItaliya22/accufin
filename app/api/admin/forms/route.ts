@@ -22,6 +22,13 @@ export async function GET() {
             formResponses: true,
           },
         },
+        assignedUsers: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -48,7 +55,14 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { title, description, privacyLabel, isCompulsory, fields } = body;
+    const {
+      title,
+      description,
+      privacyLabel,
+      isCompulsory,
+      fields,
+      assignedUserIds,
+    } = body;
 
     if (!title || !fields || !Array.isArray(fields)) {
       return NextResponse.json(
@@ -69,6 +83,14 @@ export async function POST(request: NextRequest) {
             "I consent to the processing of my personal data and agree to the privacy policy",
           isCompulsory: isCompulsory || false,
           sequence: [], // Will be updated after creating fields
+          assignedUsers:
+            assignedUserIds && assignedUserIds.length > 0
+              ? {
+                  connect: assignedUserIds.map((userId: string) => ({
+                    id: userId,
+                  })),
+                }
+              : undefined,
         },
       });
 

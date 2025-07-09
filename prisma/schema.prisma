@@ -33,6 +33,7 @@ model User {
 
   notifications Notification[] @relation("UserNotifications")
   formResponses FormResponse[] @relation("UserFormResponses")
+  assignedForms Forms[] @relation("FormAssignedUsers")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -103,6 +104,7 @@ model Forms {
   multipleChoice MultipleChoice[] @relation("FormMultipleChoices")
 
   formResponses FormResponse[] @relation("FormFormResponses")
+  assignedUsers User[] @relation("FormAssignedUsers")
 }
 
 model FormResponse {
@@ -187,7 +189,9 @@ model OpenContact {
   phone2 String?
   email String?
   links Link[] @relation("OpenContactLinks")
+  importantDates ImportantDate[] @relation("OpenContactImportantDates")
 }
+
 
 model Link { 
   id String @id @default(uuid())
@@ -199,3 +203,16 @@ model Link {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
+model ImportantDate {
+  id String @id @default(uuid())
+  title String
+  description String?
+  date DateTime
+  openContact OpenContact @relation("OpenContactImportantDates", fields: [openContactId], references: [id], onDelete: Cascade)
+  openContactId String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+

@@ -4,9 +4,10 @@ import {
   FaEnvelope,
   FaMapMarkerAlt,
   FaChevronRight,
+  FaCalendarAlt,
 } from "react-icons/fa";
 import { useEffect, useState } from "react";
-import { Link, OpenContact } from "@/lib/generated/prisma";
+import { Link, OpenContact, ImportantDate } from "@/lib/generated/prisma";
 
 const quickLinks = [
   "Home",
@@ -28,7 +29,10 @@ const services = [
   "Business Advisory",
   "Outsourced CFO",
 ];
-type OpenContactWithLinks = OpenContact & { links: Link[] };
+type OpenContactWithLinks = OpenContact & {
+  links: Link[];
+  importantDates: ImportantDate[];
+};
 export default function Footer() {
   const [openContact, setOpenContact] = useState<OpenContactWithLinks | null>(
     null
@@ -125,13 +129,36 @@ export default function Footer() {
               <div>{openContact.email}</div>
             </div>
           </div>
-          <div className="flex items-start">
+          <div className="flex items-start mb-4">
             <FaMapMarkerAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
             <div>
               <div className="font-bold">Address</div>
               <div>{openContact.address}</div>
             </div>
           </div>
+          {/* Important Dates */}
+          {openContact.importantDates &&
+            openContact.importantDates.length > 0 && (
+              <div className="flex items-start">
+                <FaCalendarAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
+                <div>
+                  <div className="font-bold">Important Dates</div>
+                  {openContact.importantDates.slice(0, 3).map((date) => (
+                    <div key={date.id} className="text-sm">
+                      <div className="font-medium">{date.title}</div>
+                      <div className="text-white/80">
+                        {new Date(date.date).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))}
+                  {openContact.importantDates.length > 3 && (
+                    <div className="text-sm text-white/60">
+                      +{openContact.importantDates.length - 3} more dates
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
         </div>
       </div>
       <hr className="my-8 border-white/30" />

@@ -12,9 +12,15 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Get all active forms
+    // Get all active forms that are either assigned to this user or available to all users
     const activeForms = await prisma.forms.findMany({
-      where: { isActive: true },
+      where: {
+        isActive: true,
+        OR: [
+          { assignedUsers: { none: {} } }, // Forms with no assigned users (available to all)
+          { assignedUsers: { some: { id: session.user.id } } }, // Forms assigned to this user
+        ],
+      },
       select: {
         id: true,
         title: true,

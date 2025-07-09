@@ -18,12 +18,26 @@ import {
   AlertCircle,
   Calendar,
   BarChart3,
+  Users,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Loader } from "@/components/ui/loader";
 import toast from "react-hot-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  MultiSelectCombobox,
+  Option,
+} from "@/components/ui/multi-select-combobox";
 
 interface Form {
   id: string;
@@ -39,11 +53,23 @@ interface Form {
     multipleChoice: number;
     formResponses: number;
   };
+  assignedUsers: {
+    id: string;
+    name: string | null;
+    email: string;
+  }[];
+}
+
+interface User {
+  id: string;
+  name: string | null;
+  email: string;
 }
 
 export default function FormsManagement() {
   const router = useRouter();
   const [forms, setForms] = useState<Form[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
@@ -51,10 +77,15 @@ export default function FormsManagement() {
   const [togglingCompulsoryId, setTogglingCompulsoryId] = useState<
     string | null
   >(null);
+  const [selectedFormId, setSelectedFormId] = useState<string | null>(null);
+  const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
+  const [isUserModalOpen, setIsUserModalOpen] = useState(false);
+  const [updatingUsers, setUpdatingUsers] = useState(false);
 
-  // Fetch forms
+  // Fetch forms and users
   useEffect(() => {
     fetchForms();
+    fetchUsers();
   }, []);
 
   const fetchForms = async () => {
@@ -70,6 +101,19 @@ export default function FormsManagement() {
       setError(err instanceof Error ? err.message : "Failed to load forms");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch("/api/admin/get-users");
+      if (!response.ok) {
+        throw new Error("Failed to fetch users");
+      }
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      console.error("Failed to fetch users:", err);
     }
   };
 
@@ -167,6 +211,46 @@ export default function FormsManagement() {
       );
     } finally {
       setTogglingCompulsoryId(null);
+    }
+  };
+
+  const handleOpenUserModal = (formId: string, currentUserIds: string[]) => {
+    setSelectedFormId(formId);
+    setSelectedUserIds(currentUserIds);
+    setIsUserModalOpen(true);
+  };
+
+  const handleUpdateAssignedUsers = async () => {
+    if (!selectedFormId) return;
+
+    try {
+      setUpdatingUsers(true);
+      const response = await fetch(
+        `/api/admin/forms/${selectedFormId}/assign-users`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            userIds: selectedUserIds,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Failed to update assigned users");
+      }
+
+      toast.success("Assigned users updated successfully!");
+      await fetchForms(); // Refresh forms list
+      setIsUserModalOpen(false);
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Failed to update assigned users"
+      );
+    } finally {
+      setUpdatingUsers(false);
     }
   };
 
@@ -272,6 +356,13 @@ export default function FormsManagement() {
                           <BarChart3 className="w-4 h-4" />
                           <span>{form._count.formResponses} responses</span>
                         </div>
+                        <div className="flex items-center space-x-2 text-gray-600">
+                          <Users className="w-4 h-4" />
+                          <span>
+                            {form.assignedUsers.length} assigned user
+                            {form.assignedUsers.length !== 1 ? "s" : ""}
+                          </span>
+                        </div>
                         <div className="flex items-center space-x-2 text-xs text-gray-500">
                           <Calendar className="w-3 h-3" />
                           <span>
@@ -341,6 +432,21 @@ export default function FormsManagement() {
                         </Button>
 
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() =>
+                            handleOpenUserModal(
+                              form.id,
+                              form.assignedUsers.map((user) => user.id)
+                            )
+                          }
+                          className="flex items-center space-x-1"
+                        >
+                          <Users className="w-4 h-4" />
+                          <span>Assign Users</span>
+                        </Button>
+
+                        <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(form.id)}
@@ -359,6 +465,44 @@ export default function FormsManagement() {
           )}
         </CardContent>
       </Card>
+
+      {/* User Assignment Modal */}
+      <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Assign Users to Form</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <MultiSelectCombobox
+                options={users.map((user) => ({
+                  value: user.id,
+                  label: user.name || user.email,
+                }))}
+                selectedValues={selectedUserIds}
+                onSelectionChange={setSelectedUserIds}
+                placeholder="Select users..."
+                searchPlaceholder="Search users..."
+                emptyMessage="No users found."
+              />
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button
+                variant="outline"
+                onClick={() => setIsUserModalOpen(false)}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleUpdateAssignedUsers}
+                disabled={updatingUsers}
+              >
+                {updatingUsers ? "Updating..." : "Save"}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
