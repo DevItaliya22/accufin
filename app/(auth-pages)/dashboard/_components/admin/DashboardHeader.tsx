@@ -22,7 +22,7 @@ const menuItems: MenuItem[] = [
   { key: "files", label: "File Management" },
   { key: "notifications", label: "Notifications" },
   { key: "blogs", label: "Blogs" },
-  { key: "contacts", label: "Open Contacts" },
+  { key: "contacts", label: "Site Settings" },
   { key: "forms", label: "Forms" },
   { key: "profile", label: "Profile" },
 ];

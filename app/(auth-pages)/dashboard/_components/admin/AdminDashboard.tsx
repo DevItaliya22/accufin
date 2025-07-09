@@ -332,7 +332,7 @@ export default function AdminDashboard() {
 
   const handleLogout = async () => {
     await signOut({ redirect: false });
-    router.push("/login");
+    router.push("/");
   };
 
   return (
@@ -342,7 +342,7 @@ export default function AdminDashboard() {
         onTabChange={(tab) => setActiveTab(tab as any)}
         onLogout={handleLogout}
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+      <div className="w-full sm:px-0 lg:px-6 py-8">
         {activeTab === "users" && (
           <UserManagement users={users} loading={loading} error={error} />
         )}

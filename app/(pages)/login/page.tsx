@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,7 +26,7 @@ export default function LoginPage() {
       if (res?.error) {
         toast.error(res.error);
       } else {
-        toast.success("Login successful!");
+        setShowWelcome(true);
         router.push("/dashboard");
       }
     } catch (err) {
@@ -40,6 +41,13 @@ export default function LoginPage() {
       router.push("/dashboard");
     }
   }, [session]);
+
+  useEffect(() => {
+    if (showWelcome && session?.user?.name) {
+      toast.success(`Welcome back, ${session.user.name}!`);
+      setShowWelcome(false);
+    }
+  }, [showWelcome, session]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">

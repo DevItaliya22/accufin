@@ -23,6 +23,8 @@ import {
   ChevronRight,
   ArchiveRestore,
   ChevronLeft,
+  CreditCard,
+  Building,
 } from "lucide-react";
 import toast from "react-hot-toast";
 import { signOut } from "next-auth/react";
@@ -68,18 +70,30 @@ export default function ProfileManagement() {
     contact: false,
     address: false,
     occupation: false,
+    name: false,
+    sinNumber: false,
+    businessNumber: false,
+    dateOfBirth: false,
   });
 
   const [formValues, setFormValues] = useState({
     contactNumber: "",
     address: "",
     occupation: "",
+    name: "",
+    sinNumber: "",
+    businessNumber: "",
+    dateOfBirth: "",
   });
 
   const [savingStates, setSavingStates] = useState({
     contact: false,
     address: false,
     occupation: false,
+    name: false,
+    sinNumber: false,
+    businessNumber: false,
+    dateOfBirth: false,
   });
 
   const [passwordValues, setPasswordValues] = useState({
@@ -112,6 +126,12 @@ export default function ProfileManagement() {
         contactNumber: data.contactNumber || "",
         address: data.address || "",
         occupation: data.occupation || "",
+        name: data.name || "",
+        sinNumber: data.sinNumber || "",
+        businessNumber: data.businessNumber || "",
+        dateOfBirth: data.dateOfBirth
+          ? new Date(data.dateOfBirth).toISOString().split("T")[0]
+          : "",
       });
     } catch (err: any) {
       setProfileError(err.message || "Failed to load profile");
@@ -151,7 +171,16 @@ export default function ProfileManagement() {
     }
   }, [profile]);
 
-  const handleUpdate = async (field: "contact" | "address" | "occupation") => {
+  const handleUpdate = async (
+    field:
+      | "contact"
+      | "address"
+      | "occupation"
+      | "name"
+      | "sinNumber"
+      | "businessNumber"
+      | "dateOfBirth"
+  ) => {
     setSavingStates((prev) => ({ ...prev, [field]: true }));
     try {
       const payload = {
@@ -159,6 +188,12 @@ export default function ProfileManagement() {
         contactNumber: formValues.contactNumber,
         address: formValues.address,
         occupation: formValues.occupation,
+        name: formValues.name,
+        sinNumber: formValues.sinNumber,
+        businessNumber: formValues.businessNumber,
+        dateOfBirth: formValues.dateOfBirth
+          ? new Date(formValues.dateOfBirth)
+          : null,
       };
       const res = await fetch("/api/user/info", {
         method: "PUT",
@@ -186,7 +221,14 @@ export default function ProfileManagement() {
   };
 
   const handleEditToggle = (
-    field: "contact" | "address" | "occupation",
+    field:
+      | "contact"
+      | "address"
+      | "occupation"
+      | "name"
+      | "sinNumber"
+      | "businessNumber"
+      | "dateOfBirth",
     isEditing: boolean
   ) => {
     setEditStates((prev) => ({ ...prev, [field]: isEditing }));
@@ -195,6 +237,12 @@ export default function ProfileManagement() {
         contactNumber: profile.contactNumber || "",
         address: profile.address || "",
         occupation: profile.occupation || "",
+        name: profile.name || "",
+        sinNumber: profile.sinNumber || "",
+        businessNumber: profile.businessNumber || "",
+        dateOfBirth: profile.dateOfBirth
+          ? new Date(profile.dateOfBirth).toISOString().split("T")[0]
+          : "",
       });
     }
   };
@@ -541,18 +589,32 @@ export default function ProfileManagement() {
               icon={User}
               iconGradient="from-blue-500 to-blue-600"
               label="FULL NAME"
-              value={profile?.name || ""}
-              isEditing={false}
+              value={formValues.name}
+              isEditing={editStates.name}
+              onEditToggle={(isEditing) => handleEditToggle("name", isEditing)}
+              onSave={() => handleUpdate("name")}
+              onChange={handleInputChange}
+              name="name"
+              isSaving={savingStates.name}
+              placeholder="John Doe"
             />
 
-            {/* Commented out for future use */}
-            {/* <ModernInfoCard
+            <ModernInfoCard
               icon={Calendar}
               iconGradient="from-indigo-500 to-indigo-600"
               label="DATE OF BIRTH"
-              value={profile?.dateOfBirth || "1990-06-15"}
-              isEditing={false}
-            /> */}
+              value={formValues.dateOfBirth}
+              isEditing={editStates.dateOfBirth}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("dateOfBirth", isEditing)
+              }
+              onSave={() => handleUpdate("dateOfBirth")}
+              onChange={handleInputChange}
+              name="dateOfBirth"
+              isSaving={savingStates.dateOfBirth}
+              placeholder="1990-01-01"
+              inputType="date"
+            />
 
             <ModernInfoCard
               icon={Briefcase}
@@ -569,15 +631,6 @@ export default function ProfileManagement() {
               isSaving={savingStates.occupation}
               placeholder="Product Designer"
             />
-
-            {/* Commented out for future use */}
-            {/* <ModernInfoCard
-              icon={Globe}
-              iconGradient="from-cyan-500 to-cyan-600"
-              label="COMPANY"
-              value={profile?.company || "Tech Solutions Inc."}
-              isEditing={false}
-            /> */}
           </div>
         </div>
 
@@ -640,6 +693,52 @@ export default function ProfileManagement() {
               name="address"
               isSaving={savingStates.address}
               placeholder="123 Main Street, San Francisco, CA 94105"
+            />
+          </div>
+        </div>
+
+        {/* Business Information Section */}
+        <div className="bg-white rounded-2xl shadow-lg p-8 mb-6">
+          <div className="flex items-center mb-6">
+            <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-lg flex items-center justify-center mr-3">
+              <Building className="w-5 h-5 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold text-gray-900">
+              Business Information
+            </h2>
+          </div>
+
+          <div className="space-y-6">
+            <ModernInfoCard
+              icon={CreditCard}
+              iconGradient="from-purple-500 to-purple-600"
+              label="SIN NUMBER"
+              value={formValues.sinNumber}
+              isEditing={editStates.sinNumber}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("sinNumber", isEditing)
+              }
+              onSave={() => handleUpdate("sinNumber")}
+              onChange={handleInputChange}
+              name="sinNumber"
+              isSaving={savingStates.sinNumber}
+              placeholder="123-456-789"
+            />
+
+            <ModernInfoCard
+              icon={Building}
+              iconGradient="from-indigo-500 to-indigo-600"
+              label="BUSINESS NUMBER"
+              value={formValues.businessNumber}
+              isEditing={editStates.businessNumber}
+              onEditToggle={(isEditing) =>
+                handleEditToggle("businessNumber", isEditing)
+              }
+              onSave={() => handleUpdate("businessNumber")}
+              onChange={handleInputChange}
+              name="businessNumber"
+              isSaving={savingStates.businessNumber}
+              placeholder="123456789RT0001"
             />
           </div>
         </div>
@@ -962,6 +1061,7 @@ interface ModernInfoCardProps {
   name?: string;
   isSaving?: boolean;
   placeholder?: string;
+  inputType?: string;
 }
 
 const ModernInfoCard: React.FC<ModernInfoCardProps> = ({
@@ -976,6 +1076,7 @@ const ModernInfoCard: React.FC<ModernInfoCardProps> = ({
   name,
   isSaving,
   placeholder,
+  inputType = "text",
 }) => {
   return (
     <div className="flex items-center p-6 bg-gray-50 rounded-xl border-l-4 border-blue-500">
@@ -1000,7 +1101,7 @@ const ModernInfoCard: React.FC<ModernInfoCardProps> = ({
         ) : (
           <input
             className="text-lg font-medium bg-white border-2 border-blue-300 focus:border-blue-500 focus:outline-none rounded-lg px-3 py-2 w-full"
-            type="text"
+            type={inputType}
             name={name}
             value={value}
             onChange={onChange}

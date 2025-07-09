@@ -31,6 +31,7 @@ export default function ResponsesTab({
       setSelectedFile={() => {}}
       showUploadButton={false}
       showAddFolderButton={false}
+      theme="admin-response"
     />
   );
 }

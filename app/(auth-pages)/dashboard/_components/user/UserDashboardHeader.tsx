@@ -16,7 +16,7 @@ interface UserDashboardHeaderProps {
 
 const menuItems: MenuItem[] = [
   { key: "upload", label: "Upload & My Files" },
-  { key: "responses", label: "Admin Responses" },
+  { key: "responses", label: "Your Accountant" },
   { key: "forms", label: "Forms" },
   { key: "notifications", label: "Notifications" },
   { key: "archive", label: "Archive" },

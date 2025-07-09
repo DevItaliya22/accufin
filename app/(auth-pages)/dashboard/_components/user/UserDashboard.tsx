@@ -157,6 +157,11 @@ export default function UserDashboard() {
 
   const handleFileUpload = async () => {
     if (!selectedFile || !session?.user?.id) return;
+    // console.log("currentPath", currentPath);
+    if (!currentPath) {
+      toast.error("Please select or create a folder before uploading a file.");
+      return;
+    }
 
     try {
       setIsUploading(true);
@@ -198,6 +203,7 @@ export default function UserDashboard() {
       }
 
       // Store file info in database
+      // console.log("currentPatssh", currentPath);
       const dbRes = await fetch("/api/s3/db", {
         method: "POST",
         headers: {
@@ -458,8 +464,8 @@ export default function UserDashboard() {
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as typeof activeTab)}
         onLogout={async () => {
-          await signOut({ callbackUrl: "/login" });
-          router.push("/login");
+          await signOut({ callbackUrl: "/" });
+          router.push("/");
         }}
       />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -477,6 +483,7 @@ export default function UserDashboard() {
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             onFileArchive={handleArchiveFile}
+            theme="user"
           />
         )}
         {activeTab === "responses" && (

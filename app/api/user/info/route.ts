@@ -17,6 +17,9 @@ export async function GET(req: NextRequest) {
       id: true,
       email: true,
       name: true,
+      sinNumber: true,
+      businessNumber: true,
+      dateOfBirth: true,
       contactNumber: true,
       address: true,
       occupation: true,
@@ -42,12 +45,25 @@ export async function PUT(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
-  const { name, contactNumber, address, occupation, profileUrl } =
-    await req.json();
+  const {
+    name,
+    fullName,
+    sinNumber,
+    businessNumber,
+    dateOfBirth,
+    contactNumber,
+    address,
+    occupation,
+    profileUrl,
+  } = await req.json();
+
   const user = await prisma.user.update({
     where: { id: session.user.id },
     data: {
       name,
+      sinNumber,
+      businessNumber,
+      dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : null,
       contactNumber,
       address,
       occupation,
@@ -57,6 +73,9 @@ export async function PUT(req: NextRequest) {
       id: true,
       email: true,
       name: true,
+      sinNumber: true,
+      businessNumber: true,
+      dateOfBirth: true,
       contactNumber: true,
       address: true,
       occupation: true,

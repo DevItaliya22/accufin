@@ -20,6 +20,9 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
+        sinNumber: true,
+        businessNumber: true,
+        dateOfBirth: true,
         email: true,
         createdAt: true,
         updatedAt: true,
@@ -79,7 +82,7 @@ export async function GET(request: Request) {
         ...user,
         uploadedFiles: user.filesUploadedToAdmin,
         formResponses: user._count.formResponses,
-        filesReceivedFromAdmin: user.filesReceivedFromAdmin
+        filesReceivedFromAdmin: user.filesReceivedFromAdmin,
       };
     });
     return NextResponse.json(usersWithAllCounts);

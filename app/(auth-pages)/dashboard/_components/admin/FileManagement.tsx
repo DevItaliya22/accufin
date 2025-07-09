@@ -261,40 +261,40 @@ export default function FileManagement({
                   value={searchQuery}
                   onChange={(e) => onSearchChange(e.target.value)}
                 />
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                  {users
-                    .filter((user) =>
-                      user.email
-                        .toLowerCase()
-                        .includes(searchQuery.toLowerCase())
-                    )
-                    .map((user) => (
-                      <div
-                        key={user.id}
-                        onClick={() => onUserSelect(user.id)}
-                        className={`p-4 rounded-lg cursor-pointer transition-all duration-200 ${
-                          selectedUser === user.id
-                            ? "bg-blue-50 border-2 border-blue-300 shadow-md"
-                            : "bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
-                        }`}
-                      >
-                        <div className="space-y-2">
+                <div className="max-h-80 overflow-y-auto">
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-2 pr-2">
+                    {users
+                      .filter((user) =>
+                        user.email
+                          .toLowerCase()
+                          .includes(searchQuery.toLowerCase())
+                      )
+                      .map((user) => (
+                        <div
+                          key={user.id}
+                          onClick={() => onUserSelect(user.id)}
+                          className={`p-2 rounded-md cursor-pointer transition-all duration-200 ${
+                            selectedUser === user.id
+                              ? "bg-blue-50 border-2 border-blue-300 shadow-sm"
+                              : "bg-white border border-gray-200 hover:bg-gray-50 hover:border-gray-300"
+                          }`}
+                        >
                           <div className="flex items-center space-x-2">
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                              <Users className="w-4 h-4 text-blue-600" />
+                            <div className="w-4 h-4 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <Users className="w-2 h-2 text-blue-600" />
                             </div>
                             <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
+                              <p className="text-xs font-medium text-gray-900 truncate">
                                 {user.email}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {user.uploadedFiles} files
                               </p>
                             </div>
                           </div>
-                          <div className="text-xs text-gray-500">
-                            {user.uploadedFiles} files uploaded
-                          </div>
                         </div>
-                      </div>
-                    ))}
+                      ))}
+                  </div>
                 </div>
               </div>
             )}
@@ -345,6 +345,7 @@ export default function FileManagement({
                         handleFileUpload={() => {}}
                         selectedFile={null}
                         setSelectedFile={() => {}}
+                        theme="user"
                       />
                     </TabsContent>
                     <TabsContent value="archived" className="pt-4">
@@ -361,6 +362,7 @@ export default function FileManagement({
                         handleFileUpload={() => {}}
                         selectedFile={null}
                         setSelectedFile={() => {}}
+                        theme="archive"
                       />
                     </TabsContent>
                   </Tabs>
@@ -376,17 +378,17 @@ export default function FileManagement({
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="private" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2">
+                    <TabsList className="flex flex-col sm:flex-row gap-2 w-full bg-white">
                       <TabsTrigger
                         value="private"
-                        className="flex items-center space-x-2"
+                        className="w-full flex-1 flex items-center justify-center bg-white data-[state=active]:bg-red-100 data-[state=active]:font-bold data-[state=active]:text-red-800"
                       >
                         <EyeOff className="w-4 h-4" />
-                        <span>Private Documents</span>
+                        <span>Work in Progress - Internal Use</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="response"
-                        className="flex items-center space-x-2"
+                        className="w-full flex-1 flex items-center justify-center bg-white data-[state=active]:bg-green-100 data-[state=active]:font-bold data-[state=active]:text-green-800"
                       >
                         <Eye className="w-4 h-4" />
                         <span>Response Documents</span>
@@ -416,6 +418,7 @@ export default function FileManagement({
                         }
                         selectedFile={privateUploadFile}
                         setSelectedFile={() => onPrivateFileSelect(null)}
+                        theme="admin-private"
                       />
                     </TabsContent>
 
@@ -442,6 +445,7 @@ export default function FileManagement({
                         }
                         selectedFile={responseUploadFile}
                         setSelectedFile={() => onResponseFileSelect(null)}
+                        theme="admin-response"
                       />
                     </TabsContent>
                   </Tabs>

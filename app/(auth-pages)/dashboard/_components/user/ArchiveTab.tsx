@@ -34,6 +34,7 @@ export default function ArchiveTab({
       handleFileUpload={() => {}}
       selectedFile={null}
       setSelectedFile={() => {}}
+      theme="archive"
     />
   );
 }
