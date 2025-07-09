@@ -5,7 +5,7 @@ import { authOptions } from "@/lib/auth";
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -14,11 +14,11 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const formId = params.id;
+    const { id } = await params;
     const body = await request.json();
     const { userIds } = body;
 
-    if (!formId) {
+    if (!id) {
       return NextResponse.json(
         { error: "Form ID is required" },
         { status: 400 }
@@ -27,7 +27,7 @@ export async function PATCH(
 
     // Update the form's assigned users
     const updatedForm = await prisma.forms.update({
-      where: { id: formId },
+      where: { id },
       data: {
         assignedUsers: {
           set: userIds.map((userId: string) => ({ id: userId })),
