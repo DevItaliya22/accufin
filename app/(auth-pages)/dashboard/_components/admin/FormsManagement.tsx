@@ -34,10 +34,8 @@ import {
 } from "@/components/ui/dialog";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import {
-  MultiSelectCombobox,
-  Option,
-} from "@/components/ui/multi-select-combobox";
+import { Input } from "@/components/ui/input";
+import { Search, User, Mail } from "lucide-react";
 
 interface Form {
   id: string;
@@ -81,12 +79,28 @@ export default function FormsManagement() {
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
   const [isUserModalOpen, setIsUserModalOpen] = useState(false);
   const [updatingUsers, setUpdatingUsers] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
   // Fetch forms and users
   useEffect(() => {
     fetchForms();
     fetchUsers();
   }, []);
+
+  // Filter users based on search query
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredUsers(users);
+    } else {
+      const filtered = users.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          user.email.toLowerCase().includes(searchQuery.toLowerCase())
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [users, searchQuery]);
 
   const fetchForms = async () => {
     try {
@@ -217,7 +231,16 @@ export default function FormsManagement() {
   const handleOpenUserModal = (formId: string, currentUserIds: string[]) => {
     setSelectedFormId(formId);
     setSelectedUserIds(currentUserIds);
+    setSearchQuery("");
     setIsUserModalOpen(true);
+  };
+
+  const handleUserSelection = (userId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedUserIds([...selectedUserIds, userId]);
+    } else {
+      setSelectedUserIds(selectedUserIds.filter((id) => id !== userId));
+    }
   };
 
   const handleUpdateAssignedUsers = async () => {
@@ -468,38 +491,122 @@ export default function FormsManagement() {
 
       {/* User Assignment Modal */}
       <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
           <DialogHeader>
-            <DialogTitle>Assign Users to Form</DialogTitle>
+            <DialogTitle className="text-xl font-semibold">
+              Assign Users to Form
+            </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <MultiSelectCombobox
-                options={users.map((user) => ({
-                  value: user.id,
-                  label: user.name || user.email,
-                }))}
-                selectedValues={selectedUserIds}
-                onSelectionChange={setSelectedUserIds}
-                placeholder="Select users..."
-                searchPlaceholder="Search users..."
-                emptyMessage="No users found."
+
+          <div className="flex-1 space-y-4">
+            {/* Search Bar */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <Input
+                placeholder="Search users by name or email..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
               />
             </div>
-            <div className="flex justify-end space-x-2">
+
+            {/* Selected Users Count */}
+            <div className="flex items-center justify-between text-sm text-gray-600">
+              <span>
+                {selectedUserIds.length} user
+                {selectedUserIds.length !== 1 ? "s" : ""} selected
+              </span>
               <Button
-                variant="outline"
-                onClick={() => setIsUserModalOpen(false)}
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedUserIds([])}
+                className="text-xs"
               >
-                Cancel
-              </Button>
-              <Button
-                onClick={handleUpdateAssignedUsers}
-                disabled={updatingUsers}
-              >
-                {updatingUsers ? "Updating..." : "Save"}
+                Clear all
               </Button>
             </div>
+
+            {/* User List */}
+            <div className="border rounded-lg max-h-96 overflow-auto">
+              {filteredUsers.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>No users found</p>
+                </div>
+              ) : (
+                <div className="divide-y">
+                  {filteredUsers.map((user) => (
+                    <div
+                      key={user.id}
+                      className="flex items-center space-x-3 p-4 hover:bg-gray-50 transition-colors"
+                    >
+                      <Checkbox
+                        id={`user-${user.id}`}
+                        checked={selectedUserIds.includes(user.id)}
+                        onCheckedChange={(checked) =>
+                          handleUserSelection(user.id, checked as boolean)
+                        }
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center space-x-2">
+                          <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <Label
+                            htmlFor={`user-${user.id}`}
+                            className="font-medium text-gray-900 cursor-pointer"
+                          >
+                            {user.name || "No name"}
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <Mail className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                          <span className="text-sm text-gray-500 truncate">
+                            {user.email}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Selected Users Preview */}
+            {selectedUserIds.length > 0 && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="text-sm font-medium text-blue-900 mb-2">
+                  Selected Users:
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedUserIds.map((userId) => {
+                    const user = users.find((u) => u.id === userId);
+                    if (!user) return null;
+                    return (
+                      <Badge
+                        key={userId}
+                        variant="secondary"
+                        className="bg-blue-100 text-blue-800"
+                      >
+                        {user.name || user.email}
+                      </Badge>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Action Buttons */}
+          <div className="flex justify-end space-x-2 pt-4 border-t">
+            <Button variant="outline" onClick={() => setIsUserModalOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              onClick={handleUpdateAssignedUsers}
+              disabled={updatingUsers}
+              className="min-w-20"
+            >
+              {updatingUsers ? "Updating..." : "Save Changes"}
+            </Button>
           </div>
         </DialogContent>
       </Dialog>

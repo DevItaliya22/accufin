@@ -55,7 +55,7 @@ const Breadcrumbs = ({
 
   const breadcrumbColors = {
     user: "text-blue-600",
-    "admin-private": "text-red-600",
+    "admin-private": "text-purple-600",
     "admin-response": "text-green-600",
     archive: "text-gray-600",
   };
@@ -115,48 +115,48 @@ export default function FileBrowser({
   // Color theme system
   const colorTheme = {
     user: {
-      folder: "text-blue-500",
-      file: "text-blue-600",
+      folder: "text-blue-700",
+      file: "text-blue-800",
       bg: "bg-blue-50",
-      border: "border-blue-200",
+      border: "border-blue-300",
       hover: "hover:bg-blue-100",
-      card: "bg-blue-25",
-      cardBorder: "border-blue-300",
+      card: "bg-blue-50",
+      cardBorder: "border-blue-400",
       headerBg: "bg-blue-100",
-      headerText: "text-blue-800",
+      headerText: "text-blue-900",
     },
     "admin-private": {
-      folder: "text-red-500",
-      file: "text-red-600",
-      bg: "bg-red-50",
-      border: "border-red-200",
-      hover: "hover:bg-red-100",
-      card: "bg-red-25",
-      cardBorder: "border-red-300",
-      headerBg: "bg-red-100",
-      headerText: "text-red-800",
+      folder: "text-purple-700",
+      file: "text-purple-800",
+      bg: "bg-purple-50",
+      border: "border-purple-300",
+      hover: "hover:bg-purple-100",
+      card: "bg-purple-50",
+      cardBorder: "border-purple-400",
+      headerBg: "bg-purple-100",
+      headerText: "text-purple-900",
     },
     "admin-response": {
-      folder: "text-green-500",
-      file: "text-green-600",
+      folder: "text-green-700",
+      file: "text-green-800",
       bg: "bg-green-50",
-      border: "border-green-200",
+      border: "border-green-300",
       hover: "hover:bg-green-100",
-      card: "bg-green-25",
-      cardBorder: "border-green-300",
+      card: "bg-green-50",
+      cardBorder: "border-green-400",
       headerBg: "bg-green-100",
-      headerText: "text-green-800",
+      headerText: "text-green-900",
     },
     archive: {
-      folder: "text-gray-500",
-      file: "text-gray-600",
-      bg: "bg-gray-50",
-      border: "border-gray-200",
-      hover: "hover:bg-gray-100",
-      card: "bg-gray-25",
-      cardBorder: "border-gray-300",
-      headerBg: "bg-gray-100",
-      headerText: "text-gray-800",
+      folder: "text-gray-700",
+      file: "text-gray-800",
+      bg: "bg-gray-100",
+      border: "border-gray-400",
+      hover: "hover:bg-gray-200",
+      card: "bg-gray-100",
+      cardBorder: "border-gray-500",
+      headerBg: "bg-gray-200",
+      headerText: "text-gray-900",
     },
   };
 
@@ -327,19 +327,18 @@ export default function FileBrowser({
             ) : (
               <div className={`max-h-80 overflow-y-auto ${currentTheme.bg}`}>
                 <div
-                  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4 mb-6 pr-2 ${currentTheme.bg}`}
+                  className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 mb-4 pr-2 ${currentTheme.bg}`}
                 >
                   {folders.map((folder) => (
                     <div
                       key={folder}
                       onClick={() => handleFolderDoubleClick(folder)}
-                      // onDoubleClick={() => handleFolderDoubleClick(folder)}
-                      className={`flex flex-col items-center justify-center p-3 border-2 rounded-lg cursor-pointer transition-colors ${currentTheme.border} ${currentTheme.hover}`}
+                      className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${currentTheme.border} ${currentTheme.hover}`}
                     >
                       <Folder
-                        className={`w-10 h-10 sm:w-12 sm:h-12 md:w-16 md:h-16 ${currentTheme.folder}`}
+                        className={`w-6 h-6 ${currentTheme.folder} flex-shrink-0 mr-3`}
                       />
-                      <span className="mt-2 text-xs sm:text-sm font-medium text-center truncate w-full">
+                      <span className="text-sm font-medium truncate flex-1">
                         {folder}
                       </span>
                     </div>

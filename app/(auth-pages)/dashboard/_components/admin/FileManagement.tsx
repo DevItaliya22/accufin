@@ -378,17 +378,17 @@ export default function FileManagement({
                 </CardHeader>
                 <CardContent>
                   <Tabs defaultValue="private" className="w-full">
-                    <TabsList className="flex flex-col sm:flex-row gap-2 w-full bg-white">
+                    <TabsList className="flex flex-col sm:flex-row gap-2 w-full bg-gray-100">
                       <TabsTrigger
                         value="private"
-                        className="w-full flex-1 flex items-center justify-center bg-white data-[state=active]:bg-red-100 data-[state=active]:font-bold data-[state=active]:text-red-800"
+                        className="w-full flex-1 flex items-center justify-center bg-gray-100 text-gray-600 data-[state=active]:bg-white data-[state=active]:text-gray-900"
                       >
                         <EyeOff className="w-4 h-4" />
                         <span>Work in Progress - Internal Use</span>
                       </TabsTrigger>
                       <TabsTrigger
                         value="response"
-                        className="w-full flex-1 flex items-center justify-center bg-white data-[state=active]:bg-green-100 data-[state=active]:font-bold data-[state=active]:text-green-800"
+                        className="w-full flex-1 flex items-center justify-center bg-gray-100 text-gray-600 data-[state=active]:bg-white data-[state=active]:text-gray-900"
                       >
                         <Eye className="w-4 h-4" />
                         <span>Response Documents</span>
