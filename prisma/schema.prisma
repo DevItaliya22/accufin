@@ -102,6 +102,10 @@ model Forms {
   inputs Input[] @relation("FormInputs")
   selections Selection[] @relation("FormSelections")
   multipleChoice MultipleChoice[] @relation("FormMultipleChoices")
+  ratings Rating[] @relation("FormRatings")
+  matrices Matrix[] @relation("FormMatrices")
+  netPromoterScores NetPromoterScore[] @relation("FormNetPromoterScores")
+  separators Separator[] @relation("FormSeparators")
 
   formResponses FormResponse[] @relation("FormFormResponses")
   assignedUsers User[] @relation("FormAssignedUsers")
@@ -132,23 +136,24 @@ model FormAnswer {
   fieldId       String   
   fieldType     String 
   value         String   
+  // For matrix answers, we'll store row and column identifiers
+  rowId         String?
+  columnId      String?
 
   createdAt DateTime @default(now())
 }
-
 
 model Input { 
   id String @id @default(uuid())
   label String?
   required Boolean @default(false)
-  type String?
+  type String? // "text", "email", "number", "date", etc.
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   form Forms @relation("FormInputs", fields: [formId], references: [id])
   formId String
-
 }
 
 model Selection {
@@ -182,6 +187,73 @@ model MultipleChoice {
   @@index([formId])
 }
 
+model Rating {
+  id String @id @default(uuid())
+  question String
+  required Boolean @default(false)
+  maxRating Int @default(5) // Maximum rating value (default 5 for 5 stars, but can be any number)
+  showLabels Boolean @default(false) // Whether to show labels like "Poor", "Excellent"
+  labels String[] // Optional labels for each star (e.g., ["Poor", "Fair", "Good", "Very Good", "Excellent"])
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormRatings", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model Matrix {
+  id String @id @default(uuid())
+  title String
+  description String?
+  required Boolean @default(false)
+  
+  // Store rows and columns as JSON arrays
+  rows String[] // Array of row labels/identifiers
+  columns String[] // Array of column labels/identifiers
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormMatrices", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model NetPromoterScore {
+  id String @id @default(uuid())
+  question String
+  leftLabel String @default("Not at all likely")
+  rightLabel String @default("Extremely likely")
+  required Boolean @default(false)
+  maxScore Int @default(10) // Scale from 0 to 10
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormNetPromoterScores", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
+model Separator {
+  id String @id @default(uuid())
+  title String
+  description String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  form Forms @relation("FormSeparators", fields: [formId], references: [id])
+  formId String
+
+  @@index([formId])
+}
+
 model OpenContact { 
   id String @id @default(uuid())
   address String?
@@ -191,7 +263,6 @@ model OpenContact {
   links Link[] @relation("OpenContactLinks")
   importantDates ImportantDate[] @relation("OpenContactImportantDates")
 }
-
 
 model Link { 
   id String @id @default(uuid())

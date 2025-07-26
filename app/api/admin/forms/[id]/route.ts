@@ -23,6 +23,10 @@ export async function GET(
         inputs: true,
         selections: true,
         multipleChoice: true,
+        ratings: true,
+        matrices: true,
+        netPromoterScores: true,
+        separators: true,
         assignedUsers: {
           select: {
             id: true,
@@ -91,6 +95,22 @@ export async function PUT(
         where: { formId: id },
       });
 
+      await tx.rating.deleteMany({
+        where: { formId: id },
+      });
+
+      await tx.matrix.deleteMany({
+        where: { formId: id },
+      });
+
+      await tx.netPromoterScore.deleteMany({
+        where: { formId: id },
+      });
+
+      await tx.separator.deleteMany({
+        where: { formId: id },
+      });
+
       const sequence: string[] = [];
 
       // Create new fields based on type
@@ -126,6 +146,50 @@ export async function PUT(
             },
           });
           sequence.push(multipleChoice.id);
+        } else if (field.type === "rating") {
+          const rating = await tx.rating.create({
+            data: {
+              question: field.label,
+              required: field.required || false,
+              maxRating: field.maxRating || 5,
+              showLabels: field.showLabels || false,
+              labels: field.labels || [],
+              formId: id,
+            },
+          });
+          sequence.push(rating.id);
+        } else if (field.type === "matrix") {
+          const matrix = await tx.matrix.create({
+            data: {
+              title: field.label,
+              required: field.required || false,
+              rows: field.rows || [],
+              columns: field.columns || [],
+              formId: id,
+            },
+          });
+          sequence.push(matrix.id);
+        } else if (field.type === "netPromoterScore") {
+          const netPromoterScore = await tx.netPromoterScore.create({
+            data: {
+              question: field.label,
+              required: field.required || false,
+              leftLabel: field.leftLabel || "Not at all likely",
+              rightLabel: field.rightLabel || "Extremely likely",
+              maxScore: field.maxScore || 10,
+              formId: id,
+            },
+          });
+          sequence.push(netPromoterScore.id);
+        } else if (field.type === "separator") {
+          const separator = await tx.separator.create({
+            data: {
+              title: field.label,
+              description: field.description || null,
+              formId: id,
+            },
+          });
+          sequence.push(separator.id);
         }
       }
 

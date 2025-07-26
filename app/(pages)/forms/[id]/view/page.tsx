@@ -12,7 +12,13 @@ import {
   CardDescription,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ArrowLeft, CheckCircle, Shield, AlertCircle } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle,
+  Shield,
+  AlertCircle,
+  Star,
+} from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
 interface FormAnswer {
@@ -20,6 +26,8 @@ interface FormAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
   createdAt: string;
   fieldLabel: string;
 }
@@ -207,19 +215,127 @@ export default function ViewFormSubmissionPage() {
                 submission.answers.map((answer) => (
                   <div
                     key={answer.id}
-                    className="border rounded-lg p-4 bg-gray-50"
+                    className="border rounded-lg p-4 bg-white shadow-sm hover:shadow-md transition-shadow"
                   >
                     <div className="space-y-2">
-                      <div className="flex items-center space-x-2">
+                      <div className="flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">
                           {answer.fieldLabel}
                         </span>
-                        <Badge variant="outline" className="text-xs">
-                          {answer.fieldType}
+                        <Badge
+                          variant="outline"
+                          className={`text-xs ${
+                            answer.fieldType === "rating"
+                              ? "border-yellow-300 text-yellow-700"
+                              : answer.fieldType === "matrix"
+                                ? "border-indigo-300 text-indigo-700"
+                                : answer.fieldType === "netPromoterScore"
+                                  ? "border-orange-300 text-orange-700"
+                                  : answer.fieldType === "input"
+                                    ? "border-blue-300 text-blue-700"
+                                    : answer.fieldType === "selection"
+                                      ? "border-green-300 text-green-700"
+                                      : answer.fieldType === "multipleChoice"
+                                        ? "border-purple-300 text-purple-700"
+                                        : "border-gray-300 text-gray-700"
+                          }`}
+                        >
+                          {answer.fieldType === "rating" && "⭐ Star Rating"}
+                          {answer.fieldType === "matrix" && "📊 Matrix"}
+                          {answer.fieldType === "netPromoterScore" && "📈 NPS"}
+                          {answer.fieldType === "input" && "📝 Input"}
+                          {answer.fieldType === "selection" && "🔘 Selection"}
+                          {answer.fieldType === "multipleChoice" &&
+                            "☑️ Multiple Choice"}
                         </Badge>
                       </div>
-                      <div className="bg-white p-3 rounded border">
-                        <p className="text-gray-900">{answer.value}</p>
+                      <div className="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                        {answer.fieldType === "rating" && (
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-1">
+                              {Array.from({ length: 5 }).map((_, index) => (
+                                <Star
+                                  key={index}
+                                  className={`w-5 h-5 ${
+                                    index < parseInt(answer.value)
+                                      ? "text-yellow-500 fill-current"
+                                      : "text-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <div className="text-sm text-gray-600 font-medium">
+                              Rating: {answer.value} out of 5 stars
+                            </div>
+                          </div>
+                        )}
+                        {answer.fieldType === "netPromoterScore" && (
+                          <div className="space-y-2">
+                            <div className="flex items-center space-x-1">
+                              {Array.from({ length: 11 }).map((_, index) => (
+                                <div
+                                  key={index}
+                                  className={`w-4 h-4 rounded border-2 ${
+                                    index === parseInt(answer.value) &&
+                                    parseInt(answer.value) >= 0 &&
+                                    parseInt(answer.value) <= 10
+                                      ? "bg-blue-600 border-blue-600"
+                                      : "bg-white border-gray-300"
+                                  }`}
+                                />
+                              ))}
+                            </div>
+                            <div className="text-sm text-gray-600 font-medium">
+                              Net Promoter Score:{" "}
+                              {parseInt(answer.value) >= 0 &&
+                              parseInt(answer.value) <= 10
+                                ? answer.value
+                                : "Invalid"}{" "}
+                              out of 10
+                            </div>
+                          </div>
+                        )}
+                        {answer.fieldType === "matrix" && (
+                          <div className="space-y-2">
+                            {answer.rowId && answer.columnId ? (
+                              <div className="text-gray-900">
+                                <div className="font-medium text-sm text-gray-700 mb-1">
+                                  Selected Answer:
+                                </div>
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                                  <span className="font-medium">Question:</span>{" "}
+                                  {answer.rowId}
+                                  <br />
+                                  <span className="font-medium">
+                                    Answer:
+                                  </span>{" "}
+                                  {answer.columnId}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-gray-900">
+                                <div className="font-medium text-sm text-gray-700 mb-1">
+                                  Selected Answer:
+                                </div>
+                                <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                                  {answer.value}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {!["rating", "netPromoterScore", "matrix"].includes(
+                          answer.fieldType
+                        ) && (
+                          <div className="text-gray-900">
+                            <div className="font-medium text-sm text-gray-700 mb-1">
+                              Answer:
+                            </div>
+                            <div className="bg-blue-50 border border-blue-200 rounded p-2">
+                              {answer.value}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

@@ -34,7 +34,7 @@ export async function GET(
 
     // Get form details with all fields
     const form = await prisma.forms.findUnique({
-        where: { id },
+      where: { id },
       include: {
         inputs: {
           select: {
@@ -61,6 +61,42 @@ export async function GET(
             maxChoices: true,
           },
         },
+        ratings: {
+          select: {
+            id: true,
+            question: true,
+            required: true,
+            maxRating: true,
+            showLabels: true,
+            labels: true,
+          },
+        },
+        matrices: {
+          select: {
+            id: true,
+            title: true,
+            required: true,
+            rows: true,
+            columns: true,
+          },
+        },
+        netPromoterScores: {
+          select: {
+            id: true,
+            question: true,
+            required: true,
+            leftLabel: true,
+            rightLabel: true,
+            maxScore: true,
+          },
+        },
+        separators: {
+          select: {
+            id: true,
+            title: true,
+            description: true,
+          },
+        },
       },
     });
 
@@ -82,6 +118,12 @@ export async function GET(
       const input = form.inputs.find((i) => i.id === fieldId);
       const selection = form.selections.find((s) => s.id === fieldId);
       const multipleChoice = form.multipleChoice.find((m) => m.id === fieldId);
+      const rating = form.ratings.find((r) => r.id === fieldId);
+      const matrix = form.matrices.find((m) => m.id === fieldId);
+      const netPromoterScore = form.netPromoterScores.find(
+        (n) => n.id === fieldId
+      );
+      const separator = form.separators.find((s) => s.id === fieldId);
 
       if (input) {
         fields.push({
@@ -107,6 +149,43 @@ export async function GET(
           required: multipleChoice.required,
           options: multipleChoice.options,
           maxChoices: multipleChoice.maxChoices || 1,
+        });
+      } else if (rating) {
+        fields.push({
+          id: rating.id,
+          type: "rating" as const,
+          label: rating.question || "",
+          required: rating.required,
+          maxRating: rating.maxRating || 5,
+          showLabels: rating.showLabels || false,
+          labels: rating.labels || [],
+        });
+      } else if (matrix) {
+        fields.push({
+          id: matrix.id,
+          type: "matrix" as const,
+          label: matrix.title || "",
+          required: matrix.required,
+          rows: matrix.rows || [],
+          columns: matrix.columns || [],
+        });
+      } else if (netPromoterScore) {
+        fields.push({
+          id: netPromoterScore.id,
+          type: "netPromoterScore" as const,
+          label: netPromoterScore.question || "",
+          required: netPromoterScore.required,
+          leftLabel: netPromoterScore.leftLabel || "Not at all likely",
+          rightLabel: netPromoterScore.rightLabel || "Extremely likely",
+          maxScore: netPromoterScore.maxScore || 10,
+        });
+      } else if (separator) {
+        fields.push({
+          id: separator.id,
+          type: "separator" as const,
+          label: separator.title || "",
+          required: false, // Separators are never required
+          description: separator.description || "",
         });
       }
     }

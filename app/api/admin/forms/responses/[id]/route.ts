@@ -33,6 +33,10 @@ export async function GET(
             inputs: true,
             selections: true,
             multipleChoice: true,
+            ratings: true,
+            matrices: true,
+            netPromoterScores: true,
+            separators: true,
           },
         },
         answers: {
@@ -62,6 +66,18 @@ export async function GET(
     formResponse.form.multipleChoice.forEach((field) => {
       fieldLabels[field.id] = field.label || "";
     });
+    formResponse.form.ratings.forEach((field) => {
+      fieldLabels[field.id] = field.question || "";
+    });
+    formResponse.form.matrices.forEach((field) => {
+      fieldLabels[field.id] = field.title || "";
+    });
+    formResponse.form.netPromoterScores.forEach((field) => {
+      fieldLabels[field.id] = field.question || "";
+    });
+    formResponse.form.separators.forEach((field) => {
+      fieldLabels[field.id] = field.title || "";
+    });
 
     // Build the fields array in sequence order
     const fields = [];
@@ -73,6 +89,14 @@ export async function GET(
       );
       const multipleChoice = formResponse.form.multipleChoice.find(
         (m) => m.id === fieldId
+      );
+      const rating = formResponse.form.ratings.find((r) => r.id === fieldId);
+      const matrix = formResponse.form.matrices.find((m) => m.id === fieldId);
+      const netPromoterScore = formResponse.form.netPromoterScores.find(
+        (n) => n.id === fieldId
+      );
+      const separator = formResponse.form.separators.find(
+        (s) => s.id === fieldId
       );
 
       if (input) {
@@ -99,6 +123,43 @@ export async function GET(
           required: multipleChoice.required,
           options: multipleChoice.options,
           maxChoices: multipleChoice.maxChoices || 1,
+        });
+      } else if (rating) {
+        fields.push({
+          id: rating.id,
+          type: "rating" as const,
+          label: rating.question || "",
+          required: rating.required,
+          maxRating: rating.maxRating,
+          showLabels: rating.showLabels,
+          labels: rating.labels,
+        });
+      } else if (matrix) {
+        fields.push({
+          id: matrix.id,
+          type: "matrix" as const,
+          label: matrix.title || "",
+          required: matrix.required,
+          rows: matrix.rows,
+          columns: matrix.columns,
+        });
+      } else if (netPromoterScore) {
+        fields.push({
+          id: netPromoterScore.id,
+          type: "netPromoterScore" as const,
+          label: netPromoterScore.question || "",
+          required: netPromoterScore.required,
+          leftLabel: netPromoterScore.leftLabel,
+          rightLabel: netPromoterScore.rightLabel,
+          maxScore: netPromoterScore.maxScore,
+        });
+      } else if (separator) {
+        fields.push({
+          id: separator.id,
+          type: "separator" as const,
+          label: separator.title || "",
+          required: false,
+          description: separator.description,
         });
       }
     }
