@@ -26,8 +26,8 @@ export default function Home() {
       <Partner />
       <Partner2 />
       <Finance />
-      <Finance2 />
-      <OurStages/>
+      {/* <Finance2 /> */}
+      {/* <OurStages/> */}
       <Faq />
       <BlogSection />
       <Footer />

@@ -491,7 +491,7 @@ export default function FormsManagement() {
 
       {/* User Assignment Modal */}
       <Dialog open={isUserModalOpen} onOpenChange={setIsUserModalOpen}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col overflow-scroll overflow-x-hidden">
           <DialogHeader>
             <DialogTitle className="text-xl font-semibold">
               Assign Users to Form
@@ -527,7 +527,7 @@ export default function FormsManagement() {
             </div>
 
             {/* User List */}
-            <div className="border rounded-lg max-h-96 overflow-auto">
+            <div className="border rounded-lg max-h-66 overflow-x-hidden overflow-scroll">
               {filteredUsers.length === 0 ? (
                 <div className="p-8 text-center text-gray-500">
                   <User className="w-12 h-12 mx-auto mb-3 text-gray-300" />

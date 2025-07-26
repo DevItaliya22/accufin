@@ -51,7 +51,7 @@ export default function Partner() {
             <div className="uppercase text-xs tracking-widest text-[#0082a3] mb-2">Why Choose Us</div>
             <h3 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">Accounting With Unity</h3>
             <p className="text-gray-500 mb-6 text-sm md:text-base">
-              Proin lorem nisl vitae pharetra mattis. Etiam luctus suscipit velit vitae ultricies malesuada. Augue molestie at aliquam quis tincidunt est, et efficitur turpis nunc bibendum ut risus et vehicula proin tempus tellus diam laoreet justo est tempus.
+              Experience seamless financial management with our comprehensive suite of services. Our expert accountants ensure precise and transparent accounting records, giving you a clear financial overview. We navigate complex tax regulations, maximizing your returns and ensuring full compliance. Unlock strategic insights with our Management Information Systems, transforming data into actionable strategies for business growth. Our holistic approach covers every financial aspect, offering tailored solutions for your unique needs. 
             </p>
             <div className="flex gap-8 mb-6 flex-col sm:flex-row">
               <div className="flex items-start gap-3">

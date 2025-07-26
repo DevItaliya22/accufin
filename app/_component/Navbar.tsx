@@ -185,10 +185,11 @@ export default function NewHeader() {
               onClick={() => setIsModalOpen(true)}
               className="flex items-center gap-2 text-white hover:text-cyan-200 transition-colors"
             >
-              <FaCalendarAlt className="text-white text-xl" />
+              <FaCalendarAlt className="text-[#59ff00] text-xl" />
               <div>
-                <div className="text-white text-sm">Important Dates</div>
-                <div className="text-white font-semibold">View All</div>
+                <div className="text-sm text-[#59ff00]">Important Dates</div>
+                <div className="text-[#59ff00] font-semibold">View All</div>
+                {/* <div className="text-[#44ff00] font-semibold">View All</div> */}
               </div>
             </button>
           </div>

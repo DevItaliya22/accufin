@@ -16,14 +16,45 @@ import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 
 const services = [
-    { icon: <FaBook className="text-3xl" />, title: "Bookkeeping", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaMoneyCheckAlt className="text-3xl" />, title: "Payroll Services", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaCalculator className="text-3xl" />, title: "Tax Planning", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaClipboardCheck className="text-3xl" />, title: "Audit & Assurance", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaChartLine className="text-3xl" />, title: "Financial Statement", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaUserCog className="text-3xl" />, title: "Tech Consulting", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaBriefcase className="text-3xl" />, title: "Business Advisory", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    { icon: <FaUserTie className="text-3xl" />, title: "Outsourced CFO", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    {
+        icon: <FaBook className="text-3xl" />,
+        title: "Bookkeeping",
+        desc: "Streamline your finances with our precise and reliable bookkeeping services. Accurate records, timely reporting, and expert financial management tailored to your business needs.",
+        href: "/service/bookkeeping"
+    },
+    {
+        icon: <FaMoneyCheckAlt className="text-3xl" />,
+        title: "Payroll Services",
+        desc: "Efficient and accurate payroll services tailored to your business. Timely processing, compliance, and hassle-free payroll management, ensuring your employees are paid accurately and on time.",
+        href: "/service/payroll"
+    },
+    {
+        icon: <FaCalculator className="text-3xl" />,
+        title: "Tax Planning",
+        desc: "Get expert Personal/Corporate Tax services designed just for you. We ensure timely filings, maximize your deductions, and offer proactive advice, making tax management and financial planning hassle-free",
+        href: "/service/tax"
+    },
+    {
+        icon: <FaClipboardCheck className="text-3xl" />,
+        title: "Audit & Assurance",
+        desc: "Improve your business understanding with our Reporting services. We provide clear, easy-to-understand reports that help you make smart decisions for your organization's success.",
+        href: "/service/audit"
+    },
+    {
+        icon: <FaChartLine className="text-3xl" />,
+        title: "Financial Statement",
+        desc: "Count on us for trustworthy Trust Accounting services. We manage your funds with care, ensuring transparency and compliance, giving you peace of mind.",
+        href: "/service/finance"
+    },
+    {
+        icon: <FaBriefcase className="text-3xl" />,
+        title: "Business Advisory",
+        desc: "Keep your workplace worry-free with our help. We manage everything for WCB Compliance, handling paperwork and safety standards to ensure your workplace is secure and worry-free.",
+        href: "/service/businesscompliances"
+    },
+    // { icon: <FaUserCog className="text-3xl" />, title: "Tech Consulting", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+    // { icon: <FaUserTie className="text-3xl" />, title: "Outsourced CFO", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
+
 ];
 
 export default function Company() {
@@ -79,8 +110,9 @@ export default function Company() {
                                     <div className="font-bold text-lg mb-2">{service.title}</div>
                                     <div className="mb-4 text-sm flex-1">{service.desc}</div>
                                     <Link
-                                        href=""
+                                        href={service.href}
                                         className="inline-flex items-center font-semibold text-sm transition-colors text-inherit group-hover:text-white"
+                                        aria-label={`Learn more about ${service.title}`}
                                     >
                                         READ MORE <FaChevronRight className="ml-2" />
                                     </Link>

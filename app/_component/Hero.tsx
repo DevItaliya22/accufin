@@ -6,7 +6,7 @@ export default function Hero() {
     return (
         <>
             {/* Hero Section */}
-            <section className="relative bg-[#0a3a4a] text-white min-h-[700px] overflow-hidden">
+            <section className="relative bg-[#0a3a4a] text-white min-h-[700px] overflow-hidden mb-0">
                 {/* Background Image */}
                 <div className="absolute inset-0 z-0">
                     <img
@@ -25,7 +25,7 @@ export default function Hero() {
                         transition={{ duration: 0.6 }}
                         className="mb-4 text-[#4fd1f9] font-semibold tracking-widest text-lg"
                     >
-                        WELCOME TO GAUDIT
+                    	WELCOME TO ACCUFIN SERVICES INC.
                     </motion.div>
 
                     <motion.h1
@@ -34,8 +34,7 @@ export default function Hero() {
                         transition={{ duration: 0.7, delay: 0.1 }}
                         className="text-5xl md:text-7xl font-bold mb-6 leading-tight"
                     >
-                        The Most Trusted <br />
-                        Accountants on The Planet
+                        Accelerate with Accurate Bookkeeping & Accounting
                     </motion.h1>
 
                     <motion.p
@@ -44,9 +43,7 @@ export default function Hero() {
                         transition={{ duration: 0.7, delay: 0.2 }}
                         className="text-lg md:text-xl mb-8 max-w-2xl"
                     >
-                        Puisque ullamcorper molestie lacus praesent id posuere diam quis
-                        ultrices tellus liquam. Semamet luctus vivamus tincidunt nulla et
-                        mauris mollis a iaculis risu.
+                        AT ACCUFIN, we combine accuracy, transparency, and strategic insight to streamline your finances and fuel your success. Our expert team follows the highest accounting standards, ensuring compliance, minimizing risks, and maximizing profitability. Whether you're a small business or a growing enterprise, trust us to keep your finances clear, compliant, and future-ready.
                     </motion.p>
 
                     <motion.a
@@ -73,7 +70,7 @@ export default function Hero() {
                         <FaChartBar className="text-4xl mb-4 mx-auto" />
                         <div className="text-2xl font-bold mb-2">Time-Saving</div>
                         <div className="text-base">
-                            Aliquam tincidunt mi vitae odio mixue molestie.
+                            Your Time is Money—Let Us Save Both
                         </div>
                     </motion.div>
 
@@ -86,7 +83,7 @@ export default function Hero() {
                         <FaHandHoldingUsd className="text-4xl mb-4 mx-auto" />
                         <div className="text-2xl font-bold mb-2">Cost-Effective</div>
                         <div className="text-base">
-                            Aliquam tincidunt mi vitae odio mixue molestie.
+                            More Savings for Your Business – In Your Books & Your Bills
                         </div>
                     </motion.div>
                 </div>

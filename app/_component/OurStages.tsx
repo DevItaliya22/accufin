@@ -7,17 +7,17 @@ const stages = [
     {
         icon: <FaChartBar className="text-3xl text-[#00c6fb]" />,
         title: "Consultation",
-        desc: "Elitam quis tincidunt est et efficitur ipsum nunc mixue. Bibendum ut risus et nec vehicula.",
+        desc: "Don't delay. We are just a phone call away",
     },
     {
         icon: <FaMoneyCheckAlt className="text-3xl text-[#00c6fb]" />,
         title: "Choose a Package",
-        desc: "Elitam quis tincidunt est et efficitur ipsum nunc mixue. Bibendum ut risus et nec vehicula.",
+        desc: "Compatible and very exclusive cost effective according to the business needs.",
     },
     {
         icon: <FaClipboardList className="text-3xl text-[#00c6fb]" />,
         title: "Get Your Service",
-        desc: "Elitam quis tincidunt est et efficitur ipsum nunc mixue. Bibendum ut risus et nec vehicula.",
+        desc: "A Bundled package along with all your business and individual/family taxes tailored to your requirements. We will help you to reduce your taxes legally in the best possible way.",
     },
 ];
 

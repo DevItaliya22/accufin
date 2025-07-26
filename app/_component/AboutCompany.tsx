@@ -16,9 +16,9 @@ export default function AboutCompany() {
       animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
       transition={{ duration: 0.8, ease: "easeOut" }}
       ref={ref}
-      className="bg-[#FFFFFF] py-12 px-4"
+      className="bg-[#FFFFFF] pb-12 px-4"
     >
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-20 items-center">
+      <div className="max-w-[85rem] mx-auto flex flex-col lg:flex-row gap-20 items-center">
         {/* Images */}
         <div className="relative flex-shrink-0 w-full lg:w-[420px]">
           <img
@@ -70,10 +70,7 @@ export default function AboutCompany() {
             transition={{ duration: 0.6 }}
             className="text-[#5a6a7a] text-lg mb-6"
           >
-            Proin laoreet nisi vitae pharetra mattis, etiam luctus suscipit
-            velit vitae amatug ultricies. Augue molestie a etiam quis tincidunt
-            est, et efficitur ipsum nunc bibendum ut risus et vehicula proin
-            tempus tellus diam laoreet justo velit ante.
+            We believe in doing the bookkeeping and accounting for your business with just in time approach. Our expertise are into redefining and counting every fraction of a cent to grow in the business and keeping your taxes up-to date and hassle free.
           </motion.p>
           <div className="flex flex-col md:flex-row gap-8 mb-8">
             {/* Vision */}
@@ -90,13 +87,14 @@ export default function AboutCompany() {
               </motion.div>
               <ul className="space-y-2 text-[#008db3]">
                 {[
-                  "Nulla congue aliquet vulputate",
-                  "Proin tempus auctor libero",
-                  "Sed venenatis purus sed",
-                  "Etiam lobortis sapien amatug",
+                 
+                  "🌱 Transforming Numbers into Your Business’s Growth Engine",
+                  "📈 Where Accurate Books Meet Ambitious Futures",
+                  "🚀 Building Financial Foundations for Tomorrow’s Success",
+                  "🔍 Clarity in Your Finances, Confidence in Your Decisions",
                 ].map((text, idx) => (
                   <li className="flex items-start" key={idx}>
-                    <FaChevronRight className="mt-1 mr-2" />
+                    {/* <FaChevronRight className="mt-1 mr-2" /> */}
                     <motion.span
                       initial={{ x: -50, opacity: 0 }}
                       animate={
@@ -105,7 +103,7 @@ export default function AboutCompany() {
                           : { x: -50, opacity: 0 }
                       }
                       transition={{ duration: 0.6, delay: idx * 0.1 }}
-                      className="text-[#5a6a7a]"
+                      className="text-[#5a6a7a] whitespace-nowrap"
                     >
                       {text}
                     </motion.span>
@@ -128,13 +126,12 @@ export default function AboutCompany() {
               </motion.div>
               <ul className="space-y-2 text-[#00c6fb]">
                 {[
-                  "Mauris non euismod odio donec",
-                  "Tellus velit eleifend ante",
-                  "Quis efficitur dolor nulla orci",
-                  "Lacus nec malesuada lacinia velit",
+                  "⚖️ Where Every Transaction Matters & Every Client Counts",
+                  "📈 Meticulous Books for Measurable Growth",
+                  "🛠️ Fueling Small Business Dreams With Big Financial Insight",
                 ].map((text, idx) => (
                   <li className="flex items-start" key={idx}>
-                    <FaChevronRight className="mt-1 mr-2" />
+                    {/* <FaChevronRight className="mt-1 mr-2" /> */}
                     <motion.span
                       initial={{ x: -50, opacity: 0 }}
                       animate={
@@ -143,7 +140,7 @@ export default function AboutCompany() {
                           : { x: -50, opacity: 0 }
                       }
                       transition={{ duration: 0.6, delay: idx * 0.1 }}
-                      className="text-[#5a6a7a]"
+                      className="text-[#5a6a7a] text-wrap whitespace-nowrap"
                     >
                       {text}
                     </motion.span>

@@ -54,9 +54,9 @@ export default function Footer() {
         {/* Logo & About */}
         <div className="flex-1 min-w-[220px]">
           <div className="flex items-center mb-2">
-            <span className="text-white text-5xl font-bold">G</span>
+            <span className="text-white text-5xl font-bold">A</span>
             <div>
-              <span className="text-white text-4xl font-bold">audit</span>
+              <span className="text-white text-4xl font-bold">ccufin</span>
               <div className="text-xs text-white tracking-widest">
                 ACCOUNTING FIRM
               </div>

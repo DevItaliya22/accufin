@@ -43,18 +43,6 @@ export const authOptions: AuthOptions = {
         }
 
         // Send login confirmation email
-        try {
-          const loginTime = new Date().toLocaleString();
-          await sendLoginConfirmationEmail({
-            userName: user.name || "User",
-            userEmail: user.email,
-            loginTime,
-            loginMethod: "Email & Password",
-          });
-        } catch (emailError) {
-          console.error("Error sending login confirmation email:", emailError);
-          // Don't fail login if email fails
-        }
 
         return {
           id: user.id,
@@ -99,6 +87,18 @@ export const authOptions: AuthOptions = {
               isAdmin: true,
             },
           });
+          try {
+            const loginTime = new Date().toLocaleString();
+            await sendLoginConfirmationEmail({
+              userName: user.name || "User",
+              userEmail: user.email!,
+              loginTime,
+              loginMethod: "Google OAuth",
+            });
+          } catch (emailError) {
+            console.error("Error sending login confirmation email:", emailError);
+            // Don't fail login if email fails
+          }
         }
 
         user.id = dbUser.id;
@@ -107,18 +107,7 @@ export const authOptions: AuthOptions = {
         user.email = dbUser.email;
 
         // Send login confirmation email for Google login
-        try {
-          const loginTime = new Date().toLocaleString();
-          await sendLoginConfirmationEmail({
-            userName: user.name || "User",
-            userEmail: user.email!,
-            loginTime,
-            loginMethod: "Google OAuth",
-          });
-        } catch (emailError) {
-          console.error("Error sending login confirmation email:", emailError);
-          // Don't fail login if email fails
-        }
+
       }
       return true;
     },

@@ -44,7 +44,7 @@ export default function Company2() {
                             transition={{ duration: 0.6, delay: 0.2 }}
                         >
                             <div className="text-3xl sm:text-4xl font-bold">
-                                15<sup>th</sup>
+                                8<sup>th</sup>
                             </div>
                             <div className="font-semibold">Years Experience</div>
                         </motion.div>
@@ -54,7 +54,7 @@ export default function Company2() {
                             animate={isInView ? { opacity: 1, x: 0 } : {}}
                             transition={{ duration: 0.6, delay: 0.3 }}
                         >
-                            <div className="text-3xl sm:text-4xl font-bold">1,700+</div>
+                            <div className="text-3xl sm:text-4xl font-bold">300+</div>
                             <div className="font-semibold">Happy Client</div>
                         </motion.div>
 
@@ -63,7 +63,7 @@ export default function Company2() {
                             animate={isInView ? { opacity: 1, y: 0 } : {}}
                             transition={{ duration: 0.6, delay: 0.4 }}
                         >
-                            <div className="text-3xl sm:text-4xl font-bold">4,300+</div>
+                            <div className="text-3xl sm:text-4xl font-bold">100+</div>
                             <div className="font-semibold">Project Completed</div>
                         </motion.div>
                     </div>

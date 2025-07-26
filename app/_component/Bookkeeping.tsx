@@ -2,7 +2,16 @@
 import { useRef } from "react";
 import { motion, useInView } from "framer-motion";
 import { FaChevronRight, FaShareAlt } from "react-icons/fa";
+import { useState } from 'react';
+import { FaArrowRight, FaCalendarAlt, FaSearchDollar, FaCogs } from 'react-icons/fa';
 
+
+
+interface AccordionItem {
+  title: string;
+  content: string;
+  hasCheckmark?: boolean;
+}
 const otherServices = [
   "Payroll Services",
   "Tax Planning",
@@ -12,14 +21,59 @@ const otherServices = [
   "Business Advisory",
   "Outsourced CFO",
 ];
-
 export default function Bookkeeping() {
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, amount: 0.2 });
 
+
   const handleScrollTop = () => {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
+
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+
+  const items: AccordionItem[] = [
+    {
+      title: 'CRA-Compliant Expertise',
+      content: 'We master Canadian tax laws (GST/HST, payroll, T4s) so you avoid penalties and sleep soundly.'
+    },
+    {
+      title: 'Real-Time Financial Visibility',
+      content: 'Access clean, up-to-date books 24/7 via cloud platforms like QuickBooks Online, Xero, or Wave.'
+    },
+    {
+      title: 'Cost-Effective Precision',
+      content: 'Save 10+ hours/month and eliminate costly errors with our meticulous record-keeping.',
+      hasCheckmark: true
+    },
+    {
+      title: 'Small Business Specialists',
+      content: 'We speak your language—no corporate jargon, just solutions built for your needs.'
+    }
+  ];
+
+  const toggleItem = (index: number) => {
+    setOpenIndex(openIndex === index ? null : index);
+  };
+
+  const services = [
+    {
+      businessType: "Startups",
+      solution: "Establish scalable systems from Day 1"
+    },
+    {
+      businessType: "Small Businesses",
+      solution: "Free owners from DIY bookkeeping stress"
+    },
+    {
+      businessType: "E-commerce",
+      solution: "Manage multi-channel sales & platform integrations"
+    },
+    {
+      businessType: "Contractors/Trades",
+      solution: "Track project costs & job profitability"
+    }
+  ];
 
   return (
     <section className="bg-[#f7f9fa] py-8 px-2 min-h-screen" ref={ref}>
@@ -59,16 +113,22 @@ export default function Bookkeeping() {
               <FaShareAlt className="mr-1" /> Share
             </button>
           </div>
-          <p className="mb-4 text-[#5a6a7a]">
-            Nullam et lacinia diam. Praesent eu pulvinar orci. Praesent in
-            condimentum lacus, hendrerit malesuada nisl...
-          </p>
-          <p className="mb-4 text-[#5a6a7a]">
-            In sed nisi vel tortor ornare venenatis sit amet vel felis...
-          </p>
-          <h2 className="text-xl font-bold text-[#0a2236] mb-2">
+            {/* <p className="mb-4 text-[#5a6a7a] text-2xl">
+              <b className="text-2xl">Accurate Bookkeeping Services in Canada:</b> Your Financial Foundation, Done Right
+            </p>
+            <p className="mb-4 text-[#5a6a7a]">
+              <p className="text-xl font-semibold">Stop juggling receipts, chasing invoices, and worrying about CRA compliance. </p>
+              <p>Accufin provides expert bookkeeping services for Canadian businesses, turning your financial chaos into clarity. We handle your day-to-day finances so you can focus on growth.</p>
+            </p> */}
+
+          {/* <h2 className="text-xl font-bold text-[#0a2236] mb-2 mx-auto">
             Benefits of Using Bookkeeping Services
-          </h2>
+          </h2> */}
+
+
+          {/* Addded */}
+          
+
           <ul className="list-none pl-0 space-y-2 text-[#008db3]">
             {[
               "Nulla congue aliquet vulputate...",
@@ -84,6 +144,7 @@ export default function Bookkeeping() {
               </li>
             ))}
           </ul>
+
         </div>
 
         {/* Sidebar */}

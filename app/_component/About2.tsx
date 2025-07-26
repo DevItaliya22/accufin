@@ -22,7 +22,7 @@ export default function About2() {
                 transition={{ duration: 0.6, ease: "easeOut" }}
                 viewport={{ once: true, amount: 0.4 }}
             >
-                <h1 className="text-white text-5xl font-bold mb-4 mt-10">About Gaudit</h1>
+                <h1 className="text-white text-5xl font-bold mb-4 mt-10">About Accufin</h1>
                 <div className="flex items-center space-x-2 text-lg">
                     <Link href="/" className="text-[#00c6fb] hover:underline">Home</Link>
                     <span className="text-white">/</span>
