@@ -29,18 +29,40 @@ import {
   CheckCircle,
   User,
   Calendar,
+  Star,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
 
 interface FormField {
   id: string;
-  type: "input" | "selection" | "multipleChoice";
+  type:
+    | "input"
+    | "selection"
+    | "multipleChoice"
+    | "rating"
+    | "matrix"
+    | "netPromoterScore"
+    | "separator";
   label: string;
   required: boolean;
   inputType?: string;
   options?: string[];
   maxChoices?: number;
+  // For rating
+  maxRating?: number;
+  showLabels?: boolean;
+  labels?: string[];
+  // For matrix
+  rows?: string[];
+  columns?: string[];
+  // For net promoter score
+  leftLabel?: string;
+  rightLabel?: string;
+  maxScore?: number;
+  // For separator
+  description?: string;
 }
 
 interface FormAnswer {
@@ -48,6 +70,8 @@ interface FormAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
   fieldLabel: string;
 }
 
@@ -68,6 +92,8 @@ interface EditAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
 }
 
 export default function AdminFormViewPage() {
@@ -86,6 +112,15 @@ export default function AdminFormViewPage() {
   );
   const [editMultipleChoiceAnswers, setEditMultipleChoiceAnswers] = useState<{
     [fieldId: string]: string[];
+  }>({});
+  const [editRatingAnswers, setEditRatingAnswers] = useState<{
+    [fieldId: string]: number;
+  }>({});
+  const [editMatrixAnswers, setEditMatrixAnswers] = useState<{
+    [fieldId: string]: { [rowId: string]: string };
+  }>({});
+  const [editNetPromoterAnswers, setEditNetPromoterAnswers] = useState<{
+    [fieldId: string]: number;
   }>({});
   const [editPrivacyConsent, setEditPrivacyConsent] = useState(false);
 
@@ -140,12 +175,27 @@ export default function AdminFormViewPage() {
       // Initialize edit state with current values
       const answers: { [fieldId: string]: string } = {};
       const multipleChoiceAnswers: { [fieldId: string]: string[] } = {};
+      const ratingAnswers: { [fieldId: string]: number } = {};
+      const matrixAnswers: { [fieldId: string]: { [rowId: string]: string } } =
+        {};
+      const netPromoterAnswers: { [fieldId: string]: number } = {};
 
       data.answers.forEach((answer: FormAnswer) => {
         if (answer.fieldType === "multipleChoice") {
           multipleChoiceAnswers[answer.fieldId] = answer.value
             .split(", ")
             .filter((v) => v.trim());
+        } else if (answer.fieldType === "rating") {
+          ratingAnswers[answer.fieldId] = parseInt(answer.value) || 0;
+        } else if (answer.fieldType === "matrix") {
+          if (answer.rowId && answer.columnId) {
+            if (!matrixAnswers[answer.fieldId]) {
+              matrixAnswers[answer.fieldId] = {};
+            }
+            matrixAnswers[answer.fieldId][answer.rowId] = answer.columnId;
+          }
+        } else if (answer.fieldType === "netPromoterScore") {
+          netPromoterAnswers[answer.fieldId] = parseInt(answer.value) || 0;
         } else {
           answers[answer.fieldId] = answer.value;
         }
@@ -153,6 +203,9 @@ export default function AdminFormViewPage() {
 
       setEditAnswers(answers);
       setEditMultipleChoiceAnswers(multipleChoiceAnswers);
+      setEditRatingAnswers(ratingAnswers);
+      setEditMatrixAnswers(matrixAnswers);
+      setEditNetPromoterAnswers(netPromoterAnswers);
       setEditPrivacyConsent(data.isChecked);
     } catch (err) {
       setError(
@@ -199,6 +252,52 @@ export default function AdminFormViewPage() {
     });
   };
 
+  const handleEditRatingChange = (fieldId: string, rating: number) => {
+    setEditRatingAnswers((prev) => ({
+      ...prev,
+      [fieldId]: rating,
+    }));
+  };
+
+  const handleEditMatrixChange = (
+    fieldId: string,
+    rowId: string,
+    columnId: string
+  ) => {
+    setEditMatrixAnswers((prev) => ({
+      ...prev,
+      [fieldId]: {
+        ...prev[fieldId],
+        [rowId]: columnId,
+      },
+    }));
+  };
+
+  const handleEditNetPromoterChange = (fieldId: string, score: number) => {
+    const field = submission?.fields.find((f) => f.id === fieldId);
+    const maxScore = field?.maxScore || 10;
+
+    if (score >= 0 && score <= maxScore) {
+      setEditNetPromoterAnswers((prev) => ({
+        ...prev,
+        [fieldId]: score,
+      }));
+    }
+  };
+
+  // Helper function to check if field is a valid matrix field
+  const isValidMatrixField = (
+    field: FormField
+  ): field is FormField & { rows: string[]; columns: string[] } => {
+    return (
+      field.type === "matrix" &&
+      Array.isArray(field.rows) &&
+      Array.isArray(field.columns) &&
+      field.rows.length > 0 &&
+      field.columns.length > 0
+    );
+  };
+
   const handleSave = async () => {
     if (!submission) return;
 
@@ -227,6 +326,41 @@ export default function AdminFormViewPage() {
             fieldId,
             fieldType: "multipleChoice",
             value: values.join(", "),
+          });
+        }
+      });
+
+      // Add rating answers
+      Object.entries(editRatingAnswers).forEach(([fieldId, rating]) => {
+        if (rating > 0) {
+          updatedAnswers.push({
+            fieldId,
+            fieldType: "rating",
+            value: rating.toString(),
+          });
+        }
+      });
+
+      // Add matrix answers
+      Object.entries(editMatrixAnswers).forEach(([fieldId, rowAnswers]) => {
+        Object.entries(rowAnswers).forEach(([rowId, columnId]) => {
+          updatedAnswers.push({
+            fieldId,
+            fieldType: "matrix",
+            value: columnId,
+            rowId,
+            columnId,
+          });
+        });
+      });
+
+      // Add net promoter score answers
+      Object.entries(editNetPromoterAnswers).forEach(([fieldId, score]) => {
+        if (score !== undefined) {
+          updatedAnswers.push({
+            fieldId,
+            fieldType: "netPromoterScore",
+            value: score.toString(),
           });
         }
       });
@@ -267,12 +401,27 @@ export default function AdminFormViewPage() {
     if (submission) {
       const answers: { [fieldId: string]: string } = {};
       const multipleChoiceAnswers: { [fieldId: string]: string[] } = {};
+      const ratingAnswers: { [fieldId: string]: number } = {};
+      const matrixAnswers: { [fieldId: string]: { [rowId: string]: string } } =
+        {};
+      const netPromoterAnswers: { [fieldId: string]: number } = {};
 
       submission.answers.forEach((answer) => {
         if (answer.fieldType === "multipleChoice") {
           multipleChoiceAnswers[answer.fieldId] = answer.value
             .split(", ")
             .filter((v) => v.trim());
+        } else if (answer.fieldType === "rating") {
+          ratingAnswers[answer.fieldId] = parseInt(answer.value) || 0;
+        } else if (answer.fieldType === "matrix") {
+          if (answer.rowId && answer.columnId) {
+            if (!matrixAnswers[answer.fieldId]) {
+              matrixAnswers[answer.fieldId] = {};
+            }
+            matrixAnswers[answer.fieldId][answer.rowId] = answer.columnId;
+          }
+        } else if (answer.fieldType === "netPromoterScore") {
+          netPromoterAnswers[answer.fieldId] = parseInt(answer.value) || 0;
         } else {
           answers[answer.fieldId] = answer.value;
         }
@@ -280,6 +429,9 @@ export default function AdminFormViewPage() {
 
       setEditAnswers(answers);
       setEditMultipleChoiceAnswers(multipleChoiceAnswers);
+      setEditRatingAnswers(ratingAnswers);
+      setEditMatrixAnswers(matrixAnswers);
+      setEditNetPromoterAnswers(netPromoterAnswers);
       setEditPrivacyConsent(submission.isChecked);
     }
   };
@@ -288,12 +440,31 @@ export default function AdminFormViewPage() {
     if (isEditMode) {
       if (field.type === "multipleChoice") {
         return editMultipleChoiceAnswers[field.id] || [];
+      } else if (field.type === "rating") {
+        return editRatingAnswers[field.id] || 0;
+      } else if (field.type === "matrix") {
+        return editMatrixAnswers[field.id] || {};
+      } else if (field.type === "netPromoterScore") {
+        return editNetPromoterAnswers[field.id] || 0;
       }
       return editAnswers[field.id] || "";
     } else {
       const answer = submission?.answers.find((a) => a.fieldId === field.id);
       if (field.type === "multipleChoice") {
         return answer ? answer.value.split(", ").filter((v) => v.trim()) : [];
+      } else if (field.type === "rating") {
+        return answer ? parseInt(answer.value) || 0 : 0;
+      } else if (field.type === "matrix") {
+        // For matrix, we need to reconstruct the answers object
+        const matrixAnswers: { [rowId: string]: string } = {};
+        submission?.answers.forEach((a) => {
+          if (a.fieldId === field.id && a.rowId && a.columnId) {
+            matrixAnswers[a.rowId] = a.columnId;
+          }
+        });
+        return matrixAnswers;
+      } else if (field.type === "netPromoterScore") {
+        return answer ? parseInt(answer.value) || 0 : 0;
       }
       return answer?.value || "";
     }
@@ -584,7 +755,9 @@ export default function AdminFormViewPage() {
                             ) : (
                               <div className="bg-gray-50 p-3 rounded border">
                                 <p className="text-gray-900">
-                                  {currentValue || "No response"}
+                                  {typeof currentValue === "string"
+                                    ? currentValue
+                                    : "No response"}
                                 </p>
                               </div>
                             ))}
@@ -621,7 +794,9 @@ export default function AdminFormViewPage() {
                             ) : (
                               <div className="bg-gray-50 p-3 rounded border">
                                 <p className="text-gray-900">
-                                  {currentValue || "No selection"}
+                                  {typeof currentValue === "string"
+                                    ? currentValue
+                                    : "No selection"}
                                 </p>
                               </div>
                             ))}
@@ -671,6 +846,236 @@ export default function AdminFormViewPage() {
                                 </p>
                               </div>
                             ))}
+
+                          {/* Star Rating */}
+                          {field.type === "rating" &&
+                            (isEditMode ? (
+                              <div className="space-y-3">
+                                <div className="flex items-center space-x-2">
+                                  {Array.from({
+                                    length: field.maxRating || 5,
+                                  }).map((_, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      onClick={() =>
+                                        handleEditRatingChange(
+                                          field.id,
+                                          index + 1
+                                        )
+                                      }
+                                      className={`p-1 transition-colors ${
+                                        (currentValue as number) >= index + 1
+                                          ? "text-yellow-500"
+                                          : "text-gray-300 hover:text-yellow-400"
+                                      }`}
+                                    >
+                                      <Star className="w-8 h-8 fill-current" />
+                                    </button>
+                                  ))}
+                                </div>
+                                {field.showLabels &&
+                                  field.labels &&
+                                  field.labels.length > 0 && (
+                                    <div className="flex justify-between text-xs text-gray-500">
+                                      {field.labels.map((label, index) => (
+                                        <span
+                                          key={index}
+                                          className="text-center flex-1"
+                                        >
+                                          {label}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+                                <p className="text-sm text-gray-600">
+                                  Rating: {currentValue as number} out of{" "}
+                                  {field.maxRating || 5}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <div className="flex items-center space-x-2">
+                                  {Array.from({
+                                    length: field.maxRating || 5,
+                                  }).map((_, index) => (
+                                    <Star
+                                      key={index}
+                                      className={`w-5 h-5 ${
+                                        (currentValue as number) >= index + 1
+                                          ? "text-yellow-500 fill-current"
+                                          : "text-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="text-gray-600 ml-2">
+                                    {currentValue as number} out of{" "}
+                                    {field.maxRating || 5}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+
+                          {/* Matrix/Table */}
+                          {isValidMatrixField(field) &&
+                            (isEditMode ? (
+                              <div className="space-y-4">
+                                <div className="overflow-x-auto">
+                                  <table className="w-full border-collapse border border-gray-300">
+                                    <thead>
+                                      <tr className="bg-gray-50">
+                                        <th className="border border-gray-300 p-2 text-left font-medium">
+                                          Questions
+                                        </th>
+                                        {field.columns.map(
+                                          (column, colIndex) => (
+                                            <th
+                                              key={colIndex}
+                                              className="border border-gray-300 p-2 text-center font-medium"
+                                            >
+                                              {column}
+                                            </th>
+                                          )
+                                        )}
+                                      </tr>
+                                    </thead>
+                                    <tbody>
+                                      {field.rows.map((row, rowIndex) => (
+                                        <tr key={rowIndex}>
+                                          <td className="border border-gray-300 p-2 font-medium">
+                                            {row}
+                                          </td>
+                                          {field.columns.map(
+                                            (column, colIndex) => (
+                                              <td
+                                                key={colIndex}
+                                                className="border border-gray-300 p-2 text-center"
+                                              >
+                                                <input
+                                                  type="radio"
+                                                  name={`matrix-${field.id}-${rowIndex}`}
+                                                  value={column}
+                                                  checked={
+                                                    (
+                                                      currentValue as {
+                                                        [rowId: string]: string;
+                                                      }
+                                                    )[row] === column
+                                                  }
+                                                  onChange={() =>
+                                                    handleEditMatrixChange(
+                                                      field.id,
+                                                      row,
+                                                      column
+                                                    )
+                                                  }
+                                                  className="w-4 h-4 text-blue-600"
+                                                />
+                                              </td>
+                                            )
+                                          )}
+                                        </tr>
+                                      ))}
+                                    </tbody>
+                                  </table>
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <div className="space-y-2">
+                                  {Object.entries(
+                                    currentValue as { [rowId: string]: string }
+                                  ).map(([rowId, columnId]) => (
+                                    <div key={rowId} className="text-sm">
+                                      <span className="font-medium">
+                                        {rowId}:
+                                      </span>{" "}
+                                      {columnId}
+                                    </div>
+                                  ))}
+                                  {Object.keys(
+                                    currentValue as { [rowId: string]: string }
+                                  ).length === 0 && (
+                                    <p className="text-gray-500">
+                                      No selections made
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            ))}
+
+                          {/* Net Promoter Score */}
+                          {field.type === "netPromoterScore" &&
+                            (isEditMode ? (
+                              <div className="space-y-4">
+                                <div className="flex items-center justify-between text-sm text-gray-600">
+                                  <span>{field.leftLabel}</span>
+                                  <span>{field.rightLabel}</span>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {Array.from({
+                                    length: (field.maxScore || 10) + 1,
+                                  }).map((_, index) => (
+                                    <button
+                                      key={index}
+                                      type="button"
+                                      onClick={() =>
+                                        handleEditNetPromoterChange(
+                                          field.id,
+                                          index
+                                        )
+                                      }
+                                      className={`w-8 h-8 rounded border transition-colors ${
+                                        (currentValue as number) === index
+                                          ? "bg-blue-600 text-white border-blue-600"
+                                          : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                      }`}
+                                    >
+                                      {index}
+                                    </button>
+                                  ))}
+                                </div>
+                                <p className="text-sm text-gray-600">
+                                  Score: {currentValue as number} out of{" "}
+                                  {field.maxScore || 10}
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-50 p-3 rounded border">
+                                <div className="flex items-center space-x-2">
+                                  {Array.from({
+                                    length: (field.maxScore || 10) + 1,
+                                  }).map((_, index) => (
+                                    <div
+                                      key={index}
+                                      className={`w-4 h-4 rounded border-2 ${
+                                        (currentValue as number) === index
+                                          ? "bg-blue-600 border-blue-600"
+                                          : "bg-white border-gray-300"
+                                      }`}
+                                    />
+                                  ))}
+                                  <span className="text-gray-600 ml-2">
+                                    Score: {currentValue as number} out of{" "}
+                                    {field.maxScore || 10}
+                                  </span>
+                                </div>
+                              </div>
+                            ))}
+
+                          {/* Section Separator */}
+                          {field.type === "separator" && (
+                            <div className="border-t-2 border-gray-300 pt-4 mt-6">
+                              <h3 className="text-lg font-semibold text-gray-900">
+                                {field.label}
+                              </h3>
+                              {field.description && (
+                                <p className="text-sm text-gray-600 mt-2">
+                                  {field.description}
+                                </p>
+                              )}
+                            </div>
+                          )}
                         </div>
                       );
                     })}

@@ -7,6 +7,8 @@ interface FormAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
 }
 
 interface SubmitFormRequest {
@@ -83,6 +85,31 @@ export async function POST(
             required: true,
           },
         },
+        ratings: {
+          select: {
+            id: true,
+            required: true,
+            maxRating: true,
+          },
+        },
+        matrices: {
+          select: {
+            id: true,
+            required: true,
+          },
+        },
+        netPromoterScores: {
+          select: {
+            id: true,
+            required: true,
+            maxScore: true,
+          },
+        },
+        separators: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 
@@ -102,6 +129,14 @@ export async function POST(
       ...form.inputs.map((f) => ({ id: f.id, required: f.required })),
       ...form.selections.map((f) => ({ id: f.id, required: f.required })),
       ...form.multipleChoice.map((f) => ({ id: f.id, required: f.required })),
+      ...form.ratings.map((f) => ({ id: f.id, required: f.required })),
+      ...form.matrices.map((f) => ({ id: f.id, required: f.required })),
+      ...form.netPromoterScores.map((f) => ({
+        id: f.id,
+        required: f.required,
+      })),
+      // Separators are never required
+      ...form.separators.map((f) => ({ id: f.id, required: false })),
     ];
 
     const answeredFieldIds = new Set(answers.map((a) => a.fieldId));
@@ -115,7 +150,7 @@ export async function POST(
       }
     }
 
-    // Validate field IDs exist in form
+    // Validate field IDs exist in form and validate specific field types
     const validFieldIds = new Set(allFields.map((f) => f.id));
     for (const answer of answers) {
       if (!validFieldIds.has(answer.fieldId)) {
@@ -123,6 +158,40 @@ export async function POST(
           { error: `Invalid field ID: ${answer.fieldId}` },
           { status: 400 }
         );
+      }
+
+      // Validate Net Promoter Score values
+      if (answer.fieldType === "netPromoterScore") {
+        const netPromoterField = form.netPromoterScores.find(
+          (f) => f.id === answer.fieldId
+        );
+        if (netPromoterField) {
+          const score = parseInt(answer.value);
+          const maxScore = netPromoterField.maxScore || 10;
+          if (isNaN(score) || score < 0 || score > maxScore) {
+            return NextResponse.json(
+              {
+                error: `Invalid Net Promoter Score. Must be between 0 and ${maxScore}`,
+              },
+              { status: 400 }
+            );
+          }
+        }
+      }
+
+      // Validate Rating values
+      if (answer.fieldType === "rating") {
+        const ratingField = form.ratings.find((f) => f.id === answer.fieldId);
+        if (ratingField) {
+          const rating = parseInt(answer.value);
+          const maxRating = ratingField.maxRating || 5;
+          if (isNaN(rating) || rating < 1 || rating > maxRating) {
+            return NextResponse.json(
+              { error: `Invalid Rating. Must be between 1 and ${maxRating}` },
+              { status: 400 }
+            );
+          }
+        }
       }
     }
 
@@ -146,6 +215,8 @@ export async function POST(
               fieldId: answer.fieldId,
               fieldType: answer.fieldType,
               value: answer.value,
+              rowId: answer.rowId,
+              columnId: answer.columnId,
             },
           })
         )

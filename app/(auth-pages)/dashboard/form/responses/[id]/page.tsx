@@ -53,6 +53,8 @@ interface FormResponse {
     fieldId: string;
     fieldType: string;
     value: string;
+    rowId?: string;
+    columnId?: string;
   }[];
 }
 
@@ -433,7 +435,13 @@ export default function FormResponsesPage() {
                                                       ] || "Unknown Field"}
                                                     </div>
                                                     <div className="text-sm text-gray-900">
-                                                      {answer.value}
+                                                      {answer.fieldType === "matrix" && answer.rowId && answer.columnId ? (
+                                                        <div>
+                                                          <span className="font-medium">{answer.rowId}:</span> {answer.columnId}
+                                                        </div>
+                                                      ) : (
+                                                        answer.value
+                                                      )}
                                                     </div>
                                                   </div>
                                                 )

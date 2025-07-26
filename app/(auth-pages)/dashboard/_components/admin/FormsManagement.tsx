@@ -49,6 +49,10 @@ interface Form {
     inputs: number;
     selections: number;
     multipleChoice: number;
+    ratings: number;
+    matrices: number;
+    netPromoterScores: number;
+    separators: number;
     formResponses: number;
   };
   assignedUsers: {
@@ -371,7 +375,11 @@ export default function FormsManagement() {
                           <span>
                             {form._count.inputs +
                               form._count.selections +
-                              form._count.multipleChoice}{" "}
+                              form._count.multipleChoice +
+                              form._count.ratings +
+                              form._count.matrices +
+                              form._count.netPromoterScores +
+                              form._count.separators}{" "}
                             fields
                           </span>
                         </div>

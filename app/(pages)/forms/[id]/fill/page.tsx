@@ -22,18 +22,40 @@ import {
   Send,
   AlertCircle,
   CheckCircle,
+  Star,
+  BarChart3,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import toast from "react-hot-toast";
 
 interface FormField {
   id: string;
-  type: "input" | "selection" | "multipleChoice";
+  type:
+    | "input"
+    | "selection"
+    | "multipleChoice"
+    | "rating"
+    | "matrix"
+    | "netPromoterScore"
+    | "separator";
   label: string;
   required: boolean;
   inputType?: string;
   options?: string[];
   maxChoices?: number;
+  // For rating
+  maxRating?: number;
+  showLabels?: boolean;
+  labels?: string[];
+  // For matrix
+  rows?: string[];
+  columns?: string[];
+  // For net promoter score
+  leftLabel?: string;
+  rightLabel?: string;
+  maxScore?: number;
+  // For separator
+  description?: string;
 }
 
 interface FormData {
@@ -49,6 +71,8 @@ interface FormAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
 }
 
 export default function FormFillPage() {
@@ -64,6 +88,15 @@ export default function FormFillPage() {
   const [answers, setAnswers] = useState<{ [fieldId: string]: string }>({});
   const [multipleChoiceAnswers, setMultipleChoiceAnswers] = useState<{
     [fieldId: string]: string[];
+  }>({});
+  const [ratingAnswers, setRatingAnswers] = useState<{
+    [fieldId: string]: number;
+  }>({});
+  const [matrixAnswers, setMatrixAnswers] = useState<{
+    [fieldId: string]: { [rowId: string]: string };
+  }>({});
+  const [netPromoterAnswers, setNetPromoterAnswers] = useState<{
+    [fieldId: string]: number;
   }>({});
   const [privacyConsent, setPrivacyConsent] = useState(false);
 
@@ -94,6 +127,7 @@ export default function FormFillPage() {
         throw new Error("Failed to fetch form");
       }
       const data = await response.json();
+      console.log("Form data loaded:", data);
       setFormData(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load form");
@@ -138,6 +172,63 @@ export default function FormFillPage() {
     });
   };
 
+  const handleRatingChange = (fieldId: string, rating: number) => {
+    setRatingAnswers((prev) => ({
+      ...prev,
+      [fieldId]: rating,
+    }));
+  };
+
+  const handleMatrixChange = (
+    fieldId: string,
+    rowId: string,
+    columnId: string
+  ) => {
+    console.log(
+      `Matrix change: field=${fieldId}, rowId="${rowId}", columnId="${columnId}"`
+    );
+    setMatrixAnswers((prev) => ({
+      ...prev,
+      [fieldId]: {
+        ...prev[fieldId],
+        [rowId]: columnId,
+      },
+    }));
+  };
+
+  const handleNetPromoterChange = (fieldId: string, score: number) => {
+    const field = formData?.fields.find((f) => f.id === fieldId);
+    const maxScore = field?.maxScore || 10;
+
+    // Ensure score is within valid range (0 to maxScore)
+    if (score >= 0 && score <= maxScore) {
+      console.log(
+        `Setting NPS score for field ${fieldId}: ${score} (max: ${maxScore})`
+      );
+      setNetPromoterAnswers((prev) => ({
+        ...prev,
+        [fieldId]: score,
+      }));
+    } else {
+      console.warn(
+        `Invalid NPS score: ${score} for field ${fieldId} (max: ${maxScore})`
+      );
+    }
+  };
+
+  // Helper function to check if field is a valid matrix field
+  const isValidMatrixField = (
+    field: FormField
+  ): field is FormField & { rows: string[]; columns: string[] } => {
+    return (
+      field.type === "matrix" &&
+      Array.isArray(field.rows) &&
+      Array.isArray(field.columns) &&
+      field.rows.length > 0 &&
+      field.columns.length > 0
+    );
+  };
+
   const validateForm = (): boolean => {
     if (!formData) return false;
 
@@ -156,7 +247,36 @@ export default function FormFillPage() {
             toast.error(`Please answer the required field: ${field.label}`);
             return false;
           }
-        } else {
+        } else if (field.type === "rating") {
+          const rating = ratingAnswers[field.id];
+          if (rating === undefined || rating === 0) {
+            toast.error(`Please answer the required field: ${field.label}`);
+            return false;
+          }
+        } else if (field.type === "matrix") {
+          const matrixAnswer = matrixAnswers[field.id];
+          if (!matrixAnswer || Object.keys(matrixAnswer).length === 0) {
+            toast.error(`Please answer the required field: ${field.label}`);
+            return false;
+          }
+        } else if (field.type === "netPromoterScore") {
+          const score = netPromoterAnswers[field.id];
+          if (score === undefined) {
+            toast.error(`Please answer the required field: ${field.label}`);
+            return false;
+          }
+          // Validate score is within range
+          const maxScore = field.maxScore || 10;
+          console.log(
+            `Validating NPS field ${field.id}: score=${score}, maxScore=${maxScore}`
+          );
+          if (score < 0 || score > maxScore) {
+            toast.error(
+              `Please select a valid score between 0 and ${maxScore} for: ${field.label}`
+            );
+            return false;
+          }
+        } else if (field.type !== "separator") {
           const answer = answers[field.id];
           if (!answer || answer.trim() === "") {
             toast.error(`Please answer the required field: ${field.label}`);
@@ -204,6 +324,64 @@ export default function FormFillPage() {
           });
         }
       });
+
+      // Add rating answers
+      Object.entries(ratingAnswers).forEach(([fieldId, rating]) => {
+        if (rating > 0) {
+          formAnswers.push({
+            fieldId,
+            fieldType: "rating",
+            value: rating.toString(),
+          });
+        }
+      });
+
+      // Add matrix answers
+      Object.entries(matrixAnswers).forEach(([fieldId, rowAnswers]) => {
+        console.log(`Matrix answers for field ${fieldId}:`, rowAnswers);
+        Object.entries(rowAnswers).forEach(([rowId, columnId]) => {
+          console.log(
+            `Adding matrix answer: fieldId=${fieldId}, rowId="${rowId}", columnId="${columnId}"`
+          );
+          formAnswers.push({
+            fieldId,
+            fieldType: "matrix",
+            value: columnId,
+            rowId,
+            columnId,
+          });
+        });
+      });
+
+      // Add net promoter score answers
+      Object.entries(netPromoterAnswers).forEach(([fieldId, score]) => {
+        if (score !== undefined) {
+          const field = formData?.fields.find((f) => f.id === fieldId);
+          const maxScore = field?.maxScore || 10;
+
+          // Double-check validation before submission
+          if (score >= 0 && score <= maxScore) {
+            console.log(
+              `Submitting NPS answer for field ${fieldId}: ${score} (max: ${maxScore})`
+            );
+            formAnswers.push({
+              fieldId,
+              fieldType: "netPromoterScore",
+              value: score.toString(),
+            });
+          } else {
+            console.error(
+              `Invalid NPS score detected: ${score} for field ${fieldId} (max: ${maxScore})`
+            );
+            toast.error(
+              `Invalid score detected for ${field?.label || "Net Promoter Score"}. Please try again.`
+            );
+            return;
+          }
+        }
+      });
+
+      console.log("Final form answers to submit:", formAnswers);
 
       const response = await fetch(`/api/user/forms/${params.id}/submit`, {
         method: "POST",
@@ -423,6 +601,176 @@ export default function FormFillPage() {
                       <p className="text-xs text-gray-500">
                         Maximum {field.maxChoices} choice(s) allowed
                       </p>
+                    </div>
+                  )}
+
+                  {/* Star Rating */}
+                  {field.type === "rating" && (
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2">
+                        {Array.from({ length: field.maxRating || 5 }).map(
+                          (_, index) => (
+                            <button
+                              key={index}
+                              type="button"
+                              onClick={() =>
+                                handleRatingChange(field.id, index + 1)
+                              }
+                              className={`p-1 transition-colors ${
+                                (ratingAnswers[field.id] || 0) >= index + 1
+                                  ? "text-yellow-500"
+                                  : "text-gray-300 hover:text-yellow-400"
+                              }`}
+                            >
+                              <Star className="w-8 h-8 fill-current" />
+                            </button>
+                          )
+                        )}
+                      </div>
+                      {field.showLabels &&
+                        field.labels &&
+                        field.labels.length > 0 && (
+                          <div className="flex justify-between text-xs text-gray-500">
+                            {field.labels.map((label, index) => (
+                              <span key={index} className="text-center flex-1">
+                                {label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      {ratingAnswers[field.id] && (
+                        <p className="text-sm text-gray-600">
+                          You rated: {ratingAnswers[field.id]} out of{" "}
+                          {field.maxRating || 5}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Matrix/Table */}
+                  {isValidMatrixField(field) && (
+                    <div className="space-y-4">
+                      {(() => {
+                        console.log(`Matrix field ${field.id}:`, {
+                          rows: field.rows,
+                          columns: field.columns,
+                          rowCount: field.rows?.length,
+                          columnCount: field.columns?.length,
+                        });
+                        return null;
+                      })()}
+                      <div className="overflow-x-auto">
+                        <table className="w-full border-collapse border border-gray-300">
+                          <thead>
+                            <tr className="bg-gray-50">
+                              <th className="border border-gray-300 p-2 text-left font-medium">
+                                Questions
+                              </th>
+                              {field.columns.map((column, colIndex) => (
+                                <th
+                                  key={colIndex}
+                                  className="border border-gray-300 p-2 text-center font-medium"
+                                >
+                                  {column}
+                                </th>
+                              ))}
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {field.rows.map((row, rowIndex) => (
+                              <tr key={rowIndex}>
+                                <td className="border border-gray-300 p-2 font-medium">
+                                  {row}
+                                </td>
+                                {field.columns.map((column, colIndex) => (
+                                  <td
+                                    key={colIndex}
+                                    className="border border-gray-300 p-2 text-center"
+                                  >
+                                    <input
+                                      type="radio"
+                                      name={`matrix-${field.id}-${rowIndex}`}
+                                      value={column}
+                                      checked={
+                                        matrixAnswers[field.id]?.[row] ===
+                                        column
+                                      }
+                                      onChange={() =>
+                                        handleMatrixChange(
+                                          field.id,
+                                          row,
+                                          column
+                                        )
+                                      }
+                                      className="w-4 h-4 text-blue-600"
+                                    />
+                                  </td>
+                                ))}
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Net Promoter Score */}
+                  {field.type === "netPromoterScore" && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between text-sm text-gray-600">
+                        <span>{field.leftLabel}</span>
+                        <span>{field.rightLabel}</span>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        {(() => {
+                          const maxScore = field.maxScore || 10;
+                          const buttonCount = maxScore + 1; // 0 to maxScore inclusive
+                          console.log(
+                            `NPS field ${field.id}: maxScore=${maxScore}, generating ${buttonCount} buttons (0-${maxScore})`
+                          );
+                          return Array.from({ length: buttonCount }).map(
+                            (_, index) => (
+                              <button
+                                key={index}
+                                type="button"
+                                onClick={() => {
+                                  console.log(
+                                    `NPS button clicked: field=${field.id}, index=${index}, maxScore=${maxScore}`
+                                  );
+                                  handleNetPromoterChange(field.id, index);
+                                }}
+                                className={`w-8 h-8 rounded border transition-colors ${
+                                  netPromoterAnswers[field.id] === index
+                                    ? "bg-blue-600 text-white border-blue-600"
+                                    : "bg-white text-gray-700 border-gray-300 hover:bg-gray-50"
+                                }`}
+                              >
+                                {index}
+                              </button>
+                            )
+                          );
+                        })()}
+                      </div>
+                      {netPromoterAnswers[field.id] !== undefined && (
+                        <p className="text-sm text-gray-600">
+                          You selected: {netPromoterAnswers[field.id]} out of{" "}
+                          {field.maxScore || 10}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Section Separator */}
+                  {field.type === "separator" && (
+                    <div className="border-t-2 border-gray-300 pt-4 mt-6">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        {field.label}
+                      </h3>
+                      {field.description && (
+                        <p className="text-sm text-gray-600 mt-2">
+                          {field.description}
+                        </p>
+                      )}
                     </div>
                   )}
                 </div>

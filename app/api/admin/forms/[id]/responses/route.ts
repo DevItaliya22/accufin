@@ -22,6 +22,10 @@ export async function GET(
         inputs: true,
         selections: true,
         multipleChoice: true,
+        ratings: true,
+        matrices: true,
+        netPromoterScores: true,
+        separators: true,
       },
     });
 
@@ -46,6 +50,8 @@ export async function GET(
             fieldId: true,
             fieldType: true,
             value: true,
+            rowId: true,
+            columnId: true,
           },
         },
       },
@@ -67,6 +73,22 @@ export async function GET(
 
     form.multipleChoice?.forEach((multipleChoice) => {
       fieldLabels[multipleChoice.id] = multipleChoice.label || "Untitled Field";
+    });
+
+    form.ratings?.forEach((rating) => {
+      fieldLabels[rating.id] = rating.question || "Untitled Field";
+    });
+
+    form.matrices?.forEach((matrix) => {
+      fieldLabels[matrix.id] = matrix.title || "Untitled Field";
+    });
+
+    form.netPromoterScores?.forEach((nps) => {
+      fieldLabels[nps.id] = nps.question || "Untitled Field";
+    });
+
+    form.separators?.forEach((separator) => {
+      fieldLabels[separator.id] = separator.title || "Untitled Field";
     });
 
     const formData = {

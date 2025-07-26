@@ -7,6 +7,8 @@ interface EditAnswer {
   fieldId: string;
   fieldType: string;
   value: string;
+  rowId?: string;
+  columnId?: string;
 }
 
 interface EditSubmissionRequest {
@@ -73,6 +75,26 @@ export async function PUT(
                 id: true,
               },
             },
+            ratings: {
+              select: {
+                id: true,
+              },
+            },
+            matrices: {
+              select: {
+                id: true,
+              },
+            },
+            netPromoterScores: {
+              select: {
+                id: true,
+              },
+            },
+            separators: {
+              select: {
+                id: true,
+              },
+            },
           },
         },
       },
@@ -90,6 +112,10 @@ export async function PUT(
       ...existingResponse.form.inputs.map((f) => f.id),
       ...existingResponse.form.selections.map((f) => f.id),
       ...existingResponse.form.multipleChoice.map((f) => f.id),
+      ...existingResponse.form.ratings.map((f) => f.id),
+      ...existingResponse.form.matrices.map((f) => f.id),
+      ...existingResponse.form.netPromoterScores.map((f) => f.id),
+      ...existingResponse.form.separators.map((f) => f.id),
     ]);
 
     for (const answer of answers) {
@@ -128,6 +154,8 @@ export async function PUT(
               fieldId: answer.fieldId,
               fieldType: answer.fieldType,
               value: answer.value,
+              rowId: answer.rowId,
+              columnId: answer.columnId,
             },
           })
         )

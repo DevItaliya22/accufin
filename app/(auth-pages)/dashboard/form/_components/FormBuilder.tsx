@@ -34,6 +34,10 @@ import {
   Search,
   User,
   Mail,
+  Star,
+  Table,
+  BarChart3,
+  SeparatorHorizontal,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
@@ -69,12 +73,32 @@ import { CSS } from "@dnd-kit/utilities";
 
 interface FormField {
   id: string;
-  type: "input" | "selection" | "multipleChoice";
+  type:
+    | "input"
+    | "selection"
+    | "multipleChoice"
+    | "rating"
+    | "matrix"
+    | "netPromoterScore"
+    | "separator";
   label: string;
   required: boolean;
   inputType?: string; // For input fields
   options?: string[]; // For selection and multipleChoice
   maxChoices?: number; // For multipleChoice
+  // For rating
+  maxRating?: number;
+  showLabels?: boolean;
+  labels?: string[];
+  // For matrix
+  rows?: string[];
+  columns?: string[];
+  // For net promoter score
+  leftLabel?: string;
+  rightLabel?: string;
+  maxScore?: number;
+  // For separator
+  description?: string;
 }
 
 interface FormBuilderProps {
@@ -141,10 +165,26 @@ function SortableField({
           {field.type === "multipleChoice" && (
             <CheckSquare className="w-4 h-4 text-purple-500" />
           )}
+          {field.type === "rating" && (
+            <Star className="w-4 h-4 text-yellow-500" />
+          )}
+          {field.type === "matrix" && (
+            <Table className="w-4 h-4 text-indigo-500" />
+          )}
+          {field.type === "netPromoterScore" && (
+            <BarChart3 className="w-4 h-4 text-orange-500" />
+          )}
+          {field.type === "separator" && (
+            <SeparatorHorizontal className="w-4 h-4 text-gray-500" />
+          )}
           <span className="font-medium text-gray-700">
             {field.type === "input" && "Text Input"}
             {field.type === "selection" && "Radio Button"}
             {field.type === "multipleChoice" && "Checkbox"}
+            {field.type === "rating" && "Star Rating"}
+            {field.type === "matrix" && "Matrix/Table"}
+            {field.type === "netPromoterScore" && "Net Promoter Score"}
+            {field.type === "separator" && "Section Separator"}
           </span>
           {field.required && <span className="text-red-500 text-sm">*</span>}
         </div>
@@ -212,6 +252,7 @@ function SortableField({
                   <SelectItem value="text">Text</SelectItem>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="number">Number</SelectItem>
+                  <SelectItem value="date">Date</SelectItem>
                   <SelectItem value="tel">Phone</SelectItem>
                   <SelectItem value="url">URL</SelectItem>
                   <SelectItem value="password">Password</SelectItem>
@@ -283,6 +324,211 @@ function SortableField({
             </div>
           )}
 
+          {field.type === "rating" && (
+            <>
+              <div>
+                <Label
+                  htmlFor="max-rating"
+                  className="text-sm font-medium text-gray-700 mb-2"
+                >
+                  Maximum Rating
+                </Label>
+                <Input
+                  id="max-rating"
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={editProps.editMaxRating}
+                  onChange={(e) =>
+                    editProps.setEditMaxRating(parseInt(e.target.value) || 5)
+                  }
+                />
+              </div>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={editProps.editShowLabels}
+                  onCheckedChange={editProps.setEditShowLabels}
+                />
+                <Label>Show labels under stars</Label>
+              </div>
+              {editProps.editShowLabels && (
+                <div>
+                  <Label className="text-sm font-medium text-gray-700 mb-2">
+                    Labels
+                  </Label>
+                  <div className="space-y-2">
+                    {editProps.editLabels.map(
+                      (label: string, index: number) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-2"
+                        >
+                          <Input
+                            value={label}
+                            onChange={(e) =>
+                              editProps.updateLabel(index, e.target.value)
+                            }
+                            placeholder={`Label ${index + 1}`}
+                          />
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => editProps.removeLabel(index)}
+                            disabled={editProps.editLabels.length <= 1}
+                            className="h-8 w-8 p-0 text-red-500"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      )
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={editProps.addLabel}
+                      className="w-full"
+                    >
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add Label
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {field.type === "matrix" && (
+            <>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Rows (Questions)
+                </Label>
+                <div className="space-y-2">
+                  {editProps.editRows.map((row: string, index: number) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <Input
+                        value={row}
+                        onChange={(e) =>
+                          editProps.updateRow(index, e.target.value)
+                        }
+                        placeholder={`Row ${index + 1}`}
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => editProps.removeRow(index)}
+                        disabled={editProps.editRows.length <= 1}
+                        className="h-8 w-8 p-0 text-red-500"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={editProps.addRow}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Row
+                  </Button>
+                </div>
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Columns (Options)
+                </Label>
+                <div className="space-y-2">
+                  {editProps.editColumns.map(
+                    (column: string, index: number) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Input
+                          value={column}
+                          onChange={(e) =>
+                            editProps.updateColumn(index, e.target.value)
+                          }
+                          placeholder={`Column ${index + 1}`}
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => editProps.removeColumn(index)}
+                          disabled={editProps.editColumns.length <= 1}
+                          className="h-8 w-8 p-0 text-red-500"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    )
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={editProps.addColumn}
+                    className="w-full"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Column
+                  </Button>
+                </div>
+              </div>
+            </>
+          )}
+
+          {field.type === "netPromoterScore" && (
+            <>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Left Label
+                </Label>
+                <Input
+                  value={editProps.editLeftLabel}
+                  onChange={(e) => editProps.setEditLeftLabel(e.target.value)}
+                  placeholder="Not at all likely"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Right Label
+                </Label>
+                <Input
+                  value={editProps.editRightLabel}
+                  onChange={(e) => editProps.setEditRightLabel(e.target.value)}
+                  placeholder="Extremely likely"
+                />
+              </div>
+              <div>
+                <Label className="text-sm font-medium text-gray-700 mb-2">
+                  Maximum Score
+                </Label>
+                <Input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={editProps.editMaxScore}
+                  onChange={(e) =>
+                    editProps.setEditMaxScore(parseInt(e.target.value) || 10)
+                  }
+                />
+              </div>
+            </>
+          )}
+
+          {field.type === "separator" && (
+            <div>
+              <Label className="text-sm font-medium text-gray-700 mb-2">
+                Description (Optional)
+              </Label>
+              <Textarea
+                value={editProps.editDescription}
+                onChange={(e) => editProps.setEditDescription(e.target.value)}
+                placeholder="Enter section description"
+                rows={3}
+              />
+            </div>
+          )}
+
           <div className="flex items-center space-x-2 pt-2">
             <Button onClick={editProps.saveFieldEdit} size="sm">
               Save Changes
@@ -339,6 +585,78 @@ function SortableField({
               </p>
             </div>
           )}
+
+          {field.type === "rating" && (
+            <div className="space-y-2">
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: field.maxRating || 5 }).map(
+                  (_, index) => (
+                    <Star
+                      key={index}
+                      className="w-5 h-5 text-gray-300 fill-current"
+                    />
+                  )
+                )}
+              </div>
+              {field.showLabels && field.labels && field.labels.length > 0 && (
+                <div className="flex justify-between text-xs text-gray-500">
+                  {field.labels.map((label, index) => (
+                    <span key={index} className="text-center">
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {field.type === "matrix" && (
+            <div className="space-y-2">
+              <div className="text-xs text-gray-500">
+                {field.rows?.length || 0} rows × {field.columns?.length || 0}{" "}
+                columns
+              </div>
+              <div className="border rounded p-2 bg-gray-50">
+                <div className="text-xs text-gray-600">
+                  Matrix table with {field.rows?.length || 0} questions and{" "}
+                  {field.columns?.length || 0} options
+                </div>
+              </div>
+            </div>
+          )}
+
+          {field.type === "netPromoterScore" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between text-xs text-gray-500">
+                <span>{field.leftLabel}</span>
+                <span>{field.rightLabel}</span>
+              </div>
+              <div className="flex items-center space-x-1">
+                {Array.from({ length: (field.maxScore || 10) + 1 }).map(
+                  (_, index) => (
+                    <div
+                      key={index}
+                      className="w-4 h-4 border border-gray-300 rounded"
+                    />
+                  )
+                )}
+              </div>
+              <div className="text-xs text-gray-500">
+                Scale: 0 to {field.maxScore || 10}
+              </div>
+            </div>
+          )}
+
+          {field.type === "separator" && (
+            <div className="border-t-2 border-gray-300 pt-4">
+              <h3 className="font-medium text-gray-900">{field.label}</h3>
+              {field.description && (
+                <p className="text-sm text-gray-600 mt-1">
+                  {field.description}
+                </p>
+              )}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -379,6 +697,19 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
   const [editInputType, setEditInputType] = useState("text");
   const [editOptions, setEditOptions] = useState<string[]>([""]);
   const [editMaxChoices, setEditMaxChoices] = useState<number>(1);
+
+  // New field types editing state
+  const [editMaxRating, setEditMaxRating] = useState<number>(5);
+  const [editShowLabels, setEditShowLabels] = useState<boolean>(false);
+  const [editLabels, setEditLabels] = useState<string[]>([""]);
+  const [editRows, setEditRows] = useState<string[]>([""]);
+  const [editColumns, setEditColumns] = useState<string[]>([""]);
+  const [editLeftLabel, setEditLeftLabel] =
+    useState<string>("Not at all likely");
+  const [editRightLabel, setEditRightLabel] =
+    useState<string>("Extremely likely");
+  const [editMaxScore, setEditMaxScore] = useState<number>(10);
+  const [editDescription, setEditDescription] = useState<string>("");
 
   // Load form data if editing and fetch users
   useEffect(() => {
@@ -455,6 +786,14 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
         const multipleChoice = formData.multipleChoice?.find(
           (m: any) => m.id === fieldId
         );
+        const rating = formData.ratings?.find((r: any) => r.id === fieldId);
+        const matrix = formData.matrices?.find((m: any) => m.id === fieldId);
+        const netPromoterScore = formData.netPromoterScores?.find(
+          (n: any) => n.id === fieldId
+        );
+        const separator = formData.separators?.find(
+          (s: any) => s.id === fieldId
+        );
 
         if (input) {
           loadedFields.push({
@@ -481,6 +820,43 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
             options: multipleChoice.options,
             maxChoices: multipleChoice.maxChoices || 1,
           });
+        } else if (rating) {
+          loadedFields.push({
+            id: rating.id,
+            type: "rating",
+            label: rating.question || "",
+            required: rating.required,
+            maxRating: rating.maxRating || 5,
+            showLabels: rating.showLabels || false,
+            labels: rating.labels || [],
+          });
+        } else if (matrix) {
+          loadedFields.push({
+            id: matrix.id,
+            type: "matrix",
+            label: matrix.title || "",
+            required: matrix.required,
+            rows: matrix.rows || [],
+            columns: matrix.columns || [],
+          });
+        } else if (netPromoterScore) {
+          loadedFields.push({
+            id: netPromoterScore.id,
+            type: "netPromoterScore",
+            label: netPromoterScore.question || "",
+            required: netPromoterScore.required,
+            leftLabel: netPromoterScore.leftLabel || "Not at all likely",
+            rightLabel: netPromoterScore.rightLabel || "Extremely likely",
+            maxScore: netPromoterScore.maxScore || 10,
+          });
+        } else if (separator) {
+          loadedFields.push({
+            id: separator.id,
+            type: "separator",
+            label: separator.title || "",
+            required: false, // Separators are never required
+            description: separator.description || "",
+          });
         }
       }
 
@@ -493,7 +869,16 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
     }
   };
 
-  const addField = (type: "input" | "selection" | "multipleChoice") => {
+  const addField = (
+    type:
+      | "input"
+      | "selection"
+      | "multipleChoice"
+      | "rating"
+      | "matrix"
+      | "netPromoterScore"
+      | "separator"
+  ) => {
     const newField: FormField = {
       id: Date.now().toString(),
       type,
@@ -501,8 +886,16 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
         type === "input"
           ? "Input"
           : type === "selection"
-          ? "Radio Button"
-          : "Checkbox"
+            ? "Radio Button"
+            : type === "multipleChoice"
+              ? "Checkbox"
+              : type === "rating"
+                ? "Star Rating"
+                : type === "matrix"
+                  ? "Matrix/Table"
+                  : type === "netPromoterScore"
+                    ? "Net Promoter Score"
+                    : "Section Separator"
       } Field`,
       required: false,
       ...(type === "input" && { inputType: "text" }),
@@ -510,6 +903,23 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
       ...(type === "multipleChoice" && {
         options: ["Option 1", "Option 2"],
         maxChoices: 2,
+      }),
+      ...(type === "rating" && {
+        maxRating: 5,
+        showLabels: false,
+        labels: [],
+      }),
+      ...(type === "matrix" && {
+        rows: ["Question 1"],
+        columns: ["Option 1", "Option 2"],
+      }),
+      ...(type === "netPromoterScore" && {
+        leftLabel: "Not at all likely",
+        rightLabel: "Extremely likely",
+        maxScore: 10,
+      }),
+      ...(type === "separator" && {
+        description: "",
       }),
     };
     setFields([...fields, newField]);
@@ -529,6 +939,17 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
     setEditInputType(field.inputType || "text");
     setEditOptions(field.options || [""]);
     setEditMaxChoices(field.maxChoices || 1);
+
+    // New field types
+    setEditMaxRating(field.maxRating || 5);
+    setEditShowLabels(field.showLabels || false);
+    setEditLabels(field.labels || [""]);
+    setEditRows(field.rows || [""]);
+    setEditColumns(field.columns || [""]);
+    setEditLeftLabel(field.leftLabel || "Not at all likely");
+    setEditRightLabel(field.rightLabel || "Extremely likely");
+    setEditMaxScore(field.maxScore || 10);
+    setEditDescription(field.description || "");
   };
 
   const saveFieldEdit = () => {
@@ -548,6 +969,25 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
             ...(field.type === "multipleChoice" && {
               options: editOptions.filter((opt) => opt.trim()),
               maxChoices: editMaxChoices,
+            }),
+            ...(field.type === "rating" && {
+              maxRating: editMaxRating,
+              showLabels: editShowLabels,
+              labels: editShowLabels
+                ? editLabels.filter((label) => label.trim())
+                : [],
+            }),
+            ...(field.type === "matrix" && {
+              rows: editRows.filter((row) => row.trim()),
+              columns: editColumns.filter((column) => column.trim()),
+            }),
+            ...(field.type === "netPromoterScore" && {
+              leftLabel: editLeftLabel,
+              rightLabel: editRightLabel,
+              maxScore: editMaxScore,
+            }),
+            ...(field.type === "separator" && {
+              description: editDescription,
             }),
           };
         }
@@ -587,6 +1027,55 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
     }
   };
 
+  // Helper functions for new field types
+  const addLabel = () => {
+    setEditLabels([...editLabels, ""]);
+  };
+
+  const updateLabel = (index: number, value: string) => {
+    const newLabels = [...editLabels];
+    newLabels[index] = value;
+    setEditLabels(newLabels);
+  };
+
+  const removeLabel = (index: number) => {
+    if (editLabels.length > 1) {
+      setEditLabels(editLabels.filter((_, i) => i !== index));
+    }
+  };
+
+  const addRow = () => {
+    setEditRows([...editRows, ""]);
+  };
+
+  const updateRow = (index: number, value: string) => {
+    const newRows = [...editRows];
+    newRows[index] = value;
+    setEditRows(newRows);
+  };
+
+  const removeRow = (index: number) => {
+    if (editRows.length > 1) {
+      setEditRows(editRows.filter((_, i) => i !== index));
+    }
+  };
+
+  const addColumn = () => {
+    setEditColumns([...editColumns, ""]);
+  };
+
+  const updateColumn = (index: number, value: string) => {
+    const newColumns = [...editColumns];
+    newColumns[index] = value;
+    setEditColumns(newColumns);
+  };
+
+  const removeColumn = (index: number) => {
+    if (editColumns.length > 1) {
+      setEditColumns(editColumns.filter((_, i) => i !== index));
+    }
+  };
+
   const saveForm = async () => {
     if (!title.trim()) {
       toast.error("Form title is required");
@@ -615,6 +1104,23 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
           ...(field.type === "multipleChoice" && {
             options: field.options,
             maxChoices: field.maxChoices,
+          }),
+          ...(field.type === "rating" && {
+            maxRating: field.maxRating,
+            showLabels: field.showLabels,
+            labels: field.labels,
+          }),
+          ...(field.type === "matrix" && {
+            rows: field.rows,
+            columns: field.columns,
+          }),
+          ...(field.type === "netPromoterScore" && {
+            leftLabel: field.leftLabel,
+            rightLabel: field.rightLabel,
+            maxScore: field.maxScore,
+          }),
+          ...(field.type === "separator" && {
+            description: field.description,
           }),
         })),
       };
@@ -914,6 +1420,38 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
                       <CheckSquare className="w-4 h-4 mr-2" />
                       Add Checkbox
                     </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("rating")}
+                      className="w-full justify-start"
+                    >
+                      <Star className="w-4 h-4 mr-2" />
+                      Add Star Rating
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("matrix")}
+                      className="w-full justify-start"
+                    >
+                      <Table className="w-4 h-4 mr-2" />
+                      Add Matrix/Table
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("netPromoterScore")}
+                      className="w-full justify-start"
+                    >
+                      <BarChart3 className="w-4 h-4 mr-2" />
+                      Add Net Promoter Score
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => addField("separator")}
+                      className="w-full justify-start"
+                    >
+                      <SeparatorHorizontal className="w-4 h-4 mr-2" />
+                      Add Section Separator
+                    </Button>
                   </div>
                 </div>
               </>
@@ -987,6 +1525,34 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
                                 addOption,
                                 updateOption,
                                 removeOption,
+                                // New field types
+                                editMaxRating,
+                                setEditMaxRating,
+                                editShowLabels,
+                                setEditShowLabels,
+                                editLabels,
+                                setEditLabels,
+                                addLabel,
+                                updateLabel,
+                                removeLabel,
+                                editRows,
+                                setEditRows,
+                                addRow,
+                                updateRow,
+                                removeRow,
+                                editColumns,
+                                setEditColumns,
+                                addColumn,
+                                updateColumn,
+                                removeColumn,
+                                editLeftLabel,
+                                setEditLeftLabel,
+                                editRightLabel,
+                                setEditRightLabel,
+                                editMaxScore,
+                                setEditMaxScore,
+                                editDescription,
+                                setEditDescription,
                                 saveFieldEdit,
                                 setEditingField,
                               }}
@@ -1041,8 +1607,8 @@ export default function FormBuilder({ mode, formId }: FormBuilderProps) {
                       {saving
                         ? "Saving..."
                         : mode === "create"
-                        ? "Create Form"
-                        : "Update Form"}
+                          ? "Create Form"
+                          : "Update Form"}
                     </span>
                   </Button>
                 </div>

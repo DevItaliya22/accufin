@@ -49,6 +49,32 @@ export async function GET(
                 label: true,
               },
             },
+            ratings: {
+              select: {
+                id: true,
+                question: true,
+                maxRating: true,
+              },
+            },
+            matrices: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
+            netPromoterScores: {
+              select: {
+                id: true,
+                question: true,
+                maxScore: true,
+              },
+            },
+            separators: {
+              select: {
+                id: true,
+                title: true,
+              },
+            },
           },
         },
         answers: {
@@ -57,6 +83,8 @@ export async function GET(
             fieldId: true,
             fieldType: true,
             value: true,
+            rowId: true,
+            columnId: true,
             createdAt: true,
           },
           orderBy: {
@@ -84,6 +112,18 @@ export async function GET(
     });
     formResponse.form.multipleChoice.forEach((field) => {
       fieldLabels[field.id] = field.label || "";
+    });
+    formResponse.form.ratings.forEach((field) => {
+      fieldLabels[field.id] = field.question || "";
+    });
+    formResponse.form.matrices.forEach((field) => {
+      fieldLabels[field.id] = field.title || "";
+    });
+    formResponse.form.netPromoterScores.forEach((field) => {
+      fieldLabels[field.id] = field.question || "";
+    });
+    formResponse.form.separators.forEach((field) => {
+      fieldLabels[field.id] = field.title || "";
     });
 
     // Add labels to answers
