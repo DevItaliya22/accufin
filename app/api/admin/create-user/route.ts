@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { hash } from "bcryptjs";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
+import { sendUserCreatedEmail } from "@/lib/email";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,6 +78,36 @@ export async function POST(req: NextRequest) {
         contactNumber: true,
       },
     });
+
+    // Send welcome email to the newly created user
+    try {
+      const loginUrl = `${process.env.NEXTAUTH_URL || "http://localhost:3000"}/login`;
+
+      console.log("Attempting to send welcome email to:", email);
+      console.log("Environment variables:", {
+        NODEMAILER_EMAIL: process.env.NODEMAILER_EMAIL ? "Set" : "Not set",
+        NODEMAILER_PASSKEY: process.env.NODEMAILER_PASSKEY ? "Set" : "Not set",
+        NEXTAUTH_URL: process.env.NEXTAUTH_URL,
+      });
+
+      const emailResult = await sendUserCreatedEmail({
+        userName: name || "User",
+        userEmail: email,
+        password: password,
+        adminName: session.user.name || "Administrator",
+        loginUrl,
+      });
+
+      if (emailResult.success) {
+        console.log("Welcome email sent successfully to:", email);
+      } else {
+        console.error("Failed to send welcome email:", emailResult.error);
+      }
+    } catch (emailError) {
+      console.error("Error sending welcome email:", emailError);
+      // Don't fail the user creation if email fails
+    }
+
     return NextResponse.json(user, { status: 201 });
   } catch (err) {
     console.error("Error creating user:", err);

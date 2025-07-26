@@ -3,6 +3,7 @@ import { compare } from "bcryptjs";
 import { AuthOptions } from "next-auth";
 import prisma from "./prisma";
 import GoogleProvider from "next-auth/providers/google";
+import { sendLoginConfirmationEmail } from "./email";
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -13,7 +14,7 @@ export const authOptions: AuthOptions = {
         password: { label: "Password", type: "password" },
       },
       async authorize(credentials) {
-        //login 
+        //login
         if (!credentials?.email || !credentials?.password) {
           throw new Error("Please enter both email and password");
         }
@@ -39,6 +40,20 @@ export const authOptions: AuthOptions = {
 
         if (!isValid) {
           throw new Error("Invalid email or password");
+        }
+
+        // Send login confirmation email
+        try {
+          const loginTime = new Date().toLocaleString();
+          await sendLoginConfirmationEmail({
+            userName: user.name || "User",
+            userEmail: user.email,
+            loginTime,
+            loginMethod: "Email & Password",
+          });
+        } catch (emailError) {
+          console.error("Error sending login confirmation email:", emailError);
+          // Don't fail login if email fails
         }
 
         return {
@@ -90,6 +105,20 @@ export const authOptions: AuthOptions = {
         user.isAdmin = dbUser.isAdmin;
         user.name = dbUser.name;
         user.email = dbUser.email;
+
+        // Send login confirmation email for Google login
+        try {
+          const loginTime = new Date().toLocaleString();
+          await sendLoginConfirmationEmail({
+            userName: user.name || "User",
+            userEmail: user.email!,
+            loginTime,
+            loginMethod: "Google OAuth",
+          });
+        } catch (emailError) {
+          console.error("Error sending login confirmation email:", emailError);
+          // Don't fail login if email fails
+        }
       }
       return true;
     },

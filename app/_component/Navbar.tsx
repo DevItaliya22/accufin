@@ -1,7 +1,7 @@
 "use client";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
-import { FaPhoneAlt, FaBars } from "react-icons/fa";
+import { FaPhoneAlt, FaBars, FaCalendarAlt } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
 import {
   FaMapMarkerAlt,
@@ -13,9 +13,11 @@ import {
 } from "react-icons/fa";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { useSession } from "next-auth/react";
+import ImportantDatesModal from "./ImportantDatesModal";
 export default function NewHeader() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
@@ -169,12 +171,26 @@ export default function NewHeader() {
           </nav>
 
           {/* Contact Info - Desktop */}
-          <div className="hidden lg:flex items-center gap-3">
-            <FaPhoneAlt className="text-white text-2xl" />
-            <div>
-              <div className="text-white text-sm">Call Us</div>
-              <div className="text-white font-semibold">+123-234-1234</div>
+          <div className="hidden lg:flex items-center gap-6">
+            <div className="flex items-center gap-3">
+              <FaPhoneAlt className="text-white text-2xl" />
+              <div>
+                <div className="text-white text-sm">Call Us</div>
+                <div className="text-white font-semibold">+123-234-1234</div>
+              </div>
             </div>
+
+            {/* Important Dates Button */}
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center gap-2 text-white hover:text-cyan-200 transition-colors"
+            >
+              <FaCalendarAlt className="text-white text-xl" />
+              <div>
+                <div className="text-white text-sm">Important Dates</div>
+                <div className="text-white font-semibold">View All</div>
+              </div>
+            </button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -240,8 +256,26 @@ export default function NewHeader() {
               <div className="text-white font-semibold">+123-234-1234</div>
             </div>
           </div>
+
+          {/* Important Dates Button - Mobile */}
+          <button
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 text-white hover:text-cyan-200 transition-colors mt-4 pt-4 border-t border-white w-full"
+          >
+            <FaCalendarAlt className="text-white text-xl" />
+            <div>
+              <div className="text-white text-sm">Important Dates</div>
+              <div className="text-white font-semibold">View All</div>
+            </div>
+          </button>
         </div>
       )}
+
+      {/* Important Dates Modal */}
+      <ImportantDatesModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+      />
     </header>
   );
 }
