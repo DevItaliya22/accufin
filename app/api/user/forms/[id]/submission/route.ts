@@ -101,35 +101,47 @@ export async function GET(
       );
     }
 
-    // Create field mapping for labels
+    // Create field mapping for labels and additional field data
     const fieldLabels: { [fieldId: string]: string } = {};
+    const fieldData: { [fieldId: string]: any } = {};
 
     formResponse.form.inputs.forEach((field) => {
       fieldLabels[field.id] = field.label || "";
+      fieldData[field.id] = { type: "input" };
     });
     formResponse.form.selections.forEach((field) => {
       fieldLabels[field.id] = field.label || "";
+      fieldData[field.id] = { type: "selection" };
     });
     formResponse.form.multipleChoice.forEach((field) => {
       fieldLabels[field.id] = field.label || "";
+      fieldData[field.id] = { type: "multipleChoice" };
     });
     formResponse.form.ratings.forEach((field) => {
       fieldLabels[field.id] = field.question || "";
+      fieldData[field.id] = { type: "rating", maxRating: field.maxRating };
     });
     formResponse.form.matrices.forEach((field) => {
       fieldLabels[field.id] = field.title || "";
+      fieldData[field.id] = { type: "matrix" };
     });
     formResponse.form.netPromoterScores.forEach((field) => {
       fieldLabels[field.id] = field.question || "";
+      fieldData[field.id] = {
+        type: "netPromoterScore",
+        maxScore: field.maxScore,
+      };
     });
     formResponse.form.separators.forEach((field) => {
       fieldLabels[field.id] = field.title || "";
+      fieldData[field.id] = { type: "separator" };
     });
 
-    // Add labels to answers
+    // Add labels and field data to answers
     const answersWithLabels = formResponse.answers.map((answer) => ({
       ...answer,
       fieldLabel: fieldLabels[answer.fieldId] || "Unknown Field",
+      fieldData: fieldData[answer.fieldId] || {},
     }));
 
     const submission = {

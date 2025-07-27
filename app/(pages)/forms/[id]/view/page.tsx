@@ -30,6 +30,11 @@ interface FormAnswer {
   columnId?: string;
   createdAt: string;
   fieldLabel: string;
+  fieldData: {
+    type: string;
+    maxRating?: number;
+    maxScore?: number;
+  };
 }
 
 interface FormSubmission {
@@ -253,7 +258,9 @@ export default function ViewFormSubmissionPage() {
                         {answer.fieldType === "rating" && (
                           <div className="space-y-2">
                             <div className="flex items-center space-x-1">
-                              {Array.from({ length: 5 }).map((_, index) => (
+                              {Array.from({
+                                length: answer.fieldData.maxRating || 5,
+                              }).map((_, index) => (
                                 <Star
                                   key={index}
                                   className={`w-5 h-5 ${
@@ -265,20 +272,24 @@ export default function ViewFormSubmissionPage() {
                               ))}
                             </div>
                             <div className="text-sm text-gray-600 font-medium">
-                              Rating: {answer.value} out of 5 stars
+                              Rating: {answer.value} out of{" "}
+                              {answer.fieldData.maxRating || 5} stars
                             </div>
                           </div>
                         )}
                         {answer.fieldType === "netPromoterScore" && (
                           <div className="space-y-2">
                             <div className="flex items-center space-x-1">
-                              {Array.from({ length: 11 }).map((_, index) => (
+                              {Array.from({
+                                length: (answer.fieldData.maxScore || 10) + 1,
+                              }).map((_, index) => (
                                 <div
                                   key={index}
                                   className={`w-4 h-4 rounded border-2 ${
                                     index === parseInt(answer.value) &&
                                     parseInt(answer.value) >= 0 &&
-                                    parseInt(answer.value) <= 10
+                                    parseInt(answer.value) <=
+                                      (answer.fieldData.maxScore || 10)
                                       ? "bg-blue-600 border-blue-600"
                                       : "bg-white border-gray-300"
                                   }`}
@@ -288,10 +299,11 @@ export default function ViewFormSubmissionPage() {
                             <div className="text-sm text-gray-600 font-medium">
                               Net Promoter Score:{" "}
                               {parseInt(answer.value) >= 0 &&
-                              parseInt(answer.value) <= 10
+                              parseInt(answer.value) <=
+                                (answer.fieldData.maxScore || 10)
                                 ? answer.value
                                 : "Invalid"}{" "}
-                              out of 10
+                              out of {answer.fieldData.maxScore || 10}
                             </div>
                           </div>
                         )}
