@@ -16,5 +16,6 @@ export const config = {
   matcher: [
     // Protected routes that require authentication
     "/dashboard",
+    
   ],
 };
