@@ -25,7 +25,7 @@ export default function Hero() {
                         transition={{ duration: 0.6 }}
                         className="mb-4 text-[#4fd1f9] font-semibold tracking-widest text-lg"
                     >
-                    	WELCOME TO ACCUFIN SERVICES INC.
+                        WELCOME TO ACCUFIN SERVICES INC.
                     </motion.div>
 
                     <motion.h1
@@ -50,10 +50,13 @@ export default function Hero() {
                         initial={{ x: -50, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         transition={{ duration: 0.7, delay: 0.3 }}
-                        href=""
+                        href="/discovermore"
                         className="inline-flex items-center bg-[#00c6fb] hover:bg-[#00a6d6] text-white font-semibold px-8 py-4 rounded transition-colors text-lg"
                     >
-                        DISCOVER MORE <FaArrowRight className="ml-3" />
+                        {/* <link rel="stylesheet" href="/discovermore" /> */}
+                        {/* <a href="/discovermore" className="inline-flex items-center bg-[#00c6fb] hover:bg-[#00a6d6] text-white font-semibold px-8 py-4 rounded transition-colors text-lg"> */}
+                            DISCOVER MORE <FaArrowRight className="ml-3" />
+                        {/* </a> */}
                     </motion.a>
                 </div>
             </section>
@@ -90,7 +93,7 @@ export default function Hero() {
             </div>
 
             {/* White Section Placeholder */}
-            <section id="white-section" className="bg-white pt-40 md:pt-24 pb-24"></section>
+            <section id="white-section" className="bg-white pt-40 md:pt-0 pb-24 sm:pb-24"></section>
         </>
     );
 }

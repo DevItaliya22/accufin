@@ -26,15 +26,14 @@ export default function BlogSection() {
         className="max-w-7xl mx-auto"
       >
         <div className="text-center mb-2 text-[#008db3] font-semibold tracking-widest uppercase">
-          Our Blog
+          News essentials for you
         </div>
+
         <h2 className="text-3xl md:text-4xl font-bold text-[#0a2236] text-center mb-4">
-          Latest Blog & News for You
+          Important to follow
         </h2>
         <p className="text-center text-[#5a6a7a] mb-10 max-w-2xl mx-auto">
-          Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut
-          suspendisse pharetra. Finibus condimentum aenean lacinia sem metus
-          Integer.
+          Important information might be useful for you
         </p>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
           {blogs.map((blog) => (

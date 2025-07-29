@@ -49,7 +49,13 @@ export default function NewHeader() {
       href: "/service",
       dropdown: [
         { name: "All Services", href: "/service" },
-        { name: "Service Details", href: "/servicedetail" },
+        // { name: "Service Details", href: "/servicedetail" },
+        { name: "Bookkeeping", href: "/service/bookkeeping" },
+        { name: "Payroll Services", href: "/service/payroll" },
+        { name: "Tax Planning", href: "/service/tax" },
+        { name: "Audit & Assurance", href: "/service/audit" },
+        { name: "Financial Statement", href: "/service/finance" },
+        { name: "Business Compliances", href: "/service/businesscompliances" },
       ],
     },
     {
@@ -81,11 +87,11 @@ export default function NewHeader() {
           <div className="flex flex-col sm:flex-row items-center gap-4 text-gray-600 text-sm">
             <div className="flex items-center gap-2">
               <FaMapMarkerAlt className="text-cyan-400" />
-              <span>99 Roving St., Big City, PKU 23456</span>
+              <span>8-3015 Trethewey Street, Abbotsford, BC, Canada</span>
             </div>
             <div className="flex items-center gap-2">
               <FaEnvelope className="text-cyan-400" />
-              <span>hello@awesomesite.com</span>
+              <span>info.accufin@gmail.com</span>
             </div>
           </div>
           <div className="flex gap-4">
@@ -176,19 +182,19 @@ export default function NewHeader() {
               <FaPhoneAlt className="text-white text-2xl" />
               <div>
                 <div className="text-white text-sm">Call Us</div>
-                <div className="text-white font-semibold">+123-234-1234</div>
+                <div className="text-white font-semibold">+1 604 551 3023</div>
               </div>
             </div>
 
             {/* Important Dates Button */}
             <button
               onClick={() => setIsModalOpen(true)}
-              className="flex items-center gap-2 text-white hover:text-cyan-200 transition-colors"
+              className="flex items-center gap-2 text-white hover:text-cyan-200 transition-colors  bg-cyan-600 rounded-xl px-4 py-2 "
             >
-              <FaCalendarAlt className="text-[#59ff00] text-xl" />
+              <FaCalendarAlt className="text-white text-xl" />
               <div>
-                <div className="text-sm text-[#59ff00]">Important Dates</div>
-                <div className="text-[#59ff00] font-semibold">View All</div>
+                <div className="text-sm text-white">Important Dates</div>
+                <div className="text-white font-semibold">View All</div>
                 {/* <div className="text-[#44ff00] font-semibold">View All</div> */}
               </div>
             </button>

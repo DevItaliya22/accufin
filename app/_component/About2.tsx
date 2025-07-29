@@ -5,7 +5,7 @@ import { motion } from "framer-motion";
 export default function About2() {
     return (
         <section
-            className="relative w-full h-[320px] flex flex-col justify-center"
+            className="relative w-full h-[320px] flex flex-col justify-center mb-15"
             style={{
                 backgroundImage: "url('/img2.jpg')", 
                 backgroundPosition: "center",

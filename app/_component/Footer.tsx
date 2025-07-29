@@ -63,8 +63,7 @@ export default function Footer() {
             </div>
           </div>
           <p className="mb-6 mt-4 text-white/90">
-            Donec neque massa, faucibus nec lorem vitae feugiat pharetra sem.
-            Nulla elementum eget lectus dapibus amatug mix finibus.
+            Every client is very important, and we invest our time in synergies and efforts for your businesses as equal as yours. 
           </p>
           <div className="flex space-x-4 mt-6 flex-col">
             {openContact.links &&

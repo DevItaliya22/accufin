@@ -43,6 +43,7 @@ export default function Contact() {
                                 className="border border-[#008db3] rounded px-3 py-2 mb-1 focus:outline-none focus:ring-2 focus:ring-[#00c6fb] text-[#0a2236]"
                             />
                         </div>
+                  
                     </div>
                     <div className="flex flex-col">
                         <input
@@ -92,14 +93,14 @@ export default function Contact() {
                         <FaPhoneAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Call Us</div>
-                            <div>+123-234-1234</div>
+                            <div>+1 604 551 3023</div>
                         </div>
                     </div>
                     <div className="flex items-start mb-4">
                         <FaEnvelope className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Email Us</div>
-                            <div>hello@awesomesite.com</div>
+                            <div>info.accufin@gmail.com</div>
                         </div>
                     </div>
                     <div className="flex items-start">
@@ -116,7 +117,7 @@ export default function Contact() {
             <div className="w-full mt-12">
                 <iframe
                     title="Google Map"
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2436.684964073624!2d-0.1277586842290132!3d51.50735077963509!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761b3333333333%3A0x1234567890abcdef!2sLondon!5e0!3m2!1sen!2suk!4v1680000000000!5m2!1sen!2suk"
+                    src="https://www.google.com/maps/embe   d?pb=!1m18!1m12!1m3!1d2436.684964073624!2d-0.1277586842290132!3d51.50735077963509!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761b3333333333%3A0x1234567890abcdef!2sLondon!5e0!3m2!1sen!2suk!4v1680000000000!5m2!1sen!2suk"
                     width="100%"
                     height="350"
                     style={{ border: 0 }}

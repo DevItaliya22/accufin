@@ -7,9 +7,7 @@ import {
     FaCalculator,
     FaClipboardCheck,
     FaChartLine,
-    FaUserCog,
     FaBriefcase,
-    FaUserTie,
     FaChevronRight,
 } from "react-icons/fa";
 import { useRef } from "react";
@@ -48,13 +46,10 @@ const services = [
     },
     {
         icon: <FaBriefcase className="text-3xl" />,
-        title: "Business Advisory",
+        title: "Business Compliances",
         desc: "Keep your workplace worry-free with our help. We manage everything for WCB Compliance, handling paperwork and safety standards to ensure your workplace is secure and worry-free.",
         href: "/service/businesscompliances"
     },
-    // { icon: <FaUserCog className="text-3xl" />, title: "Tech Consulting", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-    // { icon: <FaUserTie className="text-3xl" />, title: "Outsourced CFO", desc: "Proin laoreet nisi vitae et velunto phare mattis lorem tristiq." },
-
 ];
 
 export default function Company() {
@@ -90,7 +85,7 @@ export default function Company() {
                         Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut suspendisse
                         pharetra. Finibus condimentum aenean lacinia sem metus Integer.
                     </p>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {services.map((service, idx) => {
                             const initialPos = getInitial(idx);
                             const isFirst = idx === 0;

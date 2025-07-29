@@ -13,13 +13,12 @@ interface AccordionItem {
   hasCheckmark?: boolean;
 }
 const otherServices = [
+  "Bookkeeping",
   "Payroll Services",
   "Tax Planning",
   "Audit & Assurance",
   "Financial Statement",
-  "Tech Consulting",
-  "Business Advisory",
-  "Outsourced CFO",
+  "Business Compliances",  
 ];
 export default function Bookkeeping() {
   const ref = useRef(null);
@@ -113,7 +112,7 @@ export default function Bookkeeping() {
               <FaShareAlt className="mr-1" /> Share
             </button>
           </div>
-            {/* <p className="mb-4 text-[#5a6a7a] text-2xl">
+          {/* <p className="mb-4 text-[#5a6a7a] text-2xl">
               <b className="text-2xl">Accurate Bookkeeping Services in Canada:</b> Your Financial Foundation, Done Right
             </p>
             <p className="mb-4 text-[#5a6a7a]">
@@ -127,24 +126,28 @@ export default function Bookkeeping() {
 
 
           {/* Addded */}
-          
+
 
           <ul className="list-none pl-0 space-y-2 text-[#008db3]">
             {[
-              "Nulla congue aliquet vulputate...",
-              "Proin tempus auctor libero...",
-              "Sed venenatis purus sed nibh...",
-              "Etiam lobortis sapien amatug...",
-              "Etiam sit amet odio sed nunc...",
-              "Integer vitae nunc eu leo...",
-            ].map((text, index) => (
-              <li className="flex items-start" key={index}>
-                <FaChevronRight className="mt-1 mr-2" />
-                <span className="text-[#5a6a7a]">{text}</span>
+              { text: "Bookkeeping", href: "/service/bookkeeping" },
+              { text: "Payroll Services", href: "/service/payroll" },
+              { text: "Tax Planning", href: "/service/tax" },
+              { text: "Audit & Assurance", href: "/service/audit" },
+              { text: "Financial Statement", href: "/service/finance" },
+              { text: "Business Compliances", href: "/service/businesscompliances" },
+            ].map((item, index) => (
+              <li className="flex items-start group" key={index}>
+                <FaChevronRight className="mt-1 mr-2 text-[#008db3]" />
+                <a
+                  href={item.href}
+                  className="text-[#5a6a7a] hover:text-[#008db3] transition-colors duration-200 flex-1"
+                >
+                  {item.text}
+                </a>
               </li>
             ))}
           </ul>
-
         </div>
 
         {/* Sidebar */}
@@ -182,12 +185,13 @@ export default function Bookkeeping() {
               <div className="text-white text-lg font-bold mb-2">
                 Having Trouble Managing <br /> Your Finance?
               </div>
-              <button
-                onClick={handleScrollTop}
+              <a
+                href="/contact"
+                // onClick={handleScrollTop}
                 className="mt-2 inline-block bg-[#00c6fb] hover:translate-y-[-6px] transition-transform text-white font-semibold px-6 py-3 rounded"
               >
                 CONTACT US NOW &rarr;
-              </button>
+              </a>
             </div>
           </div>
 

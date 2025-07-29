@@ -50,22 +50,57 @@ export default function Partner() {
           >
             <div className="uppercase text-xs tracking-widest text-[#0082a3] mb-2">Why Choose Us</div>
             <h3 className="text-2xl md:text-3xl font-bold mb-4 text-gray-900">Accounting With Unity</h3>
-            <p className="text-gray-500 mb-6 text-sm md:text-base">
-              Experience seamless financial management with our comprehensive suite of services. Our expert accountants ensure precise and transparent accounting records, giving you a clear financial overview. We navigate complex tax regulations, maximizing your returns and ensuring full compliance. Unlock strategic insights with our Management Information Systems, transforming data into actionable strategies for business growth. Our holistic approach covers every financial aspect, offering tailored solutions for your unique needs. 
-            </p>
+            <ul className="text-gray-500 mb-6 space-y-3 text-sm md:text-base">
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Where your vision and our expertise align seamlessly for financial clarity and growth.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Collaborative expertise working as one to streamline your finances and fuel your success.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Integrated solutions and dedicated partnership for a unified path to financial confidence.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Leveraging collective insight and seamless collaboration to maximize your profitability.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Your goals + Our expertise = A unified strategy for financial success.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Strength in partnership: Uniting your business goals with our strategic financial guidance.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Achieve more together: A cohesive approach to clarity, compliance, and strategic growth.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Seamless collaboration. Shared goals. Exceptional financial results.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span>•</span>
+                <span>Working alongside you with one purpose: your financial empowerment and success.</span>
+              </li>
+            </ul>
             <div className="flex gap-8 mb-6 flex-col sm:flex-row">
               <div className="flex items-start gap-3">
                 <FaCheckCircle className="text-[#0082a3] text-2xl mt-1" />
                 <div>
                   <div className="font-semibold text-gray-900">Experienced</div>
-                  <div className="text-gray-500 text-xs">Etiam luctus suscipit velit nec ultricies augue sed males.</div>
+                  <div className="text-gray-500 text-xs">Books of Accounts Strategic decision making</div>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <FaCheckCircle className="text-[#0082a3] text-2xl mt-1" />
                 <div>
                   <div className="font-semibold text-gray-900">Free Consultation</div>
-                  <div className="text-gray-500 text-xs">Etiam luctus suscipit velit nec ultricies augue sed males.</div>
+                  <div className="text-gray-500 text-xs">Don’t hesitate, we are just a phone call away</div>
                 </div>
               </div>
             </div>
@@ -123,7 +158,7 @@ export default function Partner() {
               className="rounded-lg w-full max-w-md object-cover"
             />
             <div className="absolute -bottom-8 left-[-20%] translate-x-1/2 bg-[#0082a3] text-white rounded-lg px-8 py-4 shadow-lg flex flex-col items-center">
-              <div className="text-2xl font-bold">15 <sup className="text-base">Th</sup></div>
+              <div className="text-2xl font-bold">8 <sup className="text-base">Th</sup></div>
               <div className="text-xs uppercase tracking-widest">Years Experience</div>
             </div>
           </motion.div>
