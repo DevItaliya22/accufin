@@ -107,7 +107,7 @@ export default function Contact() {
                         <FaMapMarkerAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
                         <div>
                             <div className="font-bold">Office Address</div>
-                            <div>99 Roving St., Big City, PKU 23456</div>
+                            <div>8-3015 Trethewey Street, Abbotsford, BC V2T 3R4</div>
                         </div>
                     </div>
                 </div>
@@ -117,7 +117,7 @@ export default function Contact() {
             <div className="w-full mt-12">
                 <iframe
                     title="Google Map"
-                    src="https://www.google.com/maps/embe   d?pb=!1m18!1m12!1m3!1d2436.684964073624!2d-0.1277586842290132!3d51.50735077963509!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x48761b3333333333%3A0x1234567890abcdef!2sLondon!5e0!3m2!1sen!2suk!4v1680000000000!5m2!1sen!2suk"
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d2602.991943081101!2d-122.34926502373044!3d49.05622607932473!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x5485d9b47a768c6b%3A0x287ac716e6a77d46!2s8-3015%20Trethewey%20St%2C%20Abbotsford%2C%20BC%20V2T%203R4!5e0!3m2!1sen!2sca!4v1722310300000!5m2!1sen!2sca"
                     width="100%"
                     height="350"
                     style={{ border: 0 }}
