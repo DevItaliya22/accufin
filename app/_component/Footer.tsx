@@ -9,25 +9,36 @@ import { useEffect, useState } from "react";
 import { Link, OpenContact } from "@/lib/generated/prisma";
 
 const quickLinks = [
-  "Home",
-  "About Us",
-  "Services",
-  "Cases",
-  "Pricing",
-  "FAQs",
-  "Contact Us",
+  { text: "Home", href: "/" },
+  { text: "About Us", href: "/about" },
+  { text: "Services", href: "/service" },
+  { text: "Cases", href: "/cases" },
+  { text: "Pricing", href: "/pricing" },
+  // { text: "FAQs", href: "/faqs" },
+  { text: "Contact Us", href: "/contact" },
 ];
 
+
+// const services = [
+//   "Bookkeeping",
+//   "Payroll Services",
+//   "Tax Planning",
+//   "Audit & Assurance",
+//   "Financial Statement",
+//   // "Tech Consulting",
+//   "Business Compliances",
+//   // "Outsourced CFO",
+// ];
+
 const services = [
-  "Bookkeeping",
-  "Payroll Services",
-  "Tax Planning",
-  "Audit & Assurance",
-  "Financial Statement",
-  "Tech Consulting",
-  "Business Advisory",
-  "Outsourced CFO",
+  { name: "Bookkeeping", href: "/service/bookkeeping" },
+  { name: "Payroll Services", href: "/service/payroll" },
+  { name: "Tax Planning", href: "/service/tax" },
+  { name: "Audit & Assurance", href: "/service/audit" },
+  { name: "Financial Statement", href: "/service/finance" },
+  { name: "Business Compliances", href: "/service/businesscompliances" },
 ];
+
 type OpenContactWithLinks = OpenContact & {
   links: Link[];
 };
@@ -77,32 +88,39 @@ export default function Footer() {
         {/* Quick Links */}
         <div className="flex-1 min-w-[180px]">
           <div className="font-bold text-2xl mb-4">Quick Links</div>
+
           <ul>
-            {quickLinks.map((link) => (
-              <li key={link}>
-                <a
-                  href=""
-                  className="flex items-center py-1 hover:text-[#00c6fb] transition-colors"
-                >
-                  <FaChevronRight className="mr-2 text-[#00c6fb]" />
-                  {link}
-                </a>
-              </li>
-            ))}
+            {quickLinks.map((link) => {
+              // Convert link text to lowercase and replace spaces with hyphens for href
+              // const href = `${link.text.toLowerCase().replace(/\s+/g, '-')}`;
+
+              return (
+                <li key={link.text}>
+                  <a
+                    href={link.href}
+                    className="flex items-center py-1 hover:text-[#00c6fb] transition-colors"
+                  >
+                    <FaChevronRight className="mr-2 text-[#00c6fb]" />
+                    {link.text}
+                  </a>
+                </li>
+              );
+            })}
           </ul>
+
         </div>
         {/* Services */}
         <div className="flex-1 min-w-[200px]">
           <div className="font-bold text-2xl mb-4">Services</div>
           <ul>
             {services.map((service) => (
-              <li key={service}>
+              <li key={service.name}>
                 <a
-                  href=""
+                  href={service.href}
                   className="flex items-center py-1 hover:text-[#00c6fb] transition-colors"
                 >
                   <FaChevronRight className="mr-2 text-[#00c6fb]" />
-                  {service}
+                  {service.name}
                 </a>
               </li>
             ))}

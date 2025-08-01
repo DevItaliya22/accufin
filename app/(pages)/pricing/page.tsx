@@ -15,13 +15,14 @@ import Pricing from "@/app/_component/Pricing";
 import Partner2 from "@/app/_component/Partner2";
 
 export default function PricingPage() {
+    
     return (
         <div>
             <Navbar />
             <Pricing />
             <Price />
             <Finance/>
-            <OurStages />
+            {/* <OurStages /> */}
             <Partner2 />
             <Footer />
         </div>

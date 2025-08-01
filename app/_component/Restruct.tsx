@@ -12,14 +12,12 @@ const latestCases = [
 ];
 
 const otherServices = [
-    { name: "Bookkeeping" },
-    { name: "Payroll Services" },
-    { name: "Tax Planning" },
-    { name: "Audit & Assurance" },
-    { name: "Financial Statement" },
-    { name: "Tech Consulting" },
-    { name: "Business Advisory" },
-    { name: "Outsourced CFO" }
+    { name: "Bookkeeping", href: "/service/bookkeeping" },
+    { name: "Payroll Services", href: "/service/payroll" },
+    { name: "Tax Planning", href: "/service/tax" },
+    { name: "Audit & Assurance", href: "/service/audit" },
+    { name: "Financial Statement", href: "/service/finance" },
+    { name: "Business Compliances", href: "/service/businesscompliances" },
 ];
 
 export default function Restruct() {
@@ -121,12 +119,13 @@ export default function Restruct() {
                             <div className="text-white text-lg font-bold mb-2">
                                 Having Trouble Managing <br /> Your Finance?
                             </div>
-                            <button
-                                onClick={() => handleNavigate()}
+                            <a
+                                // onClick={() => handleNavigate()}
+                                href="/contact"
                                 className="mt-2 inline-block bg-[#00c6fb] hover:translate-y-[-6px] transition-transform text-white font-semibold px-6 py-3 rounded"
                             >
                                 CONTACT US NOW →
-                            </button>
+                            </a>
                         </div>
                     </div>
 
@@ -134,17 +133,20 @@ export default function Restruct() {
                     <div className="bg-[#007399] rounded-xl p-6 text-white mb-2">
                         <div className="font-bold text-lg mb-4">Other Services</div>
                         <ul className="space-y-2">
-                            {otherServices.map((s) => (
-                                <li key={s.name}>
-                                    <button
-                                        onClick={() => handleNavigate()}
-                                        className="flex items-center hover:text-[#00c6fb] transition-colors text-white"
-                                    >
-                                        <FaChevronRight className="mr-2 text-[#00c6fb]" />
-                                        {s.name}
-                                    </button>
-                                </li>
-                            ))}
+                            {otherServices.map((s) => {
+                                // const href =`${s.name.toLowerCase().replace(/\s+/g, '-')}`;
+                                return (
+                                    <li key={s.name}>
+                                        <a
+                                            href={s.href}
+                                            className="flex items-center hover:text-[#00c6fb] transition-colors text-white"
+                                        >
+                                            <FaChevronRight className="mr-2 text-[#00c6fb]" />
+                                            {s.name}
+                                        </a>
+                                    </li>
+                                );
+                            })}
                         </ul>
                     </div>
 

@@ -5,41 +5,57 @@ import { FaArrowRight } from "react-icons/fa";
 
 const plans = [
     {
-        name: "Standard",
-        price: 49,
+        name: "Individual Taxes",
+        price: "50",
         features: [
-            "Nulla congue aliquet vulputate",
-            "Proin tempus auctor libero",
-            "Sed venenatis purus sed",
-            "Etiam lobortis sapien amatuq",
-            "Congue id erat non tempus",
+            "Including all your T4/T4A/T5",
+            "Understanding individual situation and guiding what could be claimed",
+            "Claiming eligible Tuition fees paid in taxes",
+            "Guiding on setting up direct deposit",
+            "Accessibility to your CRA filings on your personal portal to access anytime"
         ],
         highlight: false,
+        description: "Comprehensive individual tax filing service with expert guidance"
     },
     {
-        name: "Enterprise",
-        price: 129,
+        name: "Business",
+        price: "108",
         features: [
-            "Nulla congue aliquet vulputate",
-            "Proin tempus auctor libero",
-            "Sed venenatis purus sed",
-            "Etiam lobortis sapien amatuq",
-            "Congue id erat non tempus",
+            "Monthly/Quarterly/Annually bookkeeping services",
+            "GST/PST/HST filing services",
+            "Books of Accounts preparations for Corporate Tax filings",
+            "WCB/Payroll/T4/T4A/T5 filings",
+            "Payroll Returns"
         ],
         highlight: true,
+        description: "Comprehensive business accounting and tax services for small to medium enterprises"
     },
     {
-        name: "Proffesional",
-        price: 89,
+        name: "Payroll for your business",
+        price: "45",
         features: [
-            "Nulla congue aliquet vulputate",
-            "Proin tempus auctor libero",
-            "Sed venenatis purus sed",
-            "Etiam lobortis sapien amatuq",
-            "Congue id erat non tempus",
+            "Set up of Employees",
+            "Paystubs preparation",
+            "Payroll Taxes remittances",
+            "Payroll Return filings",
+            "Issuing applicable tax info slips to the individuals/business"
         ],
         highlight: false,
+        description: "Full-service payroll solutions to streamline your business operations"
     },
+    {
+        name: "Business Registration Services",
+        price: "200",
+        features: [
+            "Provincial company registration",
+            "Multi-provincial/federal company registrations",
+            "Assistance with setting up GST/HST/PST accounts",
+            "Assistance with setting up payroll accounts",
+            "Assistance with setting up Information return accounts"
+        ],
+        highlight: true,
+        description: "Comprehensive business registration and setup services for new and expanding businesses"
+    }
 ];
 
 export default function Price() {
@@ -62,11 +78,14 @@ export default function Price() {
                     </div>
                     <div className="flex-1 flex items-center">
                         <p className="text-[#5a6a7a] text-sm md:text-base max-w-xl">
-                            Proin laoreet nisi vitae pharetra mattis. Etiam luctus suscipit velit vitae mixue ultricies. Augue molestie a etiam quis tincidunt est, et efficitur ipsum nunc bibendum ut risus et vehicula proin tempus tellus diam laoreet justo donec tempus.
+                            We understand that every dollar counts in your business. That's why <b>fair, transparent pricing </b>is core to our service. We don't believe in hidden fees or complicated packages designed to upsell you.
+                            Instead, we tailor our bookkeeping and accounting solutions to fit your specific needs and your budget. Whether you're a startup needing essential bookkeeping or a growing business requiring comprehensive financial management, we structure our services to deliver <b> maximum value </b>.
+                            Get the expert financial support you need to succeed, without the premium price tag. Let's discuss how we can provide the perfect fit – and the best price – for your unique business.
+
                         </p>
                     </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-7">
                     {plans.map((plan, i) => (
                         <motion.div
                             key={plan.name}
@@ -80,11 +99,15 @@ export default function Price() {
                         >
                             <div className="font-bold text-2xl mb-2">{plan.name}</div>
                             <div className="flex items-end mb-2">
-                                <span className="text-5xl font-bold mr-2">${plan.price}</span>
-                                <span className="text-lg font-semibold">/ Month</span>
+                                <span className="mb-2 text-2xl font-semibold"><sup>
+                                    From
+                                </sup>
+                                </span>
+                                <span className="text-5xl font-bold mr-2">&nbsp;${plan.price}</span>
+                                <span className="text-lg font-semibold">onwards</span>
                             </div>
                             <p className={`mb-6 ${plan.highlight ? "text-white/80" : "text-[#5a6a7a]"}`}>
-                                Nam ultrices lacus interdum neque sagittis. Integer porta sem eu facilisis.
+                                {/* Nam ultrices lacus interdum neque sagittis. Integer porta sem eu facilisis. */}
                             </p>
                             <ul className="mb-8 space-y-2">
                                 {plan.features.map((feature, i) => (
@@ -93,13 +116,13 @@ export default function Price() {
                                         className={`flex items-center border-b last:border-b-0 pb-2 last:pb-0 ${plan.highlight ? "border-white/30" : "border-[#0082a3]/30"
                                             }`}
                                     >
-                                        <span className="mr-2 text-[#00b6d6] text-lg font-bold">›</span>
+                                        <span className="mr-2 text-[#00b6d6] text-3xl font-bold ">›</span>
                                         <span>{feature}</span>
                                     </li>
                                 ))}
                             </ul>
                             <a
-                                href="#"
+                                href="/contact"
                                 className="mt-auto inline-flex items-center justify-center px-8 py-3 rounded bg-[#00b6d6] text-white font-semibold tracking-wide transition-transform duration-200 hover:-translate-y-1 hover:shadow-lg"
                             >
                                 Get Started <FaArrowRight className="ml-2" />
@@ -108,6 +131,6 @@ export default function Price() {
                     ))}
                 </div>
             </div>
-        </section>
+        </section >
     );
 }
