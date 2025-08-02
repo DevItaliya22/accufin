@@ -2,6 +2,7 @@ import transporter from "./nodemailer";
 import { render } from "@react-email/components";
 import { UserCreatedEmail } from "./email-templates/user-created";
 import { LoginConfirmationEmail } from "./email-templates/login-confirmation";
+import { ContactFormEmail } from "./email-templates/contact-form";
 
 export interface SendUserCreatedEmailParams {
   userName: string;
@@ -16,6 +17,14 @@ export interface SendLoginConfirmationEmailParams {
   userEmail: string;
   loginTime: string;
   loginMethod: string;
+}
+
+export interface SendContactFormEmailParams {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  submittedAt: string;
 }
 
 export async function sendUserCreatedEmail({
@@ -60,6 +69,46 @@ export async function sendUserCreatedEmail({
     return { success: true, result };
   } catch (error) {
     console.error("Email utility - Error sending welcome email:", error);
+    return { success: false, error };
+  }
+}
+
+export async function sendContactFormEmail({
+  name,
+  email,
+  subject,
+  message,
+  submittedAt,
+}: SendContactFormEmailParams) {
+  try {
+    console.log("Email utility - Starting to send contact form email to admin");
+
+    // Render the React email template to HTML
+    const emailHtml = await render(
+      ContactFormEmail({
+        name,
+        email,
+        subject,
+        message,
+        submittedAt,
+      })
+    );
+
+    const mailOptions = {
+      from: process.env.NODEMAILER_EMAIL,
+      to: process.env.ADMIN_EMAIL,
+      subject: `New Contact Form Submission - ${subject}`,
+      html: emailHtml,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+
+    console.log(
+      "Email utility - Contact form email sent successfully to admin"
+    );
+    return { success: true, result };
+  } catch (error) {
+    console.error("Email utility - Error sending contact form email:", error);
     return { success: false, error };
   }
 }
