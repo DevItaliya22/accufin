@@ -210,7 +210,7 @@ export default function FinancePage() {
                             whileInView={{ opacity: 1, y: 0 }}
                             viewport={{ once: true }}
                             transition={{ duration: 0.5 }}
-                            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200"
+                            className="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200 max-sm:overflow-x-scroll"
                         >
                             <table className="min-w-full">
                                 <thead className="bg-[#008db3] text-white">

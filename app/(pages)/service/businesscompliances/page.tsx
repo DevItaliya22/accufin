@@ -406,10 +406,10 @@ export default function BusinessCompliancesPage() {
                 {/* CTA Section */}
                 <section className="bg-[#0a2236] text-white rounded-xl p-8 md:p-12 text-center">
                     <h2 className="text-3xl font-bold mb-6">Ready to Offload Compliance?</h2>
-                    <div className="flex items-center justify-center text-[#00c6fb] mb-6">
+                    <a href="/contact" className="flex items-center justify-center text-[#00c6fb] mb-6">
                         <FaArrowRight className="mr-2" />
                         <span className="font-semibold">Free Compliance Health Check</span>
-                    </div>
+                    </a>
                     <p className="mb-8 max-w-2xl mx-auto">
                         We'll review your business structure, licenses, and filings to identify:
                     </p>
@@ -493,7 +493,7 @@ export default function BusinessCompliancesPage() {
                                 </p>
                             </div>
 
-                            <div className="max-w-3xl mx-auto">
+                            <div className="max-w-3xl mx-auto max-sm:ml-3 max-sm:mr-3">
                                 {renderFaqs(complianceFaqs)}
                             </div>
                         </div>

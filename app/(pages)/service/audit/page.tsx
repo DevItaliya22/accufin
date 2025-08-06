@@ -323,9 +323,13 @@ export default function AuditAssurance() {
                     <p className="mb-8 max-w-2xl mx-auto">
                         We'll review your current controls and identify 3 opportunities to streamline your next audit.
                     </p>
-                    <a href="/contact" className="bg-[#00c6fb] hover:bg-[#008db3] text-white font-bold py-3 px-8 rounded-lg transition duration-300">
+                    <a
+                        href="/contact"
+                        className="block w-full sm:w-auto text-center text-wrap bg-[#00c6fb] hover:bg-[#008db3] text-white font-bold py-3 px-6 sm:px-8 rounded-lg transition duration-300 text-sm sm:text-base md:text-lg"
+                    >
                         Claim Your Free Assessment
                     </a>
+
                     <p className="mt-6 text-sm text-gray-300">
                         *Audit services do not include assurance on future results or detect all fraud. Licensing requirements vary by province.
                     </p>
