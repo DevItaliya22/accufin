@@ -265,7 +265,7 @@ export default function NewHeader() {
             <FaPhoneAlt className="text-white text-2xl" />
             <div>
               <div className="text-white text-sm">Call Us</div>
-              <div className="text-white font-semibold">+123-234-1234</div>
+              <div className="text-white font-semibold">+1 604 551 3023</div>
             </div>
           </div>
 
