@@ -158,7 +158,7 @@ export default function AboutCompany() {
             initial={{ x: -50, opacity: 0 }}
             animate={isInView ? { x: 0, opacity: 1 } : { x: -50, opacity: 0 }}
             transition={{ duration: 0.6 }}
-            href="#"
+            href="/about"
             className="inline-flex items-center bg-[#00c6fb] hover:bg-[#00a6d6] text-white font-semibold px-6 py-3 sm:px-8 sm:py-4 rounded transition-colors text-base sm:text-lg"
           >
             MORE ABOUT US <FaChevronRight className="ml-2 sm:ml-3" />

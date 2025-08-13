@@ -1,8 +1,11 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { motion, useInView } from "framer-motion";
 import { FaArrowRight, FaCheck, FaChevronRight, FaRegCalendarAlt, FaRegUser } from "react-icons/fa";
+import { FaCalendarAlt, FaRegComment } from "react-icons/fa";
+import { Blogs } from "@/lib/generated/prisma";
+import { formatTextWithLinks } from "@/lib/utils";
 
 const recentBlogs = [
     {
@@ -32,6 +35,17 @@ const otherServices = [
 ];
 
 export default function Entry() {
+    const [blogs, setBlogs] = useState<Blogs[]>([]);
+
+    useEffect(() => {
+        const fetchBlogs = async () => {
+            const response = await fetch("/api/user/blogs");
+            const data = await response.json();
+            setBlogs(data);
+        };
+        fetchBlogs();
+    }, []);
+
     const handleScrollToTop = () => {
         window.scrollTo({ top: 0, behavior: "smooth" });
     };
@@ -945,10 +959,10 @@ export default function Entry() {
                     <div className="bg-[#007399] rounded-xl p-6 text-white mb-2">
                         <div className="font-bold text-lg mb-4">Recent Blog</div>
                         <ul className="space-y-4">
-                            {recentBlogs.map((b, i) => (
+                            {blogs.map((b, i) => (
                                 <li key={i}>
                                     <a
-                                        href=""
+                                        href={`/blog/${b.id}`}
                                         onClick={handleScrollToTop}
                                         className="flex items-center gap-4 bg-[#00c6fb] rounded transition-colors p-2 -m-2"
                                     >
@@ -959,14 +973,20 @@ export default function Entry() {
                                         />
                                         <div>
                                             <div className="font-semibold">{b.title}</div>
-                                            <div className="text-xs">{b.date}</div>
-                                            <div className="text-xs mt-1">{b.content}</div>
+                                            <div className="text-xs">
+                                                {b.createdAt ? new Date(b.createdAt).toLocaleDateString() : "N/A"}
+                                            </div>
+                                            <div className="text-xs mt-1">{formatTextWithLinks(b.content, "white")}</div>
+
+
+                                            {/* <div className="text-xs mt-1">{b.content}</div> */}
                                         </div>
                                     </a>
                                 </li>
                             ))}
                         </ul>
                     </div>
+
 
 
 

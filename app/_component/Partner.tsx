@@ -158,7 +158,9 @@ export default function Partner() {
               className="rounded-lg w-full max-w-md object-cover"
             />
             <div className="absolute -bottom-8 left-[-20%] translate-x-1/2 bg-[#0082a3] text-white rounded-lg px-8 py-4 shadow-lg flex flex-col items-center">
-              <div className="text-2xl font-bold">8 <sup className="text-base">Th</sup></div>
+              <div className="text-2xl font-bold">8
+                 {/* <sup className="text-base">Th</sup> */}
+                 </div>
               <div className="text-xs uppercase tracking-widest">Years Experience</div>
             </div>
           </motion.div>

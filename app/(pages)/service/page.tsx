@@ -19,10 +19,11 @@ export default function ServicePage() {
             <Service />
             <Company />
             <Finance />
-            <Price/>
-            <OurStages/>
+            <Price />
+            <OurStages />
             {/* <Partner /> */}
-            <Logos />
+            {/* <Logos /> */}
+
             <Partner />
             <Footer />
         </div>

@@ -325,7 +325,7 @@ export default function AuditAssurance() {
                     </p>
                     <a
                         href="/contact"
-                        className="block w-full sm:w-auto text-center text-wrap bg-[#00c6fb] hover:bg-[#008db3] text-white font-bold py-3 px-6 sm:px-8 rounded-lg transition duration-300 text-sm sm:text-base md:text-lg"
+                        className="w-fit block sm:w-auto text-center text-wrap bg-[#00c6fb] hover:bg-[#008db3] text-white font-bold py-3 px-6 sm:px-8 rounded-lg transition duration-300 text-sm sm:text-base md:text-lg"
                     >
                         Claim Your Free Assessment
                     </a>

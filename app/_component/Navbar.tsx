@@ -56,6 +56,11 @@ export default function NewHeader() {
         { name: "Audit & Assurance", href: "/service/audit" },
         { name: "Financial Statement", href: "/service/finance" },
         { name: "Business Compliances", href: "/service/businesscompliances" },
+        {
+          name: "Launching Soon",
+          href: "/",
+          className: "text-yellow-400 font-bold animate-pulse" // Added highlight styles
+        },
       ],
     },
     {
@@ -71,7 +76,7 @@ export default function NewHeader() {
       href: "#",
       dropdown: [
         { name: "Pricing", href: "/pricing" },
-        { name: "Team", href: "/team" },
+        // { name: "Team", href: "/team" },
         { name: "Blog", href: "/blog" },
         { name: "Single Post", href: "/singlepost" },
       ],
@@ -141,7 +146,7 @@ export default function NewHeader() {
                           <Link
                             key={subItem.name}
                             href={subItem.href}
-                            className="block px-4 py-2 text-white hover:bg-cyan-700 transition-colors"
+                            className={`block px-4 py-2 text-white hover:bg-cyan-700 transition-colors ${subItem.className || ''}`}
                           >
                             {subItem.name}
                           </Link>
@@ -231,7 +236,7 @@ export default function NewHeader() {
                           <Link
                             key={subItem.name}
                             href={subItem.href}
-                            className="block text-white hover:text-cyan-200"
+                            className={`block text-white hover:text-cyan-200 ${subItem.className || ''}`}
                           >
                             {subItem.name}
                           </Link>

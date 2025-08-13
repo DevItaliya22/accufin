@@ -54,7 +54,7 @@ export default function Partner() {
               initial={{ opacity: 0, ...directions[i % directions.length] }}
               animate={isInView ? { opacity: 1, x: 0, y: 0 } : {}}
               transition={{ duration: 0.8, delay: i * 0.2, ease: "easeOut" }}
-              className="bg-white bg-red-900 border border-[#0082a3] rounded-lg p-8 shadow-sm flex flex-col justify-between min-h-[220px]"
+              className="bg-white border border-[#0082a3] rounded-lg p-8 shadow-sm flex flex-col justify-between min-h-[220px]"
             >
               <p className="text-gray-500 italic mb-8">{t.text}</p>
               <div className="flex items-center mt-auto">

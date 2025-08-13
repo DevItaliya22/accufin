@@ -23,16 +23,19 @@ const stages = [
 const projects = [
     {
         img: "/img6.jpg",
+        href:"/financialrestructuring",
         title: "Financial Restructuring",
         desc: "Nunc volutpat, tortor sit amet sagittis ef en sed tellus diam laoreet justo, et elementum odio nibh eget ligula dolor dui tempus.",
     },
     {
         img: "/img7.jpg",
+        href: "/caseflow",
         title: "Cash Flow & Tax",
         desc: "Nunc volutpat, tortor sit amet sagittis ef en sed tellus diam laoreet justo, et elementum odio nibh eget ligula dolor dui tempus.",
     },
     {
         img: "/img8.jpg",
+        href: "/inventory",
         title: "Inventory Management",
         desc: "Nunc volutpat, tortor sit amet sagittis ef en sed tellus diam laoreet justo, et elementum odio nibh eget ligula dolor dui tempus.",
     },
@@ -119,7 +122,7 @@ export default function Finance() {
                                     <div className="font-bold text-lg mb-2">{project.title}</div>
                                     <div className="mb-4 text-sm flex-1">{project.desc}</div>
                                     <a
-                                        href=""
+                                        href={project.href}
                                         className="inline-flex items-center font-semibold text-sm group-hover:text-white text-[#00c6fb] transition-colors"
                                     >
                                         READ MORE &rarr;

@@ -166,7 +166,7 @@ export default function AboutPage() {
                                 </ul>
                             </div>
                         </div>
-                        
+
                     </div>
                 </div>
 
@@ -196,7 +196,8 @@ export default function AboutPage() {
             </motion.section>
             <Company2 />
             <Partner />
-            <Logos />
+            {/* <Logos /> */}
+
             <Ourteam />
             <Footer />
         </div>

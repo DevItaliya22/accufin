@@ -45,7 +45,8 @@ export default function Company2() {
                             className="px-2 py-4"
                         >
                             <div className="text-3xl sm:text-4xl font-bold">
-                                8<sup>th</sup>
+                                8
+                                {/* <sup>th</sup> */}
                             </div>
                             <div className="font-semibold text-sm sm:text-base">Years Experience</div>
                         </motion.div>
