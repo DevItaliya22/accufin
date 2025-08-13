@@ -19,6 +19,12 @@ export const s3 = {
     return `user-uploads/${userId}/received/${filename}`;
   },
 
+  // To get path for testimonial image uploads
+  getTestimonialImagePath: (filename: string) => {
+    const timestamp = Date.now();
+    return `testimonials/${timestamp}/${filename}`;
+  },
+
   getAdminPrivateUploadPath: (
     adminId: string,
     userId: string,

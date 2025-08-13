@@ -6,7 +6,7 @@ import About2 from "@/app/_component/About2";
 import Company2 from "@/app/_component/Company2";
 import Footer from "@/app/_component/Footer";
 import Logos from "@/app/_component/logos";
-import Ourteam from "@/app/_component/Ourteam";
+// import Ourteam from "@/app/_component/Ourteam";
 import Finance from "@/app/_component/Finance";
 import Finance2 from "@/app/_component/Finance2";
 import Finance3 from "@/app/_component/Finance3";

@@ -22,6 +22,7 @@ const menuItems: MenuItem[] = [
   { key: "files", label: "File Management" },
   { key: "notifications", label: "Notifications" },
   { key: "blogs", label: "Blogs" },
+  { key: "testimonials", label: "Testimonials" },
   { key: "contacts", label: "Site Settings" },
   { key: "forms", label: "Forms" },
   { key: "profile", label: "Profile" },

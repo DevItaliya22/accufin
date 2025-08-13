@@ -16,8 +16,8 @@ export default function TeamPage() {
         <div>
             <Navbar />
             <Team />
-            <Ourteam />
-            <Ourteam2 />
+            {/* <Ourteam /> */}
+            {/* <Ourteam2 /> */}
             <Finance/>
             <Partner />
             <Partner2 />            

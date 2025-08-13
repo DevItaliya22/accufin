@@ -6,6 +6,7 @@ import { useSession } from "next-auth/react";
 import { s3 } from "@/lib/s3";
 import toast from "react-hot-toast";
 import BlogManagement from "./BlogManagement";
+import TestimonialsManagement from "./TestimonialsManagement";
 import OpenContactsManagement from "./OpenContactsManagement";
 import FormsManagement from "./FormsManagement";
 import NotificationManagement from "./NotificationManagement";
@@ -22,6 +23,7 @@ export default function AdminDashboard() {
     | "files"
     | "notifications"
     | "blogs"
+    | "testimonials"
     | "contacts"
     | "forms"
     | "profile"
@@ -37,6 +39,7 @@ export default function AdminDashboard() {
         "files",
         "notifications",
         "blogs",
+        "testimonials",
         "contacts",
         "forms",
         "profile",
@@ -396,6 +399,7 @@ export default function AdminDashboard() {
           />
         )}
         {activeTab === "blogs" && <BlogManagement />}
+        {activeTab === "testimonials" && <TestimonialsManagement />}
         {activeTab === "contacts" && <OpenContactsManagement />}
         {activeTab === "forms" && <FormsManagement />}
         {activeTab === "profile" && <ProfileManagement />}

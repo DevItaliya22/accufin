@@ -198,7 +198,7 @@ export default function AboutPage() {
             <Partner />
             {/* <Logos /> */}
 
-            <Ourteam />
+            {/* <Ourteam /> */}
             <Footer />
         </div>
     );

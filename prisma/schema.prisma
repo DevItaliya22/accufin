@@ -287,3 +287,14 @@ model ImportantDate {
   updatedAt DateTime @updatedAt
 }
 
+model Testimonial {
+  id        String   @id @default(uuid())
+  name      String
+  role      String
+  text      String
+  imagePath String?
+  isActive  Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

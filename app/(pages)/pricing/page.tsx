@@ -22,7 +22,7 @@ export default function PricingPage() {
             <Pricing />
             <Price />
             <Finance/>
-            {/* <OurStages /> */}
+            <OurStages />
             <Partner2 />
             <Footer />
         </div>
