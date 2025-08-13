@@ -49,18 +49,12 @@ export default function NewHeader() {
       href: "/service",
       dropdown: [
         { name: "All Services", href: "/service" },
-        // { name: "Service Details", href: "/servicedetail" },
         { name: "Bookkeeping", href: "/service/bookkeeping" },
         { name: "Payroll Services", href: "/service/payroll" },
         { name: "Tax Planning", href: "/service/tax" },
         { name: "Audit & Assurance", href: "/service/audit" },
         { name: "Financial Statement", href: "/service/finance" },
         { name: "Business Compliances", href: "/service/businesscompliances" },
-        {
-          name: "Launching Soon",
-          href: "/",
-          className: "text-yellow-400 font-bold animate-pulse" // Added highlight styles
-        },
       ],
     },
     {
@@ -78,7 +72,7 @@ export default function NewHeader() {
         { name: "Pricing", href: "/pricing" },
         // { name: "Team", href: "/team" },
         { name: "Blog", href: "/blog" },
-        { name: "Single Post", href: "/singlepost" },
+        { name: "Tutorial", href: "/tutorial" },
       ],
     },
     { name: "Contact", href: "/contact" },
@@ -146,7 +140,7 @@ export default function NewHeader() {
                           <Link
                             key={subItem.name}
                             href={subItem.href}
-                            className={`block px-4 py-2 text-white hover:bg-cyan-700 transition-colors ${subItem.className || ''}`}
+                            className="block px-4 py-2 text-white hover:bg-cyan-700 transition-colors"
                           >
                             {subItem.name}
                           </Link>
@@ -236,7 +230,7 @@ export default function NewHeader() {
                           <Link
                             key={subItem.name}
                             href={subItem.href}
-                            className={`block text-white hover:text-cyan-200 ${subItem.className || ''}`}
+                            className="block text-white hover:text-cyan-200"
                           >
                             {subItem.name}
                           </Link>

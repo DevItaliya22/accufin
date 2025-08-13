@@ -31,11 +31,11 @@ export default function SinglePost() {
                 transition={{ duration: 0.8, ease: "easeOut" }}
                 className="relative z-10 w-full max-w-7xl mx-auto px-4 flex flex-col"
             >
-                <h1 className="text-white text-5xl font-bold mb-4 mt-10">Single Post</h1>
+                <h1 className="text-white text-5xl font-bold mb-4 mt-10">Tutorial</h1>
                 <div className="flex items-center space-x-2 text-lg">
                     <Link href="/" className="text-[#00c6fb] hover:underline">Home</Link>
                     <span className="text-white">/</span>
-                    <span className="text-white">Single Post</span>
+                    <span className="text-white">Tutorial</span>
                 </div>
             </motion.div>
         </section>
