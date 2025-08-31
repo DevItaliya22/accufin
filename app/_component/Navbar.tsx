@@ -57,14 +57,14 @@ export default function NewHeader() {
         { name: "Business Compliances", href: "/service/businesscompliances" },
       ],
     },
-    {
-      name: "Cases",
-      href: "/cases",
-      dropdown: [
-        { name: "All Cases", href: "/cases" },
-        { name: "Case Details", href: "/casedetail" },
-      ],
-    },
+    // {
+    //   name: "Cases",
+    //   href: "/cases",
+    //   dropdown: [
+    //     { name: "All Cases", href: "/cases" },
+    //     { name: "Case Details", href: "/casedetail" },
+    //   ],
+    // },
     {
       name: "Pages",
       href: "#",

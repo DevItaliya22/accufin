@@ -81,10 +81,10 @@ export default function Company() {
                     <h2 className="text-3xl md:text-4xl font-bold text-[#0a2236] text-center mb-4">
                         Real Accounting Services for You
                     </h2>
-                    <p className="text-center text-[#5a6a7a] mb-10 max-w-2xl mx-auto">
+                    {/* <p className="text-center text-[#5a6a7a] mb-10 max-w-2xl mx-auto">
                         Sed tincidunt accumsan lacus nec bibendum sapien aliquet ut suspendisse
                         pharetra. Finibus condimentum aenean lacinia sem metus Integer.
-                    </p>
+                    </p> */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {services.map((service, idx) => {
                             const initialPos = getInitial(idx);

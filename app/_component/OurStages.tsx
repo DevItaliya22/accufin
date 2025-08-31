@@ -69,13 +69,13 @@ export default function OurStages() {
                         <h2 className="text-3xl md:text-4xl font-bold text-[#0a2236] mb-4">
                             Easy Process to Manage Your Finances
                         </h2>
-                        <p className="text-[#5a6a7a] text-base">
+                        {/* <p className="text-[#5a6a7a] text-base">
                             In sed nisi vel tortor ornare venenatis sit amet vel felis. Etiam sit amet odio sed nunc lacinia
                             dictum vel quis est. Vivamus in tempor dolor. Sed eget pharetra ligula. Etiam egestas fringilla
                             lectus, et molestie augue auctor sagittis. Nunc sit amet felis ac ex ultricies lacinia. Praesent
                             quis ligula id tortor maximus laoreet. Fusce ultrices sed ante sollicitudin venenatis. Suspendisse
                             potenti. Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia curae.
-                        </p>
+                        </p> */}
                     </motion.div>
                 </div>
             </div>

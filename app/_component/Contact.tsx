@@ -174,11 +174,11 @@ export default function Contact() {
           <div className="text-3xl font-bold text-[#0a2236] mb-2">
             Get In Touch!
           </div>
-          <p className="text-[#5a6a7a] mb-4">
+          {/* <p className="text-[#5a6a7a] mb-4">
             Proin laoreet nisi vitae pharetra mattis, etiam luctus suscipit.
             Augue molestie a etiam quis tincidunt est, et efficitur ipsum nunc
             bibendum ut risus et vehicula proin tempus.
-          </p>
+          </p> */}
           <div className="flex items-start mb-4">
             <FaPhoneAlt className="text-2xl mr-3 mt-1 text-[#00c6fb]" />
             <div>
