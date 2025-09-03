@@ -87,9 +87,9 @@ export default function Faq() {
                         <h2 className="text-3xl md:text-5xl font-bold mb-4">The Most Questions</h2>
                     </div>
                     <div className="flex-1 flex items-center">
-                        <p className="text-cyan-100 text-sm md:text-base max-w-xl">
+                        {/* <p className="text-cyan-100 text-sm md:text-base max-w-xl">
                             Proin laoreet nisi vitae pharetra mattis. Etiam luctus suscipit velit vitae mixue ultricies. Augue molestie a etiam quis tincidunt est, et efficitur ipsum nunc bibendum ut risus et vehicula proin tempus tellus diam laoreet justo donec tempus.
-                        </p>
+                        </p> */}
                     </div>
                 </div>
 
