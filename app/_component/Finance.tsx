@@ -88,52 +88,7 @@ export default function Finance() {
             </motion.div>
 
             {/* Case Studies */}
-            <motion.div
-                ref={caseRef}
-                initial={{ opacity: 0, x: -60 }}
-                animate={caseInView ? { opacity: 1, x: 0 } : {}}
-                transition={{ duration: 0.8, ease: "easeOut" }}
-                className="bg-[#f7f9fa] py-16 px-4"
-            >
-                <div className="max-w-7xl mx-auto">
-                    <div className="text-center mb-2 text-[#008db3] font-semibold tracking-widest uppercase">
-                        Case Studies
-                    </div>
-                    <h2 className="text-3xl md:text-4xl font-bold text-[#0a2236] text-center mb-4">
-                        The Last Project We Worked On
-                    </h2>
-                    <p className="text-center text-[#5a6a7a] mb-10 max-w-2xl mx-auto">
-                        Stop Guessing. Start Growing, Lets work together to make bookkeeping and accounting streamlined and hassle free.
-                    </p>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {projects.map((project) => (
-                            <div
-                                key={project.title}
-                                className="rounded-lg border border-[#008db3] bg-white hover:bg-[#008db3] hover:text-white transition-colors p-0 flex flex-col h-full group"
-                            >
-                                <div className="overflow-hidden rounded-t-lg">
-                                    <img
-                                        src={project.img}
-                                        alt={project.title}
-                                        className="w-full h-48 object-cover transition-transform duration-300 ease-out group-hover:scale-105"
-                                    />
-                                </div>
-                                <div className="p-6 flex flex-col flex-1">
-                                    <div className="font-bold text-lg mb-2">{project.title}</div>
-                                    {/* <div className="mb-4 text-sm flex-1">{project.desc}</div> */}
-                                    <a
-                                        href={project.href}
-                                        className="inline-flex items-center font-semibold text-sm group-hover:text-white text-[#00c6fb] transition-colors"
-                                    >
-                                        READ MORE &rarr;
-                                    </a>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            </motion.div>
-     
+       
 
             {/* Our Stages */}
             {/* <motion.div

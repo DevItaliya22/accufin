@@ -84,7 +84,7 @@ export default function   BlogSection() {
               Important information might be useful for you
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-              {blogs.map((blog) => (
+              {blogs && blogs.length > 0 && blogs.map((blog) => (
                 <div
                   key={blog.id}
                   className="rounded-lg overflow-hidden border border-[#008db3] bg-white flex flex-col h-full group transition-colors duration-300 hover:bg-[#008db3] hover:text-white"

@@ -41,10 +41,15 @@ import {
   UserPlus,
   ChevronLeft,
   ChevronRight,
+  Shield,
+  ShieldCheck,
 } from "lucide-react";
 import { User as PrismaUser } from "@/lib/generated/prisma";
 import { useState, useMemo } from "react";
 import CreateUserForm from "./CreateUserForm";
+import { Switch } from "@/components/ui/switch";
+import { useSession } from "next-auth/react";
+import { toast } from "sonner";
 
 interface UserManagementProps {
   users: (PrismaUser & {
@@ -64,7 +69,15 @@ export default function UserManagement({
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
+  const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{
+    id: string;
+    name: string;
+    isAdmin: boolean;
+  } | null>(null);
   const itemsPerPage = 15;
+  const { data: session } = useSession();
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery) return users;
@@ -90,6 +103,55 @@ export default function UserManagement({
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
+  };
+
+  const handleAdminToggle = async (userId: string, currentIsAdmin: boolean) => {
+    const user = users.find((u) => u.id === userId);
+    if (!user) return;
+
+    setSelectedUser({
+      id: userId,
+      name: user.name || user.email,
+      isAdmin: currentIsAdmin,
+    });
+    setShowAdminModal(true);
+  };
+
+  const confirmAdminToggle = async () => {
+    if (!selectedUser) return;
+
+    setTogglingAdmin(selectedUser.id);
+    try {
+      const response = await fetch("/api/admin/toggle-admin", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          isAdmin: !selectedUser.isAdmin,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to update admin status");
+      }
+
+      toast.success(data.message);
+      // Refresh the page to get updated data
+      window.location.reload();
+    } catch (error) {
+      console.error("Error toggling admin status:", error);
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update admin status"
+      );
+    } finally {
+      setTogglingAdmin(null);
+      setShowAdminModal(false);
+      setSelectedUser(null);
+    }
   };
 
   if (loading) {
@@ -190,13 +252,16 @@ export default function UserManagement({
                     <TableHead className="py-3 px-2 text-emerald-800 font-semibold bg-emerald-100 text-xs w-20">
                       Joined
                     </TableHead>
+                    <TableHead className="py-3 px-2 text-emerald-800 font-semibold bg-emerald-100 text-xs w-20">
+                      Admin
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {paginatedUsers.length === 0 ? (
                     <TableRow>
                       <TableCell
-                        colSpan={9}
+                        colSpan={10}
                         className="py-8 text-center text-gray-500"
                       >
                         <Users className="w-8 h-8 mx-auto mb-2 text-gray-300" />
@@ -211,11 +276,17 @@ export default function UserManagement({
                       <TableRow
                         key={user.id}
                         className={`border-emerald-100 hover:bg-emerald-100 transition-colors ${
-                          index % 2 === 0 ? "bg-emerald-50" : "bg-white"
+                          user.isAdmin
+                            ? "bg-gradient-to-r from-amber-50 to-yellow-50 border-amber-200"
+                            : index % 2 === 0
+                              ? "bg-emerald-50"
+                              : "bg-white"
                         }`}
                       >
                         <TableCell className="py-3 px-2">
-                          <Avatar className="h-8 w-8 ring-2 ring-emerald-100">
+                          <Avatar
+                            className={`h-8 w-8 ring-2 ${user.isAdmin ? "ring-amber-200" : "ring-emerald-100"}`}
+                          >
                             {user.profileUrl && (
                               <AvatarImage
                                 src={user.profileUrl}
@@ -223,7 +294,13 @@ export default function UserManagement({
                                 className="object-cover"
                               />
                             )}
-                            <AvatarFallback className="bg-gradient-to-br from-emerald-400 to-teal-500 text-white font-semibold text-xs">
+                            <AvatarFallback
+                              className={`text-white font-semibold text-xs ${
+                                user.isAdmin
+                                  ? "bg-gradient-to-br from-amber-400 to-yellow-500"
+                                  : "bg-gradient-to-br from-emerald-400 to-teal-500"
+                              }`}
+                            >
                               {(user.name || user.email)
                                 .charAt(0)
                                 .toUpperCase()}
@@ -312,6 +389,35 @@ export default function UserManagement({
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="py-3 px-2">
+                          <div className="flex flex-col items-center space-y-1">
+                            {user.isAdmin ? (
+                              <div className="flex items-center space-x-1">
+                                <ShieldCheck className="w-3 h-3 text-amber-600" />
+                                <span className="text-xs text-amber-700 font-medium">
+                                  Admin
+                                </span>
+                              </div>
+                            ) : (
+                              <div className="flex items-center space-x-1">
+                                <Shield className="w-3 h-3 text-gray-400" />
+                                <span className="text-xs text-gray-500">
+                                  User
+                                </span>
+                              </div>
+                            )}
+                            {session?.user?.id !== user.id && (
+                              <Switch
+                                checked={user.isAdmin}
+                                onCheckedChange={() =>
+                                  handleAdminToggle(user.id, user.isAdmin)
+                                }
+                                disabled={togglingAdmin === user.id}
+                                className="scale-75"
+                              />
+                            )}
+                          </div>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -322,7 +428,7 @@ export default function UserManagement({
         </div>
 
         {/* Pagination */}
-        { (
+        {
           <div className="px-6 py-4 bg-emerald-50 border-t border-emerald-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-gray-700">
@@ -367,8 +473,76 @@ export default function UserManagement({
               </div>
             </div>
           </div>
-        )}
+        }
       </Card>
+
+      {/* Admin Toggle Confirmation Modal */}
+      <Dialog open={showAdminModal} onOpenChange={setShowAdminModal}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Shield className="w-5 h-5 text-amber-600" />
+              <span>Confirm Admin Status Change</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-gray-700 mb-4">
+              Are you sure you want to{" "}
+              {selectedUser?.isAdmin
+                ? "remove admin privileges from"
+                : "grant admin privileges to"}{" "}
+              <span className="font-semibold">{selectedUser?.name}</span>?
+            </p>
+            {selectedUser?.isAdmin ? (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-4">
+                <p className="text-amber-800 text-sm">
+                  <strong>Warning:</strong> This will remove admin access from
+                  the user. They will no longer be able to access admin
+                  features.
+                </p>
+              </div>
+            ) : (
+              <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mb-4">
+                <p className="text-emerald-800 text-sm">
+                  <strong>Note:</strong> This will grant full admin access to
+                  the user. They will be able to manage other users and access
+                  all admin features.
+                </p>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setShowAdminModal(false);
+                setSelectedUser(null);
+              }}
+              disabled={togglingAdmin !== null}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={confirmAdminToggle}
+              disabled={togglingAdmin !== null}
+              className={
+                selectedUser?.isAdmin
+                  ? "bg-amber-600 hover:bg-amber-700 text-white"
+                  : "bg-emerald-600 hover:bg-emerald-700 text-white"
+              }
+            >
+              {togglingAdmin ? (
+                <>
+                  <Loader size={16} className="mr-2" />
+                  Updating...
+                </>
+              ) : (
+                <>{selectedUser?.isAdmin ? "Remove Admin" : "Make Admin"}</>
+              )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

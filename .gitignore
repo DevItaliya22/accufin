@@ -24,6 +24,7 @@ ssh-accufin.pem
 # misc
 .DS_Store
 *.pem
+curl.md
 
 # debug
 npm-debug.log*

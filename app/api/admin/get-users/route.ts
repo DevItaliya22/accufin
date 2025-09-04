@@ -14,9 +14,7 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
     const users = await prisma.user.findMany({
-      where: {
-        isAdmin: false,
-      },
+      where: {},
       select: {
         id: true,
         name: true,
@@ -29,6 +27,7 @@ export async function GET(request: Request) {
         occupation: true,
         contactNumber: true,
         profileUrl: true,
+        isAdmin: true,
         _count: {
           select: {
             uploadedFiles: true,
