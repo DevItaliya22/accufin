@@ -17,10 +17,16 @@ export default function RegisterPage() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [showTerms, setShowTerms] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      toast.error("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
     if (formData.password !== formData.confirmPassword) {
       toast.error("Passwords do not match");
       return;
@@ -110,6 +116,8 @@ export default function RegisterPage() {
                 />
               </div>
             </div>
+
+            
             <div>
               <label
                 htmlFor="email"
@@ -240,10 +248,34 @@ export default function RegisterPage() {
               </div>
             </div>
 
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  id="agree-terms"
+                  name="agree-terms"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
+                />
+                <label htmlFor="agree-terms" className="block text-sm text-gray-900">
+                  I agree to the
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowTerms(true)}
+                  className="text-[#007399] hover:underline focus:outline-none text-sm"
+                >
+                  Terms & Conditions
+                </button>
+              </div>
+            </div>
+
             <div>
               <button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007399] hover:bg-[#0082a3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007399] hover:bg-[#0082a3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed"
+                disabled={!agreedToTerms}
               >
                 Create account
               </button>
@@ -265,31 +297,145 @@ export default function RegisterPage() {
                   onClick={() => signIn("google")}
                   className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500"
                 >
-                  <svg className="w-5 h-5 mr-2" viewBox="0 0 48 48">
-                    <g>
-                      <path
-                        d="M44.5 20H24v8.5h11.7C34.1 33.7 29.5 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c2.7 0 5.2.9 7.2 2.4l6.4-6.4C34.1 5.1 29.3 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.5 20-21 0-1.3-.1-2.7-.5-4z"
-                        fill="#FFC107"
-                      />
-                      <path
-                        d="M6.3 14.7l7 5.1C15.5 16.1 19.4 13 24 13c2.7 0 5.2.9 7.2 2.4l6.4-6.4C34.1 5.1 29.3 3 24 3c-7.2 0-13.4 4.1-16.7 10.1z"
-                        fill="#FF3D00"
-                      />
-                      <path
-                        d="M24 45c5.3 0 10.1-1.8 13.8-4.9l-6.4-5.2C29.5 36 24 36 24 36c-5.5 0-10.1-3.3-12.1-8.1l-7 5.4C6.6 41.1 14.7 45 24 45z"
-                        fill="#4CAF50"
-                      />
-                      <path
-                        d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-2.2 0-4.2-.7-5.7-2l-7 5.4C15.5 43.9 19.4 47 24 47c10.5 0 20-7.5 20-21 0-1.3-.1-2.7-.5-4z"
-                        fill="#1976D2"
-                      />
-                    </g>
-                  </svg>
+                  <img src="/google.svg" alt="Google" className="w-5 h-5 mr-2" />
                   Sign up with Google
                 </button>
               </div>
             </div>
           </form>
+
+          {showTerms && (
+            <div className="fixed inset-0 bg-[#00000043] backdrop-blur-[3px] bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-y-auto p-6 pt-0 pb-0">
+                <div className="flex justify-between items-center mb-4 sticky top-0 bg-white py-4">
+                  <h2 className="text-2xl font-bold">Privacy Policy</h2>
+                  <button
+                    onClick={() => setShowTerms(false)}
+                    className="text-gray-500 hover:text-gray-700 focus:outline-none text-2xl"
+                    aria-label="Close"
+                  >
+                    &times;
+                  </button>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="border-b pb-2">
+                    <p className="font-semibold">Effective Date: March 1, 2025</p>
+                    <p className="font-semibold">Last Updated: March 1, 2025</p>
+                  </div>
+
+                  <p className="text-lg">
+                    Accufin Services Inc. is committed to protecting the privacy and security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our bookkeeping, accounting, and payroll services in Canada.
+                  </p>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">1. Information We Collect</h3>
+                    <p>We collect only information necessary to deliver our services, including:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Personal Identifiers:</strong> Name, address, phone, email, SIN (for payroll)</li>
+                      <li><strong>Business Details:</strong> Business name, CRA business number, incorporation documents</li>
+                      <li><strong>Financial Data:</strong> Bank statements, invoices, receipts, tax filings, expense reports, payroll records</li>
+                      <li><strong>Technical Information:</strong> IP address, browser type, usage data (via website analytics)</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">2. How We Use Your Information</h3>
+                    <p>Your data is used strictly for:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Providing bookkeeping, accounting, tax, or payroll services</li>
+                      <li>Filing documents with the CRA (e.g., GST/HST, T4s, corporate taxes)</li>
+                      <li>Communicating service updates or regulatory changes</li>
+                      <li>Improving our services and website experience</li>
+                      <li>Complying with legal obligations (e.g., audits, anti-fraud laws)</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">3. How We Share Your Information</h3>
+                    <p>We do not sell your data. Disclosures are limited to:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Regulatory Bodies:</strong> CRA, Revenu Québec, or other tax authorities as legally required</li>
+                      <li><strong>Third-Party Service Providers:</strong> Secure cloud accounting platforms (e.g., QuickBooks, Xero), payroll software, or encrypted document storage tools—all bound by confidentiality agreements</li>
+                      <li><strong>Legal Compliance:</strong> If compelled by court order, subpoena, or lawful request</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">4. Data Security</h3>
+                    <p>We implement rigorous measures to protect your information:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Encryption:</strong> Data transmitted/stored via SSL/TLS encryption</li>
+                      <li><strong>Access Controls:</strong> Role-based access limited to authorized staff</li>
+                      <li><strong>Secure Tools:</strong> Industry-standard platforms (e.g., QuickBooks Secure, Xero)</li>
+                      <li><strong>Training:</strong> Staff trained in privacy best practices and PIPEDA compliance</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">5. Data Retention</h3>
+                    <p>We retain your information only as long as necessary:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Active Clients:</strong> For the duration of our service agreement</li>
+                      <li><strong>Inactive Clients:</strong> 7 years (to comply with CRA record-keeping requirements)</li>
+                    </ul>
+                    <p>After this period, data is securely destroyed.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">6. Your Rights</h3>
+                    <p>Under PIPEDA, you have the right to:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li><strong>Access:</strong> Request a copy of your personal data</li>
+                      <li><strong>Correct:</strong> Update inaccurate or incomplete information</li>
+                      <li><strong>Withdraw Consent:</strong> Opt out of non-essential communications (e.g., newsletters)</li>
+                      <li><strong>Complain:</strong> Contact the Office of the Privacy Commissioner of Canada if concerned about our practices</li>
+                    </ul>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">7. Cross-Border Data Transfers</h3>
+                    <p>Your data is stored in Canada whenever possible. If transferred internationally (e.g., via cloud servers in the U.S.), we ensure providers comply with PIPEDA-equivalent safeguards (e.g., GDPR for EU data).</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">8. Cookies & Tracking</h3>
+                    <p>Our website may use cookies to:</p>
+                    <ul className="list-disc pl-6 space-y-1">
+                      <li>Enhance user experience (e.g., login sessions)</li>
+                      <li>Collect anonymized analytics (via tools like Google Analytics)</li>
+                    </ul>
+                    <p>You can disable cookies via your browser settings.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">9. Children's Privacy</h3>
+                    <p>Our services are not directed to individuals under 18. We do not knowingly collect their data.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">10. Updates to This Policy</h3>
+                    <p>We may update this policy to reflect legal changes. The "Last Updated" date will be revised, and significant changes will be communicated via email or our website.</p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <h3 className="text-xl font-bold">11. Contact Us</h3>
+                    <p>For privacy requests or questions:</p>
+                    <p>Email: <a href="mailto:info.accufin@gmail.com" className="text-[#007399] hover:underline">info.accufin@gmail.com</a></p>
+                  </div>
+                </div>
+
+                <div className="mt-8 flex justify-end sticky bottom-0 bg-white py-4">
+                  <button
+                    onClick={() => setShowTerms(false)}
+                    className="bg-[#007399] hover:bg-[#005f7a] text-white font-semibold px-6 py-2 rounded transition-colors"
+                  >
+                    I Understand
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           <div className="mt-6">
             <div className="relative">

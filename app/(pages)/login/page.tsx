@@ -11,6 +11,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -18,6 +19,10 @@ export default function LoginPage() {
   const { data: session } = useSession();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!agreedToTerms) {
+      toast.error("Please agree to the Terms & Conditions to continue.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await signIn("credentials", {
@@ -155,21 +160,34 @@ export default function LoginPage() {
               </div>
             </div>
 
-            <div>
-              <div className="text-right  text-sm text-gray-600 mx-auto pb-3">
-                {/* By Signing, you agree to our{' '} */}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <input
+                  id="agree-terms"
+                  name="agree-terms"
+                  type="checkbox"
+                  checked={agreedToTerms}
+                  onChange={(e) => setAgreedToTerms(e.target.checked)}
+                  className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
+                />
+                <label htmlFor="agree-terms" className="block text-sm text-gray-900">
+                  I agree to the
+                </label>
                 <button
                   type="button"
-                  onClick={toggleTerms}
-                  className="text-[#007399] hover:underline focus:outline-none font-bold"
+                  onClick={() => setShowTerms(true)}
+                  className="text-[#007399] hover:underline focus:outline-none text-sm"
                 >
                   Terms & Conditions
                 </button>
               </div>
+            </div>
+
+            <div>
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-[#007399] hover:bg-[#0082a3] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-cyan-500 disabled:opacity-60 disabled:cursor-not-allowed"
-                disabled={loading}
+                disabled={loading || !agreedToTerms}
               >
                 {loading ? "Signing in..." : "Sign in"}
               </button>
@@ -188,26 +206,7 @@ export default function LoginPage() {
                   "Signing in with Google..."
                 ) : (
                   <>
-                    <svg className="w-5 h-5 mr-2" viewBox="0 0 48 48">
-                      <g>
-                        <path
-                          d="M44.5 20H24v8.5h11.7C34.1 33.7 29.5 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c2.7 0 5.2.9 7.2 2.4l6.4-6.4C34.1 5.1 29.3 3 24 3c-7.2 0-13.4 4.1-16.7 10.1z"
-                          fill="#FFC107"
-                        />
-                        <path
-                          d="M6.3 14.7l7 5.1C15.5 16.1 19.4 13 24 13c2.7 0 5.2.9 7.2 2.4l6.4-6.4C34.1 5.1 29.3 3 24 3c-7.2 0-13.4 4.1-16.7 10.1z"
-                          fill="#FF3D00"
-                        />
-                        <path
-                          d="M24 45c5.3 0 10.1-1.8 13.8-4.9l-6.4-5.2C29.5 36 24 36 24 36c-5.5 0-10.1-3.3-12.1-8.1l-7 5.4C6.6 41.1 14.7 45 24 45z"
-                          fill="#4CAF50"
-                        />
-                        <path
-                          d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-2.2 0-4.2-.7-5.7-2l-7 5.4C15.5 43.9 19.4 47 24 47c10.5 0 20-7.5 20-21 0-1.3-.1-2.7-.5-4z"
-                          fill="#1976D2"
-                        />
-                      </g>
-                    </svg>
+                    <img src="/google.svg" alt="Google" className="w-5 h-5 mr-2" />
                     Sign in with Google
                   </>
                 )}
