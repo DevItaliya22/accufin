@@ -103,7 +103,7 @@ export default function ImportantDatesModal({
                         {date.title}
                       </h3>
                       {date.description && (
-                        <p className="text-gray-600 mb-2">{date.description}</p>
+                        <p className="text-gray-600 mb-2 whitespace-pre-wrap">{date.description}</p>
                       )}
                       <div className="flex items-center text-sm text-gray-500">
                         <FaCalendarAlt className="mr-2 text-[#007399]" />
