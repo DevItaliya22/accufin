@@ -3,6 +3,7 @@ import { render } from "@react-email/components";
 import { UserCreatedEmail } from "./email-templates/user-created";
 import { LoginConfirmationEmail } from "./email-templates/login-confirmation";
 import { ContactFormEmail } from "./email-templates/contact-form";
+import { PasswordResetEmail } from "./email-templates/password-reset";
 
 export interface SendUserCreatedEmailParams {
   userName: string;
@@ -25,6 +26,12 @@ export interface SendContactFormEmailParams {
   subject: string;
   message: string;
   submittedAt: string;
+}
+
+export interface SendPasswordResetEmailParams {
+  userEmail: string;
+  userName: string;
+  resetToken: string;
 }
 
 export async function sendUserCreatedEmail({
@@ -152,6 +159,51 @@ export async function sendLoginConfirmationEmail({
   } catch (error) {
     console.error(
       "Email utility - Error sending login confirmation email:",
+      error
+    );
+    return { success: false, error };
+  }
+}
+
+export async function sendPasswordResetEmail({
+  userEmail,
+  userName,
+  resetToken,
+}: SendPasswordResetEmailParams) {
+  try {
+    console.log(
+      "Email utility - Starting to send password reset email to:",
+      userEmail
+    );
+
+    const resetUrl = `${process.env.NEXTAUTH_URL}/reset-password?token=${resetToken}`;
+
+    // Render the React email template to HTML
+    const emailHtml = await render(
+      PasswordResetEmail({
+        userName,
+        userEmail,
+        resetUrl,
+      })
+    );
+
+    const mailOptions = {
+      from: process.env.NODEMAILER_EMAIL,
+      to: userEmail,
+      subject: "AccuFin - Password Reset Request",
+      html: emailHtml,
+    };
+
+    const result = await transporter.sendMail(mailOptions);
+
+    console.log(
+      "Email utility - Password reset email sent successfully to:",
+      userEmail
+    );
+    return { success: true, result };
+  } catch (error) {
+    console.error(
+      "Email utility - Error sending password reset email:",
       error
     );
     return { success: false, error };
