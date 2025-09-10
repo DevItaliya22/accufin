@@ -1,3 +1,6 @@
+"use client";
+import React from "react";
+import { useRouter } from "next/navigation";
 import {
   Table,
   TableBody,
@@ -66,7 +69,9 @@ export default function UserManagement({
   loading,
   error,
 }: UserManagementProps) {
+  const router = useRouter();
   const [searchQuery, setSearchQuery] = useState("");
+  const [usersList, setUsersList] = useState(users);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [togglingAdmin, setTogglingAdmin] = useState<string | null>(null);
@@ -80,9 +85,9 @@ export default function UserManagement({
   const { data: session } = useSession();
 
   const filteredUsers = useMemo(() => {
-    if (!searchQuery) return users;
+    if (!searchQuery) return usersList;
 
-    return users.filter(
+    return usersList.filter(
       (user) =>
         user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -91,7 +96,7 @@ export default function UserManagement({
         user.sinNumber?.includes(searchQuery) ||
         user.businessNumber?.includes(searchQuery)
     );
-  }, [users, searchQuery]);
+  }, [usersList, searchQuery]);
 
   const paginatedUsers = useMemo(() => {
     const startIndex = (currentPage - 1) * itemsPerPage;
@@ -140,8 +145,8 @@ export default function UserManagement({
       }
 
       toast.success(data.message);
-      // Refresh the page to get updated data
-      window.location.reload();
+      // Trigger Next.js router cache refresh
+      router.refresh();
     } catch (error) {
       console.error("Error toggling admin status:", error);
       toast.error(
@@ -203,7 +208,13 @@ export default function UserManagement({
                 <DialogHeader>
                   <DialogTitle>Create New User</DialogTitle>
                 </DialogHeader>
-                <CreateUserForm onSuccess={() => setIsCreateModalOpen(false)} />
+                <CreateUserForm
+                  onSuccess={(created) => {
+                    setIsCreateModalOpen(false);
+                    // Optimistically add the newly created user to the list
+                    setUsersList((prev) => [created, ...prev]);
+                  }}
+                />
               </DialogContent>
             </Dialog>
           </div>

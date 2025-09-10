@@ -26,7 +26,7 @@ import { useRouter } from "next/navigation";
 export default function CreateUserForm({
   onSuccess,
 }: {
-  onSuccess?: () => void;
+  onSuccess?: (createdUser: any) => void;
 }) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -68,6 +68,7 @@ export default function CreateUserForm({
         throw new Error(error.error || "Failed to create user");
       }
 
+      const createdUser = await response.json();
       toast.success("User created successfully!");
       setFormData({
         email: "",
@@ -78,8 +79,7 @@ export default function CreateUserForm({
         dateOfBirth: "",
         contactNumber: "",
       });
-      router.refresh();
-      onSuccess?.();
+      onSuccess?.(createdUser);
     } catch (error: any) {
       toast.error(error.message || "An error occurred while creating the user");
     } finally {
