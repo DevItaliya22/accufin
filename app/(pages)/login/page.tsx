@@ -33,7 +33,7 @@ export default function LoginPage() {
       });
       if (res?.error) {
         const msg = res.error.includes("inactive")
-          ? "Your account is inactive. You can't login."
+          ? `Your account is inactive. To activate it, contact us at ${"info@accufin@gmail.com"}.`
           : res.error;
         toast.error(msg);
       } else {
@@ -50,7 +50,9 @@ export default function LoginPage() {
   useEffect(() => {
     const inactive = searchParams?.get("inactive");
     if (inactive === "1") {
-      toast.error("Your account is inactive. You can't login.");
+      toast.error(
+        `Your account is inactive. To activate it, contact us at ${"info@accufin@gmail.com"}.`
+      );
     }
   }, [searchParams]);
 
@@ -81,8 +83,6 @@ export default function LoginPage() {
   const toggleTerms = () => {
     setShowTerms(!showTerms);
   };
-
-  
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -141,7 +141,7 @@ export default function LoginPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 pr-12 border border-gray-300 rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-cyan-500 focus:border-cyan-500"
                 />
-                
+
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -155,9 +155,7 @@ export default function LoginPage() {
                     <EyeClosedIcon className="w-5 h-5 text-gray-500" />
                   )}
                 </button>
-                
               </div>
-              
             </div>
 
             <div className="flex items-center justify-end">
@@ -181,7 +179,10 @@ export default function LoginPage() {
                   onChange={(e) => setAgreedToTerms(e.target.checked)}
                   className="h-4 w-4 text-cyan-600 focus:ring-cyan-500 border-gray-300 rounded"
                 />
-                <label htmlFor="agree-terms" className="block text-sm text-gray-900">
+                <label
+                  htmlFor="agree-terms"
+                  className="block text-sm text-gray-900"
+                >
                   I agree to the
                 </label>
                 <button
@@ -217,7 +218,11 @@ export default function LoginPage() {
                   "Signing in with Google..."
                 ) : (
                   <>
-                    <img src="/google.svg" alt="Google" className="w-5 h-5 mr-2" />
+                    <img
+                      src="/google.svg"
+                      alt="Google"
+                      className="w-5 h-5 mr-2"
+                    />
                     Sign in with Google
                   </>
                 )}
@@ -270,50 +275,106 @@ export default function LoginPage() {
               </div>
 
               <p className="text-lg">
-                Accufin Services Inc. is committed to protecting the privacy and security of your personal information. This Privacy Policy explains how we collect, use, disclose, and safeguard your data when you use our bookkeeping, accounting, and payroll services in Canada.
+                Accufin Services Inc. is committed to protecting the privacy and
+                security of your personal information. This Privacy Policy
+                explains how we collect, use, disclose, and safeguard your data
+                when you use our bookkeeping, accounting, and payroll services
+                in Canada.
               </p>
 
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">1. Information We Collect</h3>
-                <p>We collect only information necessary to deliver our services, including:</p>
+                <p>
+                  We collect only information necessary to deliver our services,
+                  including:
+                </p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li><strong>Personal Identifiers:</strong> Name, address, phone, email, SIN (for payroll)</li>
-                  <li><strong>Business Details:</strong> Business name, CRA business number, incorporation documents</li>
-                  <li><strong>Financial Data:</strong> Bank statements, invoices, receipts, tax filings, expense reports, payroll records</li>
-                  <li><strong>Technical Information:</strong> IP address, browser type, usage data (via website analytics)</li>
+                  <li>
+                    <strong>Personal Identifiers:</strong> Name, address, phone,
+                    email, SIN (for payroll)
+                  </li>
+                  <li>
+                    <strong>Business Details:</strong> Business name, CRA
+                    business number, incorporation documents
+                  </li>
+                  <li>
+                    <strong>Financial Data:</strong> Bank statements, invoices,
+                    receipts, tax filings, expense reports, payroll records
+                  </li>
+                  <li>
+                    <strong>Technical Information:</strong> IP address, browser
+                    type, usage data (via website analytics)
+                  </li>
                 </ul>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">2. How We Use Your Information</h3>
+                <h3 className="text-xl font-bold">
+                  2. How We Use Your Information
+                </h3>
                 <p>Your data is used strictly for:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li>Providing bookkeeping, accounting, tax, or payroll services</li>
-                  <li>Filing documents with the CRA (e.g., GST/HST, T4s, corporate taxes)</li>
+                  <li>
+                    Providing bookkeeping, accounting, tax, or payroll services
+                  </li>
+                  <li>
+                    Filing documents with the CRA (e.g., GST/HST, T4s, corporate
+                    taxes)
+                  </li>
                   <li>Communicating service updates or regulatory changes</li>
                   <li>Improving our services and website experience</li>
-                  <li>Complying with legal obligations (e.g., audits, anti-fraud laws)</li>
+                  <li>
+                    Complying with legal obligations (e.g., audits, anti-fraud
+                    laws)
+                  </li>
                 </ul>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">3. How We Share Your Information</h3>
+                <h3 className="text-xl font-bold">
+                  3. How We Share Your Information
+                </h3>
                 <p>We do not sell your data. Disclosures are limited to:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li><strong>Regulatory Bodies:</strong> CRA, Revenu Québec, or other tax authorities as legally required</li>
-                  <li><strong>Third-Party Service Providers:</strong> Secure cloud accounting platforms (e.g., QuickBooks, Xero), payroll software, or encrypted document storage tools—all bound by confidentiality agreements</li>
-                  <li><strong>Legal Compliance:</strong> If compelled by court order, subpoena, or lawful request</li>
+                  <li>
+                    <strong>Regulatory Bodies:</strong> CRA, Revenu Québec, or
+                    other tax authorities as legally required
+                  </li>
+                  <li>
+                    <strong>Third-Party Service Providers:</strong> Secure cloud
+                    accounting platforms (e.g., QuickBooks, Xero), payroll
+                    software, or encrypted document storage tools—all bound by
+                    confidentiality agreements
+                  </li>
+                  <li>
+                    <strong>Legal Compliance:</strong> If compelled by court
+                    order, subpoena, or lawful request
+                  </li>
                 </ul>
               </div>
 
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">4. Data Security</h3>
-                <p>We implement rigorous measures to protect your information:</p>
+                <p>
+                  We implement rigorous measures to protect your information:
+                </p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li><strong>Encryption:</strong> Data transmitted/stored via SSL/TLS encryption</li>
-                  <li><strong>Access Controls:</strong> Role-based access limited to authorized staff</li>
-                  <li><strong>Secure Tools:</strong> Industry-standard platforms (e.g., QuickBooks Secure, Xero)</li>
-                  <li><strong>Training:</strong> Staff trained in privacy best practices and PIPEDA compliance</li>
+                  <li>
+                    <strong>Encryption:</strong> Data transmitted/stored via
+                    SSL/TLS encryption
+                  </li>
+                  <li>
+                    <strong>Access Controls:</strong> Role-based access limited
+                    to authorized staff
+                  </li>
+                  <li>
+                    <strong>Secure Tools:</strong> Industry-standard platforms
+                    (e.g., QuickBooks Secure, Xero)
+                  </li>
+                  <li>
+                    <strong>Training:</strong> Staff trained in privacy best
+                    practices and PIPEDA compliance
+                  </li>
                 </ul>
               </div>
 
@@ -321,8 +382,14 @@ export default function LoginPage() {
                 <h3 className="text-xl font-bold">5. Data Retention</h3>
                 <p>We retain your information only as long as necessary:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li><strong>Active Clients:</strong> For the duration of our service agreement</li>
-                  <li><strong>Inactive Clients:</strong> 7 years (to comply with CRA record-keeping requirements)</li>
+                  <li>
+                    <strong>Active Clients:</strong> For the duration of our
+                    service agreement
+                  </li>
+                  <li>
+                    <strong>Inactive Clients:</strong> 7 years (to comply with
+                    CRA record-keeping requirements)
+                  </li>
                 </ul>
                 <p>After this period, data is securely destroyed.</p>
               </div>
@@ -331,16 +398,35 @@ export default function LoginPage() {
                 <h3 className="text-xl font-bold">6. Your Rights</h3>
                 <p>Under PIPEDA, you have the right to:</p>
                 <ul className="list-disc pl-6 space-y-1">
-                  <li><strong>Access:</strong> Request a copy of your personal data</li>
-                  <li><strong>Correct:</strong> Update inaccurate or incomplete information</li>
-                  <li><strong>Withdraw Consent:</strong> Opt out of non-essential communications (e.g., newsletters)</li>
-                  <li><strong>Complain:</strong> Contact the Office of the Privacy Commissioner of Canada if concerned about our practices</li>
+                  <li>
+                    <strong>Access:</strong> Request a copy of your personal
+                    data
+                  </li>
+                  <li>
+                    <strong>Correct:</strong> Update inaccurate or incomplete
+                    information
+                  </li>
+                  <li>
+                    <strong>Withdraw Consent:</strong> Opt out of non-essential
+                    communications (e.g., newsletters)
+                  </li>
+                  <li>
+                    <strong>Complain:</strong> Contact the Office of the Privacy
+                    Commissioner of Canada if concerned about our practices
+                  </li>
                 </ul>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">7. Cross-Border Data Transfers</h3>
-                <p>Your data is stored in Canada whenever possible. If transferred internationally (e.g., via cloud servers in the U.S.), we ensure providers comply with PIPEDA-equivalent safeguards (e.g., GDPR for EU data).</p>
+                <h3 className="text-xl font-bold">
+                  7. Cross-Border Data Transfers
+                </h3>
+                <p>
+                  Your data is stored in Canada whenever possible. If
+                  transferred internationally (e.g., via cloud servers in the
+                  U.S.), we ensure providers comply with PIPEDA-equivalent
+                  safeguards (e.g., GDPR for EU data).
+                </p>
               </div>
 
               <div className="space-y-4">
@@ -348,25 +434,45 @@ export default function LoginPage() {
                 <p>Our website may use cookies to:</p>
                 <ul className="list-disc pl-6 space-y-1">
                   <li>Enhance user experience (e.g., login sessions)</li>
-                  <li>Collect anonymized analytics (via tools like Google Analytics)</li>
+                  <li>
+                    Collect anonymized analytics (via tools like Google
+                    Analytics)
+                  </li>
                 </ul>
                 <p>You can disable cookies via your browser settings.</p>
               </div>
 
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">9. Children's Privacy</h3>
-                <p>Our services are not directed to individuals under 18. We do not knowingly collect their data.</p>
+                <p>
+                  Our services are not directed to individuals under 18. We do
+                  not knowingly collect their data.
+                </p>
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-xl font-bold">10. Updates to This Policy</h3>
-                <p>We may update this policy to reflect legal changes. The "Last Updated" date will be revised, and significant changes will be communicated via email or our website.</p>
+                <h3 className="text-xl font-bold">
+                  10. Updates to This Policy
+                </h3>
+                <p>
+                  We may update this policy to reflect legal changes. The "Last
+                  Updated" date will be revised, and significant changes will be
+                  communicated via email or our website.
+                </p>
               </div>
 
               <div className="space-y-4">
                 <h3 className="text-xl font-bold">11. Contact Us</h3>
                 <p>For privacy requests or questions:</p>
-                <p>Email: <a href="mailto:info.accufin@gmail.com" className="text-[#007399] hover:underline">info.accufin@gmail.com</a></p>
+                <p>
+                  Email:{" "}
+                  <a
+                    href="mailto:info.accufin@gmail.com"
+                    className="text-[#007399] hover:underline"
+                  >
+                    info.accufin@gmail.com
+                  </a>
+                </p>
               </div>
             </div>
 
@@ -381,8 +487,6 @@ export default function LoginPage() {
           </div>
         </div>
       )}
-
-
     </div>
   );
 }
