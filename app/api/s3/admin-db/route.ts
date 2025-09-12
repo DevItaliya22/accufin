@@ -61,14 +61,16 @@ export async function POST(request: NextRequest) {
         updatedAt: new Date(),
       },
     });
-    // Create notification for recipient
-    await prisma.notification.create({
-      data: {
-        title: "New File Uploaded",
-        message: `A new file '${name}' has been uploaded for you by ${session.user.name}`,
-        userId: receivedById,
-      },
-    });
+    // Create notification for recipient unless this is an admin-only private file
+    if (!isAdminOnlyPrivateFile) {
+      await prisma.notification.create({
+        data: {
+          title: "New File Uploaded",
+          message: `A new file '${name}' has been uploaded for you by ${session.user.name}`,
+          userId: receivedById,
+        },
+      });
+    }
     // // Create notification for uploader
     // await prisma.notification.create({
     //   data: {

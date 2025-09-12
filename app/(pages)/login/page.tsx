@@ -1,10 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { EyeClosedIcon, EyeIcon, EyeOffIcon } from "lucide-react";
+import { EyeClosedIcon, EyeIcon } from "lucide-react";
 import { signIn, useSession } from "next-auth/react";
 import toast from "react-hot-toast";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function LoginPage() {
   const [showTerms, setShowTerms] = useState(false);
@@ -17,6 +17,7 @@ export default function LoginPage() {
   const [showWelcome, setShowWelcome] = useState(false);
   const router = useRouter();
   const { data: session } = useSession();
+  const searchParams = useSearchParams();
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!agreedToTerms) {
@@ -45,6 +46,13 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const inactive = searchParams?.get("inactive");
+    if (inactive === "1") {
+      toast.error("Your account is inactive. You can't login.");
+    }
+  }, [searchParams]);
 
   useEffect(() => {
     if (session) {
