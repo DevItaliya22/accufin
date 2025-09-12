@@ -48,7 +48,7 @@ import {
   ShieldCheck,
 } from "lucide-react";
 import { User as PrismaUser } from "@/lib/generated/prisma";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import CreateUserForm from "./CreateUserForm";
 import { Switch } from "@/components/ui/switch";
 import { useSession } from "next-auth/react";
@@ -83,6 +83,11 @@ export default function UserManagement({
   } | null>(null);
   const itemsPerPage = 15;
   const { data: session } = useSession();
+
+  // Keep local usersList in sync with incoming users prop
+  useEffect(() => {
+    setUsersList(users);
+  }, [users]);
 
   const filteredUsers = useMemo(() => {
     if (!searchQuery) return usersList;

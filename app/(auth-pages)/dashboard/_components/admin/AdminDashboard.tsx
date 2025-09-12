@@ -50,7 +50,8 @@ export default function AdminDashboard() {
   }, [searchParams]);
 
   // Loading and error states
-  const [loading, setLoading] = useState(true);
+  const [usersLoading, setUsersLoading] = useState(true);
+  const [notificationsLoading, setNotificationsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [users, setUsers] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -82,26 +83,38 @@ export default function AdminDashboard() {
   }>({});
   const [prefetching, setPrefetching] = useState(false);
 
-  // Fetch users and notifications on mount
+  // Fetch users and notifications on mount (independently)
   useEffect(() => {
-    setLoading(true);
     setError(null);
-    Promise.all([
-      fetch("/api/admin/get-users").then((res) =>
-        res.ok ? res.json() : Promise.reject("Failed to fetch users")
-      ),
-      fetch("/api/admin/notification").then((res) =>
-        res.ok ? res.json() : Promise.reject("Failed to fetch notifications")
-      ),
-    ])
-      .then(([usersData, notificationsData]) => {
+    setUsersLoading(true);
+    setNotificationsLoading(true);
+
+    // Users
+    fetch("/api/admin/get-users")
+      .then((res) => (res.ok ? res.json() : Promise.reject("Failed to fetch users")))
+      .then((usersData) => {
         setUsers(usersData);
-        setNotifications(notificationsData);
-        setLoading(false);
       })
       .catch((err) => {
         setError(typeof err === "string" ? err : "Failed to load data");
-        setLoading(false);
+      })
+      .finally(() => {
+        setUsersLoading(false);
+      });
+
+    // Notifications
+    fetch("/api/admin/notification")
+      .then((res) =>
+        res.ok ? res.json() : Promise.reject("Failed to fetch notifications")
+      )
+      .then((notificationsData) => {
+        setNotifications(notificationsData);
+      })
+      .catch(() => {
+        // We intentionally don't set global error here to avoid blocking users UI
+      })
+      .finally(() => {
+        setNotificationsLoading(false);
       });
   }, []);
 
@@ -345,15 +358,16 @@ export default function AdminDashboard() {
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as any)}
         onLogout={handleLogout}
+        unreadNotificationsCount={notifications.filter((n:any) => !n.isRead).length}
       />
       <div className="w-full sm:px-0 lg:px-6 py-8">
         {activeTab === "users" && (
-          <UserManagement users={users} loading={loading} error={error} />
+          <UserManagement users={users} loading={usersLoading} error={error} />
         )}
         {activeTab === "files" && (
           <FileManagement
             users={users}
-            loading={loading}
+            loading={usersLoading}
             error={error}
             selectedUser={selectedUser}
             userDetails={userDetails}
@@ -394,9 +408,9 @@ export default function AdminDashboard() {
           <NotificationManagement
             handleMarkAllAsRead={handleMarkAllNotificationsAsRead}
             notifications={notifications}
-            isLoading={loading}
+            isLoading={notificationsLoading}
             setNotifications={setNotifications}
-            setIsLoading={setLoading}
+            setIsLoading={setNotificationsLoading}
           />
         )}
         {activeTab === "blogs" && <BlogManagement />}

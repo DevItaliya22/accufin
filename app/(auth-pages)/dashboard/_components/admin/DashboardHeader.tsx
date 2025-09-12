@@ -15,6 +15,7 @@ interface DashboardHeaderProps {
   activeTab: string;
   onTabChange: (tab: string) => void;
   onLogout: () => void;
+  unreadNotificationsCount?: number;
 }
 
 const menuItems: MenuItem[] = [
@@ -32,6 +33,7 @@ export default function DashboardHeader({
   activeTab,
   onTabChange,
   onLogout,
+  unreadNotificationsCount = 0,
 }: DashboardHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
@@ -71,13 +73,21 @@ export default function DashboardHeader({
               <button
                 key={item.key}
                 onClick={() => onTabChange(item.key)}
-                className={`text-white text-lg px-4 py-2 rounded-lg transition-colors cursor-pointer ${
+                className={`relative text-white text-lg px-4 py-2 rounded-lg transition-colors cursor-pointer ${
                   activeTab === item.key
                     ? "bg-cyan-600 hover:bg-cyan-500"
                     : "hover:text-white"
                 }`}
               >
-                {item.label}
+                <span className="flex items-center gap-2">
+                  {item.label}
+                  {item.key === "notifications" && unreadNotificationsCount > 0 && (
+                    <span
+                      aria-label={`${unreadNotificationsCount} unread notifications`}
+                      className="inline-block w-2 h-2 rounded-full bg-red-500"
+                    />
+                  )}
+                </span>
               </button>
             ))}
             <Button
@@ -111,13 +121,21 @@ export default function DashboardHeader({
                   onTabChange(item.key);
                   setIsMenuOpen(false);
                 }}
-                className={`block text-white text-lg px-4 py-2 rounded-lg text-left transition-colors cursor-pointer ${
+                className={`relative block text-white text-lg px-4 py-2 rounded-lg text-left transition-colors cursor-pointer ${
                   activeTab === item.key
                     ? "bg-cyan-600 hover:bg-cyan-500"
                     : "hover:text-white"
                 }`}
               >
-                {item.label}
+                <span className="flex items-center gap-2">
+                  {item.label}
+                  {item.key === "notifications" && unreadNotificationsCount > 0 && (
+                    <span
+                      aria-label={`${unreadNotificationsCount} unread notifications`}
+                      className="inline-block w-2 h-2 rounded-full bg-red-500"
+                    />
+                  )}
+                </span>
               </button>
             ))}
             <Button

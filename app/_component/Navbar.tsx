@@ -21,6 +21,7 @@ export default function NewHeader() {
   const headerRef = useRef<HTMLDivElement>(null);
 
   const { data: session } = useSession();
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const handleDropdownClick = (dropdown: string) => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
@@ -40,6 +41,34 @@ export default function NewHeader() {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, []);
+
+  // Fetch unread notifications count for showing a red dot
+  useEffect(() => {
+    let isMounted = true;
+    const fetchNotifications = async () => {
+      if (!session?.user) {
+        if (isMounted) setUnreadNotificationsCount(0);
+        return;
+      }
+      try {
+        const isAdmin = Boolean(session.user.isAdmin);
+        const res = await fetch(isAdmin ? "/api/admin/notification" : "/api/user/notification");
+        if (!res.ok) {
+          if (isMounted) setUnreadNotificationsCount(0);
+          return;
+        }
+        const data = await res.json();
+        const count = Array.isArray(data) ? data.filter((n:any) => !n.isRead).length : 0;
+        if (isMounted) setUnreadNotificationsCount(count);
+      } catch {
+        if (isMounted) setUnreadNotificationsCount(0);
+      }
+    };
+    fetchNotifications();
+    return () => {
+      isMounted = false;
+    };
+  }, [session]);
 
   const menuItems = [
     { name: "Home", href: "/" },
@@ -161,9 +190,14 @@ export default function NewHeader() {
             {session ? (
               <Link
                 href="/dashboard"
-                className="text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
+                className="relative text-white text-lg bg-cyan-600 hover:bg-cyan-700 px-6 py-2 rounded-lg transition-colors"
               >
-                Dashboard
+                <span className="flex items-center gap-2">
+                  Dashboard
+                  {unreadNotificationsCount > 0 && (
+                    <span aria-label={`${unreadNotificationsCount} unread notifications`} className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                  )}
+                </span>
               </Link>
             ) : (
               <Link
