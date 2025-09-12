@@ -1,9 +1,9 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import toast from "react-hot-toast";
 
-export default function ResetPasswordPage() {
+function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [password, setPassword] = useState("");
@@ -57,7 +57,11 @@ export default function ResetPasswordPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center items-center space-x-2">
-          <img src="/image-000.png" alt="Accufin Logo" className="h-16 w-auto" />
+          <img
+            src="/image-000.png"
+            alt="Accufin Logo"
+            className="h-16 w-auto"
+          />
         </div>
         <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
           Reset your password
@@ -68,7 +72,10 @@ export default function ResetPasswordPage() {
         <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="password"
+                className="block text-sm font-medium text-gray-700"
+              >
                 New Password
               </label>
               <div className="mt-1 relative">
@@ -88,13 +95,18 @@ export default function ResetPasswordPage() {
                   className="absolute inset-y-0 right-0 flex items-center px-3 focus:outline-none"
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  <span className="text-sm text-gray-500">{showPassword ? "Hide" : "Show"}</span>
+                  <span className="text-sm text-gray-500">
+                    {showPassword ? "Hide" : "Show"}
+                  </span>
                 </button>
               </div>
             </div>
 
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
+              <label
+                htmlFor="confirmPassword"
+                className="block text-sm font-medium text-gray-700"
+              >
                 Confirm Password
               </label>
               <div className="mt-1">
@@ -127,4 +139,34 @@ export default function ResetPasswordPage() {
   );
 }
 
-
+export default function ResetPasswordPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+          <div className="sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="flex justify-center items-center space-x-2">
+              <img
+                src="/image-000.png"
+                alt="Accufin Logo"
+                className="h-16 w-auto"
+              />
+            </div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Reset your password
+            </h2>
+          </div>
+          <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+            <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
+              <div className="flex justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#007399]"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    >
+      <ResetPasswordForm />
+    </Suspense>
+  );
+}

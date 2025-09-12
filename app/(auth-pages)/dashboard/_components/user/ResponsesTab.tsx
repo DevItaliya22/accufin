@@ -27,8 +27,8 @@ export default function ResponsesTab({
       isUploading={false}
       handleFileSelect={() => {}}
       handleFileUpload={() => {}}
-      selectedFile={null}
-      setSelectedFile={() => {}}
+      selectedFiles={[]}
+      onRemoveSelectedFile={() => {}}
       showUploadButton={false}
       showAddFolderButton={false}
       theme="admin-response"

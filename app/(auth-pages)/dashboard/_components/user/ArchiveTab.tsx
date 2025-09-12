@@ -32,8 +32,8 @@ export default function ArchiveTab({
       isUploading={false}
       handleFileSelect={() => {}}
       handleFileUpload={() => {}}
-      selectedFile={null}
-      setSelectedFile={() => {}}
+      selectedFiles={[]}
+      onRemoveSelectedFile={() => {}}
       theme="archive"
     />
   );
