@@ -114,7 +114,7 @@ export const authOptions: AuthOptions = {
         user.email = dbUser.email;
 
         if (dbUser.isActive === false) {
-          return false;
+          return "/login?inactive=1";
         }
 
         // Send login confirmation email for Google login
