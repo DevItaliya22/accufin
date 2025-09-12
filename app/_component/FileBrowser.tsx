@@ -22,6 +22,13 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreVertical } from "lucide-react";
 
 type FileBrowserProps = {
   files: ManagedFile[];
@@ -30,11 +37,16 @@ type FileBrowserProps = {
   currentPath: string;
   onPathChange: (path: string) => void;
   onFolderCreate?: (folderName: string) => void;
+  onRenameFile?: (fileId: string, newName: string) => void;
+  onRenameFolder?: (folderName: string, newName: string) => void;
+  onDeleteFile?: (fileId: string) => void;
+  onDeleteFolder?: (folderName: string) => void;
   isUploading: boolean;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleFileUpload: () => void;
   selectedFile: { name: string } | null;
   setSelectedFile: (file: null) => void;
+  onSelectedFileNameChange?: (newName: string) => void;
   onFileArchive?: (fileId: string) => void;
   onFileUnarchive?: (fileId: string) => void;
   showUploadButton?: boolean;
@@ -98,11 +110,16 @@ export default function FileBrowser({
   currentPath,
   onPathChange,
   onFolderCreate,
+  onRenameFile,
+  onRenameFolder,
+  onDeleteFile,
+  onDeleteFolder,
   isUploading,
   handleFileSelect,
   handleFileUpload,
   selectedFile,
   setSelectedFile,
+  onSelectedFileNameChange,
   onFileArchive,
   onFileUnarchive,
   showUploadButton = true,
@@ -110,7 +127,14 @@ export default function FileBrowser({
   theme = "user",
 }: FileBrowserProps) {
   const [newFolderName, setNewFolderName] = useState("");
+  const [renameTargetFileId, setRenameTargetFileId] = useState<string | null>(null);
+  const [renameTargetFolderName, setRenameTargetFolderName] = useState<string | null>(null);
+  const [renameNewName, setRenameNewName] = useState("");
+  const [renameOriginalExt, setRenameOriginalExt] = useState<string | null>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
+  const [deleteTargetFileId, setDeleteTargetFileId] = useState<string | null>(null);
+  const [deleteTargetFolderName, setDeleteTargetFolderName] = useState<string | null>(null);
+  const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Color theme system
   const colorTheme = {
@@ -203,6 +227,64 @@ export default function FileBrowser({
     }
   };
 
+  const openRenameFileDialog = (fileId: string, currentName: string) => {
+    setRenameTargetFileId(fileId);
+    setRenameTargetFolderName(null);
+    const dotIndex = currentName.lastIndexOf(".");
+    const ext = dotIndex > 0 ? currentName.slice(dotIndex + 1) : "";
+    const base = dotIndex > 0 ? currentName.slice(0, dotIndex) : currentName;
+    setRenameNewName(base);
+    setRenameOriginalExt(ext || null);
+  };
+
+  const openRenameFolderDialog = (folderName: string) => {
+    setRenameTargetFileId(null);
+    setRenameTargetFolderName(folderName);
+    setRenameNewName(folderName);
+    setRenameOriginalExt(null);
+  };
+
+  const confirmRename = () => {
+    if (!renameNewName.trim() || renameNewName.includes("/")) {
+      toast.error("Name cannot be empty or contain '/'");
+      return;
+    }
+    if (renameTargetFileId && onRenameFile) {
+      const base = renameNewName.trim();
+      const finalName = renameOriginalExt ? `${base}.${renameOriginalExt}` : base;
+      onRenameFile(renameTargetFileId, finalName);
+    } else if (renameTargetFolderName && onRenameFolder) {
+      onRenameFolder(renameTargetFolderName, renameNewName.trim());
+    }
+    setRenameTargetFileId(null);
+    setRenameTargetFolderName(null);
+    setRenameNewName("");
+    setRenameOriginalExt(null);
+  };
+
+  const openDeleteFileDialog = (fileId: string) => {
+    setDeleteTargetFileId(fileId);
+    setDeleteTargetFolderName(null);
+    setShowDeleteDialog(true);
+  };
+
+  const openDeleteFolderDialog = (folderName: string) => {
+    setDeleteTargetFileId(null);
+    setDeleteTargetFolderName(folderName);
+    setShowDeleteDialog(true);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTargetFileId && onDeleteFile) {
+      onDeleteFile(deleteTargetFileId);
+    } else if (deleteTargetFolderName && onDeleteFolder) {
+      onDeleteFolder(deleteTargetFolderName);
+    }
+    setShowDeleteDialog(false);
+    setDeleteTargetFileId(null);
+    setDeleteTargetFolderName(null);
+  };
+
   return (
     <>
       <Dialog open={showNewFolderDialog} onOpenChange={setShowNewFolderDialog}>
@@ -228,6 +310,88 @@ export default function FileBrowser({
             <Button onClick={handleCreateFolder} className="w-full sm:w-auto">
               Create
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(renameTargetFileId || renameTargetFolderName)}
+        onOpenChange={(open) => {
+          if (!open) {
+            setRenameTargetFileId(null);
+            setRenameTargetFolderName(null);
+            setRenameNewName("");
+          }
+        }}
+      >
+        <DialogContent className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}>
+          <DialogHeader>
+            <DialogTitle className={`${currentTheme.headerText}`}>Rename {renameTargetFolderName ? "Folder" : "File"}</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            {renameTargetFileId ? (
+              <div className="flex items-center gap-2">
+                <Input
+                  type="text"
+                  value={renameNewName}
+                  onChange={(e) => setRenameNewName(e.target.value)}
+                  placeholder="New file name"
+                  onKeyDown={(e) => e.key === "Enter" && confirmRename()}
+                />
+                {renameOriginalExt && (
+                  <span className="text-sm text-gray-500 whitespace-nowrap">.{renameOriginalExt}</span>
+                )}
+              </div>
+            ) : (
+              <Input
+                type="text"
+                value={renameNewName}
+                onChange={(e) => setRenameNewName(e.target.value)}
+                placeholder="New folder name"
+                onKeyDown={(e) => e.key === "Enter" && confirmRename()}
+              />
+            )}
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" className={`w-full sm:w-auto ${currentTheme.border}`}>
+                Cancel
+              </Button>
+            </DialogClose>
+            <Button onClick={confirmRename} className={`w-full sm:w-auto`}>
+              Rename
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Confirmation Dialog */}
+      <Dialog
+        open={showDeleteDialog}
+        onOpenChange={(open) => {
+          if (!open) {
+            setShowDeleteDialog(false);
+            setDeleteTargetFileId(null);
+            setDeleteTargetFolderName(null);
+          }
+        }}
+      >
+        <DialogContent className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}>
+          <DialogHeader>
+            <DialogTitle className={`${currentTheme.headerText}`}>Confirm Delete</DialogTitle>
+          </DialogHeader>
+          <div className="py-2 text-sm">
+            {deleteTargetFolderName ? (
+              <p>Are you sure you want to delete the folder "{deleteTargetFolderName}" and all its contents?</p>
+            ) : (
+              <p>Are you sure you want to delete this file?</p>
+            )}
+          </div>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <DialogClose asChild>
+              <Button variant="outline" className={`w-full sm:w-auto ${currentTheme.border}`}>Cancel</Button>
+            </DialogClose>
+            <Button onClick={confirmDelete} className="w-full sm:w-auto" variant="destructive">Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -298,9 +462,43 @@ export default function FileBrowser({
                   <FileText
                     className={`w-5 h-5 ${currentTheme.file} flex-shrink-0`}
                   />
-                  <p className="font-medium text-sm truncate">
-                    {selectedFile.name}
-                  </p>
+                  <div className="min-w-0 flex-1">
+                    <p className="font-medium text-sm truncate">
+                      {selectedFile.name}
+                    </p>
+                    {onSelectedFileNameChange && (
+                      <div className="mt-2 flex items-center gap-2">
+                        {(() => {
+                          const originalName = selectedFile.name || "";
+                          const dotIndex = originalName.lastIndexOf(".");
+                          const ext = dotIndex > 0 ? originalName.slice(dotIndex + 1) : "";
+                          const base = dotIndex > 0 ? originalName.slice(0, dotIndex) : originalName;
+                          return (
+                            <>
+                              <Input
+                                type="text"
+                                defaultValue={base}
+                                onChange={(e) => {
+                                  const raw = e.target.value.trim();
+                                  if (raw.includes("/")) {
+                                    toast.error("Name cannot contain '/'");
+                                    return;
+                                  }
+                                  const newName = ext ? `${raw}.${ext}` : raw;
+                                  if (raw.length === 0) return; // ignore empty
+                                  onSelectedFileNameChange(newName);
+                                }}
+                                className="h-8 w-48"
+                              />
+                              {ext && (
+                                <span className="text-xs text-gray-500 whitespace-nowrap">.{ext}</span>
+                              )}
+                            </>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
                   <Button
@@ -332,15 +530,47 @@ export default function FileBrowser({
                   {folders.map((folder) => (
                     <div
                       key={folder}
-                      onClick={() => handleFolderDoubleClick(folder)}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${currentTheme.border} ${currentTheme.hover}`}
                     >
-                      <Folder
+                      <div onClick={() => handleFolderDoubleClick(folder)} className="flex items-center flex-1 min-w-0">
+                        <Folder
                         className={`w-6 h-6 ${currentTheme.folder} flex-shrink-0 mr-3`}
-                      />
-                      <span className="text-sm font-medium truncate flex-1">
-                        {folder}
-                      </span>
+                        />
+                        <span className="text-sm font-medium truncate flex-1">
+                          {folder}
+                        </span>
+                      </div>
+                      {(onRenameFolder || onDeleteFolder) && (
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            {onRenameFolder && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openRenameFolderDialog(folder);
+                                }}
+                              >
+                                Rename
+                              </DropdownMenuItem>
+                            )}
+                            {onDeleteFolder && (
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  openDeleteFolderDialog(folder);
+                                }}
+                              >
+                                Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -392,6 +622,27 @@ export default function FileBrowser({
                             <Archive className="w-4 h-4 mr-2" />
                             Archive
                           </Button>
+                        )}
+                        {(onRenameFile || onDeleteFile) && (
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon">
+                                <MoreVertical className="w-4 h-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              {onRenameFile && (
+                                <DropdownMenuItem onClick={() => openRenameFileDialog(file.id, file.name)}>
+                                  Rename
+                                </DropdownMenuItem>
+                              )}
+                              {onDeleteFile && (
+                                <DropdownMenuItem onClick={() => openDeleteFileDialog(file.id)}>
+                                  Delete
+                                </DropdownMenuItem>
+                              )}
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                         {onFileUnarchive && (
                           <Button

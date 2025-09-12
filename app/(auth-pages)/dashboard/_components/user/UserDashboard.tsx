@@ -155,6 +155,10 @@ export default function UserDashboard() {
     }
   };
 
+  const handleSelectedFileNameChange = (newName: string) => {
+    setSelectedFile((prev) => (prev ? { ...prev, name: newName } : prev));
+  };
+
   const handleFileUpload = async () => {
     if (!selectedFile || !session?.user?.id) return;
     // console.log("currentPath", currentPath);
@@ -266,6 +270,114 @@ export default function UserDashboard() {
     } catch (error) {
       toast.error("Failed to create folder. Please try again.");
       console.error("Error creating folder:", error);
+    }
+  };
+
+  const handleRenameFile = async (fileId: string, newName: string) => {
+    const file = uploadedFiles.find((f) => f.id === fileId);
+    if (!file) return;
+
+    const prevName = file.name;
+    setUploadedFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newName }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      await fetchData();
+      toast.success("Renamed successfully");
+    } catch (e) {
+      setUploadedFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, name: prevName } : f)));
+      toast.error("Failed to rename. Try again.");
+    }
+  };
+
+  const handleRenameFolder = async (folderName: string, newName: string) => {
+    // Find the folder pseudo-entry in this current path
+    const parentPath = currentPath;
+    const folderEntry = uploadedFiles.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    
+    // Optimistic: update folder entry name and adjust descendants' folderName
+    const folderFullOld = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const folderFullNew = parentPath ? `${parentPath}/${newName}` : newName;
+    const prevState = uploadedFiles;
+    setUploadedFiles((prev) =>
+      prev.map((f) => {
+        if (f.id === folderEntry?.id) return { ...f, name: newName } as any;
+        const fn = f.folderName || "";
+        if (fn.startsWith(folderFullOld)) {
+          return { ...f, folderName: `${folderFullNew}${fn.slice(folderFullOld.length)}` } as any;
+        }
+        return f;
+      })
+    );
+    try {
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}/rename`
+        : `/api/user/folders/rename`;
+      const method = folderEntry ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: folderEntry
+          ? JSON.stringify({ newName })
+          : JSON.stringify({ parentPath, folderName, newName }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      await fetchData();
+      toast.success("Folder renamed");
+    } catch (e) {
+      setUploadedFiles(prevState);
+      toast.error("Failed to rename folder");
+    }
+  };
+
+  const handleDeleteFile = async (fileId: string) => {
+    const file = uploadedFiles.find((f) => f.id === fileId);
+    if (!file) return;
+    const prev = uploadedFiles;
+    setUploadedFiles((p) => p.filter((f) => f.id !== fileId));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed");
+      await fetchData();
+      toast.success("Deleted");
+    } catch (e) {
+      setUploadedFiles(prev);
+      toast.error("Failed to delete");
+    }
+  };
+
+  const handleDeleteFolder = async (folderName: string) => {
+    const parentPath = currentPath;
+    const folderEntry = uploadedFiles.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    const full = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const prev = uploadedFiles;
+    setUploadedFiles((p) => p.filter((f) => {
+      if (f.id === folderEntry?.id) return false;
+      const fn = f.folderName || "";
+      return !fn.startsWith(full);
+    }));
+    try {
+      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/user/folders/delete`;
+      const method = folderEntry ? "DELETE" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
+        body: folderEntry ? undefined : JSON.stringify({ parentPath, folderName }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      await fetchData();
+      toast.success("Folder deleted");
+    } catch (e) {
+      setUploadedFiles(prev);
+      toast.error("Failed to delete folder");
     }
   };
 
@@ -477,11 +589,16 @@ export default function UserDashboard() {
             currentPath={currentPath}
             onPathChange={setCurrentPath}
             onFolderCreate={handleFolderCreate}
+            onRenameFile={handleRenameFile}
+            onRenameFolder={handleRenameFolder}
+            onDeleteFile={handleDeleteFile}
+            onDeleteFolder={handleDeleteFolder}
             isUploading={isUploading}
             handleFileSelect={handleFileSelect}
             handleFileUpload={handleFileUpload}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
+            onSelectedFileNameChange={handleSelectedFileNameChange}
             onFileArchive={handleArchiveFile}
             theme="user"
           />

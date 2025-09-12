@@ -10,7 +10,7 @@ import {
 import { Users, EyeOff, Eye, ChevronUp, ChevronDown } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader } from "@/components/ui/loader";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import FileBrowser from "@/app/_component/FileBrowser";
 import { ManagedFile } from "@/types/files";
 import { toast } from "react-hot-toast";
@@ -55,8 +55,8 @@ interface FileManagementProps {
   onSearchChange: (query: string) => void;
   onPrivateFileSelect: (file: File | null) => void;
   onResponseFileSelect: (file: File | null) => void;
-  onPrivateUpload: (folderPath: string) => Promise<void>;
-  onResponseUpload: (folderPath: string) => Promise<void>;
+  onPrivateUpload: (folderPath: string, overrideName?: string) => Promise<void>;
+  onResponseUpload: (folderPath: string, overrideName?: string) => Promise<void>;
   onRefreshUserDetails: () => void;
 }
 
@@ -130,6 +130,27 @@ export default function FileManagement({
   const [responseFilesPath, setResponseFilesPath] = useState("");
   const [isUsersCollapsed, setIsUsersCollapsed] = useState(false);
 
+  // Local optimistic state for Document Management lists
+  const [privateFilesData, setPrivateFilesData] = useState<FileDetail[] | undefined>(undefined);
+  const [responseFilesData, setResponseFilesData] = useState<FileDetail[] | undefined>(undefined);
+  const [privateSelectedName, setPrivateSelectedName] = useState<string | null>(null);
+  const [responseSelectedName, setResponseSelectedName] = useState<string | null>(null);
+
+  // Sync local state with userDetails for optimistic updates
+  useEffect(() => {
+    if (userDetails) {
+      setPrivateFilesData(userDetails.userPrivateFiles);
+      setResponseFilesData(userDetails.userReceivedFiles);
+    }
+  }, [userDetails]);
+
+  useEffect(() => {
+    setPrivateSelectedName(privateUploadFile ? privateUploadFile.name : null);
+  }, [privateUploadFile]);
+  useEffect(() => {
+    setResponseSelectedName(responseUploadFile ? responseUploadFile.name : null);
+  }, [responseUploadFile]);
+
   const { files: processedUploadedFiles, folders: processedUploadedFolders } =
     useMemo(
       () => processFiles(userDetails?.userUploadedFiles, uploadedFilesPath),
@@ -144,14 +165,14 @@ export default function FileManagement({
 
   const { files: processedPrivateFiles, folders: processedPrivateFolders } =
     useMemo(
-      () => processFiles(userDetails?.userPrivateFiles, privateFilesPath),
-      [userDetails?.userPrivateFiles, privateFilesPath]
+      () => processFiles(privateFilesData, privateFilesPath),
+      [privateFilesData, privateFilesPath]
     );
 
   const { files: processedResponseFiles, folders: processedResponseFolders } =
     useMemo(
-      () => processFiles(userDetails?.userReceivedFiles, responseFilesPath),
-      [userDetails?.userReceivedFiles, responseFilesPath]
+      () => processFiles(responseFilesData, responseFilesPath),
+      [responseFilesData, responseFilesPath]
     );
 
   const handleAdminFolderCreate = async (
@@ -160,6 +181,28 @@ export default function FileManagement({
     type: "private" | "response"
   ) => {
     if (!selectedUser) return;
+    // Optimistic insert of a temp folder record
+    const tempFolder = {
+      id: `temp-${Date.now()}`,
+      name: folderName,
+      size: "",
+      url: "",
+      createdAt: new Date().toISOString(),
+      folderName: parentPath,
+      type: "folder",
+    } as FileDetail;
+    const revert = () => {
+      if (type === "private") {
+        setPrivateFilesData((prev) => (prev || []).filter((f) => f.id !== tempFolder.id));
+      } else {
+        setResponseFilesData((prev) => (prev || []).filter((f) => f.id !== tempFolder.id));
+      }
+    };
+    if (type === "private") {
+      setPrivateFilesData((prev) => ([...(prev || []), tempFolder]));
+    } else {
+      setResponseFilesData((prev) => ([...(prev || []), tempFolder]));
+    }
     try {
       const res = await fetch("/api/s3/admin-db", {
         method: "POST",
@@ -173,10 +216,18 @@ export default function FileManagement({
         }),
       });
       if (!res.ok) throw new Error("Failed to create folder");
+      const created = await res.json();
+      // Replace temp with actual
+      if (type === "private") {
+        setPrivateFilesData((prev) => (prev || []).map((f) => (f.id === tempFolder.id ? { ...f, id: created.id } : f)));
+      } else {
+        setResponseFilesData((prev) => (prev || []).map((f) => (f.id === tempFolder.id ? { ...f, id: created.id } : f)));
+      }
       toast.success("Folder created successfully");
-      onRefreshUserDetails();
+      // Optional sync refresh can run in background if needed
     } catch (err) {
       toast.error("Failed to create folder");
+      revert();
     }
   };
 
@@ -202,6 +253,239 @@ export default function FileManagement({
       onRefreshUserDetails();
     } catch (err) {
       toast.error("Failed to unarchive file");
+    }
+  };
+
+  // Admin rename/delete for Document Management (private/response)
+  const handlePrivateRenameFile = async (fileId: string, newName: string) => {
+    const prev = privateFilesData;
+    setPrivateFilesData((curr) => (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newName }),
+      });
+      if (!res.ok) throw new Error("Failed to rename file");
+      toast.success("File renamed successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setPrivateFilesData(prev);
+      toast.error("Failed to rename file");
+    }
+  };
+
+  const handleResponseRenameFile = async (fileId: string, newName: string) => {
+    const prev = responseFilesData;
+    setResponseFilesData((curr) => (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}/rename`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ newName }),
+      });
+      if (!res.ok) throw new Error("Failed to rename file");
+      toast.success("File renamed successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setResponseFilesData(prev);
+      toast.error("Failed to rename file");
+    }
+  };
+
+  const handlePrivateRenameFolder = async (folderName: string, newName: string) => {
+    const parentPath = privateFilesPath;
+    const folderEntry = (privateFilesData || [])?.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    // Optimistic update regardless of explicit record
+    const oldFull = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const newFull = parentPath ? `${parentPath}/${newName}` : newName;
+    const prev = privateFilesData;
+    setPrivateFilesData((curr) =>
+      (curr || []).map((f) => {
+        // Update descendants folder paths
+        const fn = f.folderName || "";
+        if (fn.startsWith(oldFull)) return { ...f, folderName: `${newFull}${fn.slice(oldFull.length)}` } as any;
+        // If there is an explicit folder record, update its display name
+        if (folderEntry && f.id === folderEntry.id) return { ...f, name: newName } as any;
+        return f;
+      })
+    );
+    try {
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}/rename`
+        : `/api/admin/folders/rename`;
+      const method = folderEntry ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: folderEntry
+          ? JSON.stringify({ newName })
+          : JSON.stringify({
+              selectedUserId: selectedUser,
+              parentPath,
+              folderName,
+              newName,
+              isPrivate: true,
+            }),
+      });
+      if (!res.ok) throw new Error("Failed to rename folder");
+      toast.success("Folder renamed successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setPrivateFilesData(prev);
+      toast.error("Failed to rename folder");
+    }
+  };
+
+  const handleResponseRenameFolder = async (folderName: string, newName: string) => {
+    const parentPath = responseFilesPath;
+    const folderEntry = (responseFilesData || [])?.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    // Optimistic update regardless of explicit record
+    const oldFull = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const newFull = parentPath ? `${parentPath}/${newName}` : newName;
+    const prev = responseFilesData;
+    setResponseFilesData((curr) =>
+      (curr || []).map((f) => {
+        // Update descendants folder paths
+        const fn = f.folderName || "";
+        if (fn.startsWith(oldFull)) return { ...f, folderName: `${newFull}${fn.slice(oldFull.length)}` } as any;
+        // If there is an explicit folder record, update its display name
+        if (folderEntry && f.id === folderEntry.id) return { ...f, name: newName } as any;
+        return f;
+      })
+    );
+    try {
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}/rename`
+        : `/api/admin/folders/rename`;
+      const method = folderEntry ? "PATCH" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json" },
+        body: folderEntry
+          ? JSON.stringify({ newName })
+          : JSON.stringify({
+              selectedUserId: selectedUser,
+              parentPath,
+              folderName,
+              newName,
+              isPrivate: false,
+            }),
+      });
+      if (!res.ok) throw new Error("Failed to rename folder");
+      toast.success("Folder renamed successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setResponseFilesData(prev);
+      toast.error("Failed to rename folder");
+    }
+  };
+
+  const handlePrivateDeleteFile = async (fileId: string) => {
+    const prev = privateFilesData;
+    setPrivateFilesData((curr) => (curr || []).filter((f) => f.id !== fileId));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete file");
+      toast.success("File deleted successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setPrivateFilesData(prev);
+      toast.error("Failed to delete file");
+    }
+  };
+
+  const handleResponseDeleteFile = async (fileId: string) => {
+    const prev = responseFilesData;
+    setResponseFilesData((curr) => (curr || []).filter((f) => f.id !== fileId));
+    try {
+      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete file");
+      toast.success("File deleted successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setResponseFilesData(prev);
+      toast.error("Failed to delete file");
+    }
+  };
+
+  const handlePrivateDeleteFolder = async (folderName: string) => {
+    const parentPath = privateFilesPath;
+    const folderEntry = (privateFilesData || [])?.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    const full = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const prev = privateFilesData;
+    setPrivateFilesData((curr) =>
+      (curr || []).filter((f) => {
+        const fn = f.folderName || "";
+        // Remove any descendants under the folder path
+        if (fn.startsWith(full)) return false;
+        // Also remove the explicit folder record itself if it exists
+        if (folderEntry && f.id === folderEntry.id) return false;
+        // Be defensive: remove any folder item matching name+parentPath
+        if (f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath) return false;
+        return true;
+      })
+    );
+    try {
+      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/admin/folders/delete`;
+      const method = folderEntry ? "DELETE" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
+        body: folderEntry
+          ? undefined
+          : JSON.stringify({ selectedUserId: selectedUser, parentPath, folderName, isPrivate: true }),
+      });
+      if (!res.ok) throw new Error("Failed to delete folder");
+      toast.success("Folder deleted successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setPrivateFilesData(prev);
+      toast.error("Failed to delete folder");
+    }
+  };
+
+  const handleResponseDeleteFolder = async (folderName: string) => {
+    const parentPath = responseFilesPath;
+    const folderEntry = (responseFilesData || [])?.find(
+      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+    );
+    const full = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const prev = responseFilesData;
+    setResponseFilesData((curr) =>
+      (curr || []).filter((f) => {
+        const fn = f.folderName || "";
+        // Remove any descendants under the folder path
+        if (fn.startsWith(full)) return false;
+        // Also remove the explicit folder record itself if it exists
+        if (folderEntry && f.id === folderEntry.id) return false;
+        // Be defensive: remove any folder item matching name+parentPath
+        if (f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath) return false;
+        return true;
+      })
+    );
+    try {
+      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/admin/folders/delete`;
+      const method = folderEntry ? "DELETE" : "POST";
+      const res = await fetch(url, {
+        method,
+        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
+        body: folderEntry
+          ? undefined
+          : JSON.stringify({ selectedUserId: selectedUser, parentPath, folderName, isPrivate: false }),
+      });
+      if (!res.ok) throw new Error("Failed to delete folder");
+      toast.success("Folder deleted successfully");
+      // UI already updated optimistically
+    } catch (e) {
+      setResponseFilesData(prev);
+      toast.error("Failed to delete folder");
     }
   };
 
@@ -409,15 +693,20 @@ export default function FileManagement({
                             "private"
                           )
                         }
+                        onRenameFile={handlePrivateRenameFile}
+                        onRenameFolder={handlePrivateRenameFolder}
+                        onDeleteFile={handlePrivateDeleteFile}
+                        onDeleteFolder={handlePrivateDeleteFolder}
                         isUploading={privateUploadLoading}
                         handleFileSelect={(e) =>
                           onPrivateFileSelect(e.target.files?.[0] || null)
                         }
                         handleFileUpload={() =>
-                          onPrivateUpload(privateFilesPath)
+                          onPrivateUpload(privateFilesPath, privateSelectedName || undefined)
                         }
-                        selectedFile={privateUploadFile}
+                        selectedFile={privateSelectedName ? { name: privateSelectedName } as any : (privateUploadFile as any)}
                         setSelectedFile={() => onPrivateFileSelect(null)}
+                        onSelectedFileNameChange={(newName) => setPrivateSelectedName(newName)}
                         theme="admin-private"
                       />
                     </TabsContent>
@@ -436,15 +725,20 @@ export default function FileManagement({
                             "response"
                           )
                         }
+                        onRenameFile={handleResponseRenameFile}
+                        onRenameFolder={handleResponseRenameFolder}
+                        onDeleteFile={handleResponseDeleteFile}
+                        onDeleteFolder={handleResponseDeleteFolder}
                         isUploading={responseUploadLoading}
                         handleFileSelect={(e) =>
                           onResponseFileSelect(e.target.files?.[0] || null)
                         }
                         handleFileUpload={() =>
-                          onResponseUpload(responseFilesPath)
+                          onResponseUpload(responseFilesPath, responseSelectedName || undefined)
                         }
-                        selectedFile={responseUploadFile}
+                        selectedFile={responseSelectedName ? { name: responseSelectedName } as any : (responseUploadFile as any)}
                         setSelectedFile={() => onResponseFileSelect(null)}
+                        onSelectedFileNameChange={(newName) => setResponseSelectedName(newName)}
                         theme="admin-response"
                       />
                     </TabsContent>

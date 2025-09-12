@@ -1,3 +1,4 @@
+"use client";
 import { useState, useRef, useEffect } from "react";
 import { FaBars } from "react-icons/fa";
 import { IoMdClose } from "react-icons/io";
@@ -30,6 +31,7 @@ export default function UserDashboardHeader({
 }: UserDashboardHeaderProps) {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const headerRef = useRef<HTMLDivElement>(null);
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -43,6 +45,26 @@ export default function UserDashboardHeader({
     document.addEventListener("mousedown", handleClickOutside);
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  useEffect(() => {
+    let isMounted = true;
+    let interval: any;
+    const fetchUnread = async () => {
+      try {
+        const res = await fetch("/api/user/notification");
+        if (!res.ok) return;
+        const data = await res.json();
+        const count = Array.isArray(data) ? data.filter((n: any) => !n.isRead).length : 0;
+        if (isMounted) setUnreadNotificationsCount(count);
+      } catch {}
+    };
+    fetchUnread();
+    interval = setInterval(fetchUnread, 30000);
+    return () => {
+      isMounted = false;
+      if (interval) clearInterval(interval);
     };
   }, []);
 
@@ -71,7 +93,12 @@ export default function UserDashboardHeader({
                     : "hover:text-cyan-200"
                 }`}
               >
-                {item.label}
+                <span className="inline-flex items-center gap-2">
+                  {item.label}
+                  {item.key === "notifications" && unreadNotificationsCount > 0 && (
+                    <span aria-label={`${unreadNotificationsCount} unread notifications`} className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                  )}
+                </span>
               </button>
             ))}
             <Button
@@ -111,7 +138,12 @@ export default function UserDashboardHeader({
                     : "hover:text-cyan-200"
                 }`}
               >
-                {item.label}
+                <span className="inline-flex items-center gap-2">
+                  {item.label}
+                  {item.key === "notifications" && unreadNotificationsCount > 0 && (
+                    <span aria-label={`${unreadNotificationsCount} unread notifications`} className="inline-block w-2 h-2 rounded-full bg-red-500" />
+                  )}
+                </span>
               </button>
             ))}
             <Button

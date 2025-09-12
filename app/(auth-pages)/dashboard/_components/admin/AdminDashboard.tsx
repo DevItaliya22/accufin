@@ -212,14 +212,23 @@ export default function AdminDashboard() {
     if (!res.ok) throw new Error("Failed to mark as read");
   };
 
-  const handlePrivateUpload = async (folderPath: string) => {
+  const handlePrivateUpload = async (folderPath: string, overrideName?: string) => {
     if (!privateUploadFile || !session?.user?.id || !selectedUser) return;
     setPrivateUploadLoading(true);
     try {
+      const finalName = (() => {
+        if (!overrideName) return privateUploadFile.name;
+        const original = privateUploadFile.name;
+        const dot = original.lastIndexOf(".");
+        const ext = dot > 0 ? original.slice(dot + 1) : "";
+        const raw = overrideName.includes(".") ? overrideName.slice(0, overrideName.lastIndexOf(".")) : overrideName;
+        return ext ? `${raw}.${ext}` : raw;
+      })();
+
       const filePath = s3.getAdminPrivateUploadPath(
         session.user.id,
         selectedUser,
-        privateUploadFile.name
+        finalName
       );
       const signedUrlRes = await fetch("/api/s3/put", {
         method: "POST",
@@ -250,7 +259,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           filePath,
           url: signedUrl,
-          name: privateUploadFile.name,
+          name: finalName,
           size: `${(privateUploadFile.size / 1024).toFixed(1)} KB`,
           type: privateUploadFile.type,
           uploadedById: session.user.id,
@@ -278,13 +287,22 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResponseUpload = async (folderPath: string) => {
+  const handleResponseUpload = async (folderPath: string, overrideName?: string) => {
     if (!responseUploadFile || !session?.user?.id || !selectedUser) return;
     setResponseUploadLoading(true);
     try {
+      const finalName = (() => {
+        if (!overrideName) return responseUploadFile.name;
+        const original = responseUploadFile.name;
+        const dot = original.lastIndexOf(".");
+        const ext = dot > 0 ? original.slice(dot + 1) : "";
+        const raw = overrideName.includes(".") ? overrideName.slice(0, overrideName.lastIndexOf(".")) : overrideName;
+        return ext ? `${raw}.${ext}` : raw;
+      })();
+
       const filePath = s3.getUserReceivedFilePath(
         selectedUser,
-        responseUploadFile.name
+        finalName
       );
       const signedUrlRes = await fetch("/api/s3/put", {
         method: "POST",
@@ -318,7 +336,7 @@ export default function AdminDashboard() {
         body: JSON.stringify({
           filePath,
           url: signedUrl,
-          name: responseUploadFile.name,
+          name: finalName,
           size: `${(responseUploadFile.size / 1024).toFixed(1)} KB`,
           type: responseUploadFile.type,
           uploadedById: session.user.id,
