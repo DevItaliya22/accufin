@@ -31,7 +31,10 @@ export default function LoginPage() {
         password,
       });
       if (res?.error) {
-        toast.error(res.error);
+        const msg = res.error.includes("inactive")
+          ? "Your account is inactive. You can't login."
+          : res.error;
+        toast.error(msg);
       } else {
         setShowWelcome(true);
         router.push("/dashboard");

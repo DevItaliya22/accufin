@@ -46,6 +46,8 @@ import {
   ChevronRight,
   Shield,
   ShieldCheck,
+  Eye,
+  Pencil,
 } from "lucide-react";
 import { User as PrismaUser } from "@/lib/generated/prisma";
 import { useState, useMemo, useEffect } from "react";
@@ -81,6 +83,33 @@ export default function UserManagement({
     name: string;
     isAdmin: boolean;
   } | null>(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewUserId, setViewUserId] = useState<string | null>(null);
+  const [viewUserBasic, setViewUserBasic] = useState<
+    | (PrismaUser & {
+        uploadedFiles: number;
+        formResponses: number;
+        filesReceivedFromAdmin: number;
+      })
+    | null
+  >(null);
+  const [viewLoading, setViewLoading] = useState(false);
+  const [viewError, setViewError] = useState<string | null>(null);
+  const [viewData, setViewData] = useState<any | null>(null);
+
+  // Edit modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editUserId, setEditUserId] = useState<string | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editForm, setEditForm] = useState({
+    name: "",
+    contactNumber: "",
+    occupation: "",
+    sinNumber: "",
+    businessNumber: "",
+    dateOfBirth: "",
+    address: "",
+  });
   const itemsPerPage = 15;
   const { data: session } = useSession();
 
@@ -127,6 +156,27 @@ export default function UserManagement({
     setShowAdminModal(true);
   };
 
+  const handleActiveToggle = async (userId: string, currentIsActive: boolean) => {
+    setUsersList((prev) =>
+      prev.map((u) => (u.id === userId ? { ...u, isActive: !currentIsActive } as any : u))
+    );
+    try {
+      const response = await fetch("/api/admin/toggle-active", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, isActive: !currentIsActive }),
+      });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Failed to update active status");
+      toast.success(data.message);
+    } catch (e) {
+      setUsersList((prev) =>
+        prev.map((u) => (u.id === userId ? { ...u, isActive: currentIsActive } as any : u))
+      );
+      toast.error(e instanceof Error ? e.message : "Failed to update active status");
+    }
+  };
+
   const confirmAdminToggle = async () => {
     if (!selectedUser) return;
 
@@ -163,6 +213,19 @@ export default function UserManagement({
       setSelectedUser(null);
     }
   };
+
+  // Fetch selected user's detailed info when opening the view modal
+  useEffect(() => {
+    if (!showViewModal || !viewUserId) return;
+    setViewLoading(true);
+    setViewError(null);
+    setViewData(null);
+    fetch(`/api/admin/user-details/${viewUserId}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject("Failed to fetch user details")))
+      .then((data) => setViewData(data))
+      .catch((err) => setViewError(typeof err === "string" ? err : "Failed to load user details"))
+      .finally(() => setViewLoading(false));
+  }, [showViewModal, viewUserId]);
 
   if (loading) {
     return (
@@ -270,6 +333,12 @@ export default function UserManagement({
                     </TableHead>
                     <TableHead className="py-3 px-2 text-emerald-800 font-semibold bg-emerald-100 text-xs w-20">
                       Admin
+                    </TableHead>
+                    <TableHead className="py-3 px-2 text-emerald-800 font-semibold bg-emerald-100 text-xs w-20">
+                      Active
+                    </TableHead>
+                    <TableHead className="py-3 px-2 text-emerald-800 font-semibold bg-emerald-100 text-xs w-24">
+                      Actions
                     </TableHead>
                   </TableRow>
                 </TableHeader>
@@ -434,6 +503,54 @@ export default function UserManagement({
                             )}
                           </div>
                         </TableCell>
+                        <TableCell className="py-3 px-2">
+                          <div className="flex flex-col items-center space-y-1">
+                            <span className={`text-xs font-medium ${user.isActive ? "text-emerald-700" : "text-red-600"}`}>
+                              {user.isActive ? "Active" : "Inactive"}
+                            </span>
+                            {session?.user?.id !== user.id && (
+                              <Switch
+                                checked={!!user.isActive}
+                                onCheckedChange={() => handleActiveToggle(user.id, !!user.isActive)}
+                                className="scale-75"
+                              />
+                            )}
+                          </div>
+                        </TableCell>
+                        <TableCell className="py-3 px-2">
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8"
+                            onClick={() => {
+                              setViewUserId(user.id);
+                              setViewUserBasic(user as any);
+                              setShowViewModal(true);
+                            }}
+                          >
+                            <Eye className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            className="h-8 w-8 ml-2"
+                            onClick={() => {
+                              setEditUserId(user.id);
+                              setEditForm({
+                                name: user.name || "",
+                                contactNumber: user.contactNumber || "",
+                                occupation: user.occupation || "",
+                                sinNumber: user.sinNumber || "",
+                                businessNumber: user.businessNumber || "",
+                                dateOfBirth: user.dateOfBirth ? new Date(user.dateOfBirth as any).toISOString().slice(0, 10) : "",
+                                address: (user as any).address || "",
+                              });
+                              setShowEditModal(true);
+                            }}
+                          >
+                            <Pencil className="w-4 h-4" />
+                          </Button>
+                        </TableCell>
                       </TableRow>
                     ))
                   )}
@@ -555,6 +672,201 @@ export default function UserManagement({
               ) : (
                 <>{selectedUser?.isAdmin ? "Remove Admin" : "Make Admin"}</>
               )}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* User Details View Modal */}
+      <Dialog open={showViewModal} onOpenChange={setShowViewModal}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center space-x-2">
+              <Eye className="w-5 h-5 text-emerald-600" />
+              <span>User Details</span>
+            </DialogTitle>
+          </DialogHeader>
+          <div className="py-2">
+            {viewLoading ? (
+              <div className="flex items-center justify-center py-6 text-gray-500">
+                <Loader size={24} className="mr-2 text-emerald-500" />
+                Loading user details...
+              </div>
+            ) : viewError ? (
+              <div className="py-4 text-red-600">{viewError}</div>
+            ) : !viewData ? (
+              <div className="py-4 text-gray-600">No data available.</div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <div className="text-xs text-gray-500">Name</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.name || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Email</div>
+                    <div className="text-sm font-medium text-emerald-700">{viewUserBasic?.email}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Status</div>
+                    <div className={`text-sm font-semibold ${viewUserBasic?.isActive ? "text-emerald-700" : "text-red-600"}`}>
+                      {viewUserBasic?.isActive ? "Active" : "Inactive"}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Phone</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.contactNumber || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Occupation</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.occupation || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">SIN</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.sinNumber || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Business Number</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.businessNumber || "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Date of Birth</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.dateOfBirth ? new Date(viewUserBasic.dateOfBirth as any).toLocaleDateString() : "N/A"}</div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-gray-500">Joined</div>
+                    <div className="text-sm font-medium text-gray-900">{viewUserBasic?.createdAt ? new Date(viewUserBasic.createdAt as any).toLocaleString() : "N/A"}</div>
+                  </div>
+                  {false && (
+                    <div className="sm:col-span-2">
+                      <div className="text-xs text-gray-500">Address</div>
+                      <div className="text-sm font-medium text-gray-900 break-words"></div>
+                    </div>
+                  )}
+                </div>
+                <div className="grid grid-cols-3 gap-3">
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <div className="text-xs text-emerald-700">Uploaded Files</div>
+                    <div className="text-lg font-semibold text-emerald-800">{(viewData.userUploadedFiles?.length) ?? 0}</div>
+                  </div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <div className="text-xs text-emerald-700">Admin Files</div>
+                    <div className="text-lg font-semibold text-emerald-800">{(viewData.userReceivedFiles?.length) ?? 0}</div>
+                  </div>
+                  <div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3">
+                    <div className="text-xs text-emerald-700">Form Responses</div>
+                    <div className="text-lg font-semibold text-emerald-800">{viewUserBasic?.formResponses ?? 0}</div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="flex justify-end">
+            <Button
+              variant="default"
+              onClick={() => setShowViewModal(false)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit User Modal */}
+      <Dialog open={showEditModal} onOpenChange={setShowEditModal}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Edit User</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Name</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm((p) => ({ ...p, name: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Phone</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.contactNumber}
+                  onChange={(e) => setEditForm((p) => ({ ...p, contactNumber: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Occupation</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.occupation}
+                  onChange={(e) => setEditForm((p) => ({ ...p, occupation: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-gray-600 mb-1">SIN</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.sinNumber}
+                  onChange={(e) => setEditForm((p) => ({ ...p, sinNumber: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Business Number</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.businessNumber}
+                  onChange={(e) => setEditForm((p) => ({ ...p, businessNumber: e.target.value }))}
+                />
+              </div>
+              <div>
+                <div className="text-xs text-gray-600 mb-1">Date of Birth</div>
+                <input
+                  type="date"
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.dateOfBirth}
+                  onChange={(e) => setEditForm((p) => ({ ...p, dateOfBirth: e.target.value }))}
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <div className="text-xs text-gray-600 mb-1">Address</div>
+                <input
+                  className="w-full border border-emerald-200 rounded-md px-2 py-1 text-sm bg-white"
+                  value={editForm.address}
+                  onChange={(e) => setEditForm((p) => ({ ...p, address: e.target.value }))}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex justify-end space-x-2">
+            <Button variant="outline" onClick={() => setShowEditModal(false)} disabled={editLoading}>Cancel</Button>
+            <Button
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              disabled={editLoading}
+              onClick={async () => {
+                if (!editUserId) return;
+                setEditLoading(true);
+                try {
+                  const res = await fetch(`/api/admin/users/${editUserId}`, {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(editForm),
+                  });
+                  const data = await res.json();
+                  if (!res.ok) throw new Error(data.error || "Failed to update user");
+                  setUsersList((prev) => prev.map((u) => (u.id === editUserId ? { ...u, ...data } as any : u)));
+                  toast.success("User updated successfully");
+                  setShowEditModal(false);
+                } catch (e) {
+                  toast.error(e instanceof Error ? e.message : "Failed to update user");
+                } finally {
+                  setEditLoading(false);
+                }
+              }}
+            >
+              {editLoading ? "Saving..." : "Save"}
             </Button>
           </div>
         </DialogContent>

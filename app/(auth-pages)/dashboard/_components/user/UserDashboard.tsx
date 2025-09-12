@@ -138,6 +138,26 @@ export default function UserDashboard() {
     fetchData();
   }, []);
 
+  // Auto-signout if user becomes inactive
+  useEffect(() => {
+    let timer: any;
+    async function checkActive() {
+      try {
+        const res = await fetch("/api/user/check-active", { cache: "no-store" });
+        if (res.status === 401) return;
+        const data = await res.json();
+        if (data && data.active === false) {
+          toast.error("Your account is inactive. You have been signed out by admin.");
+          await signOut({ redirect: false });
+          router.push("/login");
+        }
+      } catch {}
+    }
+    checkActive();
+    timer = setInterval(checkActive, 30000);
+    return () => clearInterval(timer);
+  }, [router]);
+
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {

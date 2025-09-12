@@ -6,7 +6,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Bell, Clock, Check, MoreVertical } from "lucide-react";
+import { Bell, Clock, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import React from "react";
 import toast from "react-hot-toast";
@@ -194,10 +194,6 @@ export default function NotificationManagement({
                       </div>
                     </div>
 
-                    {/* Options button */}
-                    <button className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-gray-100">
-                      <MoreVertical className="w-4 h-4 text-gray-400" />
-                    </button>
                   </div>
                 </div>
               </div>

@@ -28,6 +28,7 @@ export async function GET(request: Request) {
         contactNumber: true,
         profileUrl: true,
         isAdmin: true,
+        isActive: true,
         _count: {
           select: {
             uploadedFiles: true,

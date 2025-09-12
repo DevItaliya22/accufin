@@ -23,6 +23,7 @@ model User {
   businessNumber String?
   dateOfBirth DateTime?
   isAdmin   Boolean  @default(false)
+  isActive  Boolean  @default(true)
   provider  String? @default("credentials")
   contactNumber String?
   profileUrl String?

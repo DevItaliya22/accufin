@@ -26,6 +26,7 @@ export const authOptions: AuthOptions = {
             email: true,
             name: true,
             isAdmin: true,
+            isActive: true,
             password: true,
           },
         });
@@ -34,6 +35,10 @@ export const authOptions: AuthOptions = {
 
         if (!user) {
           throw new Error("No account found with this email");
+        }
+
+        if (user.isActive === false) {
+          throw new Error("Your account is inactive. Please contact support.");
         }
 
         const isValid = await compare(credentials.password, user.password);
@@ -68,6 +73,7 @@ export const authOptions: AuthOptions = {
             email: true,
             name: true,
             isAdmin: true,
+            isActive: true,
           },
         });
 
@@ -85,6 +91,7 @@ export const authOptions: AuthOptions = {
               email: true,
               name: true,
               isAdmin: true,
+              isActive: true,
             },
           });
           try {
@@ -105,6 +112,10 @@ export const authOptions: AuthOptions = {
         user.isAdmin = dbUser.isAdmin;
         user.name = dbUser.name;
         user.email = dbUser.email;
+
+        if (dbUser.isActive === false) {
+          return false;
+        }
 
         // Send login confirmation email for Google login
 
