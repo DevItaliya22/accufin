@@ -71,7 +71,9 @@ export default function UserDashboard() {
   const [notifications, setNotifications] = useState<NotificationRecord[]>([]);
   const [forms, setForms] = useState<FormWithStatus[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedFile, setSelectedFile] = useState<SelectedFile | null>(null);
+  // Multiple selection queue
+  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
+  const [uploadingIds, setUploadingIds] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [currentPath, setCurrentPath] = useState("");
   const [currentResponsePath, setCurrentResponsePath] = useState("");
@@ -143,11 +145,15 @@ export default function UserDashboard() {
     let timer: any;
     async function checkActive() {
       try {
-        const res = await fetch("/api/user/check-active", { cache: "no-store" });
+        const res = await fetch("/api/user/check-active", {
+          cache: "no-store",
+        });
         if (res.status === 401) return;
         const data = await res.json();
         if (data && data.active === false) {
-          toast.error("Your account is inactive. You have been signed out by admin.");
+          toast.error(
+            "Your account is inactive. You have been signed out by admin."
+          );
           await signOut({ redirect: false });
           router.push("/login");
         }
@@ -159,40 +165,52 @@ export default function UserDashboard() {
   }, [router]);
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setSelectedFile({
-        id: crypto.randomUUID(),
-        url: "",
-        path: "",
-        name: file.name,
-        size: `${(file.size / 1024).toFixed(1)} KB`,
-        type: file.type,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        file: file,
-      });
-    }
+    const list = e.target.files;
+    if (!list || list.length === 0) return;
+    const newItems: SelectedFile[] = Array.from(list).map((file) => ({
+      id: crypto.randomUUID(),
+      url: "",
+      path: "",
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(1)} KB`,
+      type: file.type,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      file,
+    }));
+    setSelectedFiles((prev) => [...prev, ...newItems]);
   };
 
-  const handleSelectedFileNameChange = (newName: string) => {
-    setSelectedFile((prev) => (prev ? { ...prev, name: newName } : prev));
+  const handleRemoveSelectedFile = (selectedTempId: string) => {
+    setSelectedFiles((prev) => prev.filter((f) => f.id !== selectedTempId));
   };
 
-  const handleFileUpload = async () => {
-    if (!selectedFile || !session?.user?.id) return;
-    // console.log("currentPath", currentPath);
+  const handleClearSelectedFiles = () => {
+    setSelectedFiles([]);
+  };
+
+  const handleSelectedFileNameChange = (
+    selectedTempId: string,
+    newName: string
+  ) => {
+    setSelectedFiles((prev) =>
+      prev.map((f) => (f.id === selectedTempId ? { ...f, name: newName } : f))
+    );
+  };
+
+  const uploadOne = async (sf: SelectedFile) => {
+    if (!session?.user?.id) return false;
     if (!currentPath) {
       toast.error("Please select or create a folder before uploading a file.");
-      return;
+      return false;
     }
-
     try {
-      setIsUploading(true);
-      const file = selectedFile;
-      const filePath = s3.getUserSendingFilePath(session.user.id, file.name!);
-
-      // Get signed URL for upload
+      setUploadingIds((prev) => [...prev, sf.id]);
+      const filePath = s3.getUserSendingFilePath(
+        session.user.id,
+        sf.name!,
+        currentPath
+      );
       const signedUrlRes = await fetch("/api/s3/put", {
         method: "POST",
         headers: {
@@ -200,34 +218,25 @@ export default function UserDashboard() {
         },
         body: JSON.stringify({
           filePath,
-          contentType: file.type,
+          contentType: sf.type,
         }),
       });
-
       if (!signedUrlRes.ok) {
         toast.error("Failed to get signed URL. Try again, please.");
-        setIsUploading(false);
-        return;
+        return false;
       }
       const { signedUrl } = await signedUrlRes.json();
-
-      // Upload file to S3
       const uploadRes = await fetch(signedUrl, {
         method: "PUT",
-        body: file.file,
+        body: sf.file,
         headers: {
-          "Content-Type": file.type!,
+          "Content-Type": sf.type!,
         },
       });
-
       if (!uploadRes.ok) {
         toast.error("Failed to upload file. Try again, please.");
-        setIsUploading(false);
-        return;
+        return false;
       }
-
-      // Store file info in database
-      // console.log("currentPatssh", currentPath);
       const dbRes = await fetch("/api/s3/db", {
         method: "POST",
         headers: {
@@ -236,32 +245,60 @@ export default function UserDashboard() {
         body: JSON.stringify({
           filePath,
           url: signedUrl,
-          name: file.name,
-          size: file.size,
-          type: file.type,
+          name: sf.name,
+          size: sf.size,
+          type: sf.type,
           uploadedById: session.user.id,
           isAdminOnlyPrivateFile: false,
           folderName: currentPath,
         }),
       });
-
       if (!dbRes.ok) {
         toast.error("Failed to store file info. Try again, please.");
-        setIsUploading(false);
-        return;
+        return false;
       }
       const newFile = await dbRes.json();
-
       setUploadedFiles((prev) => [newFile, ...prev]);
-      fetchData();
-      setSelectedFile(null);
-      toast.success("File uploaded successfully!");
+      return true;
     } catch (error) {
-      toast.error("Error uploading file. Please try again.");
       console.error("Error uploading file:", error);
+      toast.error("Error uploading file. Please try again.");
+      return false;
     } finally {
-      setIsUploading(false);
+      setUploadingIds((prev) => prev.filter((id) => id !== sf.id));
     }
+  };
+
+  const handleFileUploadById = async (selectedTempId: string) => {
+    const sf = selectedFiles.find((f) => f.id === selectedTempId);
+    if (!sf) return;
+    setIsUploading(true);
+    const ok = await uploadOne(sf);
+    if (ok) {
+      setSelectedFiles((prev) => prev.filter((f) => f.id !== selectedTempId));
+      await fetchData();
+      toast.success(`${sf.name} uploaded successfully!`);
+    }
+    setIsUploading(false);
+  };
+
+  const handleConfirmAll = async () => {
+    if (selectedFiles.length === 0) return;
+    setIsUploading(true);
+    for (const sf of selectedFiles) {
+      // Skip if duplicate name exists in current view to honour UI rule
+      const duplicate = uploadedFiles.some(
+        (f) =>
+          f.name === sf.name && (f.folderName || "") === (currentPath || "")
+      );
+      if (duplicate) continue;
+      // eslint-disable-next-line no-await-in-loop
+      await uploadOne(sf);
+    }
+    setSelectedFiles([]);
+    await fetchData();
+    setIsUploading(false);
+    toast.success("All uploads attempted.");
   };
 
   const handleFolderCreate = async (folderName: string) => {
@@ -298,7 +335,9 @@ export default function UserDashboard() {
     if (!file) return;
 
     const prevName = file.name;
-    setUploadedFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    setUploadedFiles((prev) =>
+      prev.map((f) => (f.id === fileId ? { ...f, name: newName } : f))
+    );
     try {
       const res = await fetch(`/api/user/files/${fileId}/rename`, {
         method: "PATCH",
@@ -309,7 +348,9 @@ export default function UserDashboard() {
       await fetchData();
       toast.success("Renamed successfully");
     } catch (e) {
-      setUploadedFiles((prev) => prev.map((f) => (f.id === fileId ? { ...f, name: prevName } : f)));
+      setUploadedFiles((prev) =>
+        prev.map((f) => (f.id === fileId ? { ...f, name: prevName } : f))
+      );
       toast.error("Failed to rename. Try again.");
     }
   };
@@ -318,11 +359,16 @@ export default function UserDashboard() {
     // Find the folder pseudo-entry in this current path
     const parentPath = currentPath;
     const folderEntry = uploadedFiles.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
-    
+
     // Optimistic: update folder entry name and adjust descendants' folderName
-    const folderFullOld = parentPath ? `${parentPath}/${folderName}` : folderName;
+    const folderFullOld = parentPath
+      ? `${parentPath}/${folderName}`
+      : folderName;
     const folderFullNew = parentPath ? `${parentPath}/${newName}` : newName;
     const prevState = uploadedFiles;
     setUploadedFiles((prev) =>
@@ -330,7 +376,10 @@ export default function UserDashboard() {
         if (f.id === folderEntry?.id) return { ...f, name: newName } as any;
         const fn = f.folderName || "";
         if (fn.startsWith(folderFullOld)) {
-          return { ...f, folderName: `${folderFullNew}${fn.slice(folderFullOld.length)}` } as any;
+          return {
+            ...f,
+            folderName: `${folderFullNew}${fn.slice(folderFullOld.length)}`,
+          } as any;
         }
         return f;
       })
@@ -362,7 +411,9 @@ export default function UserDashboard() {
     const prev = uploadedFiles;
     setUploadedFiles((p) => p.filter((f) => f.id !== fileId));
     try {
-      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      const res = await fetch(`/api/user/files/${fileId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed");
       await fetchData();
       toast.success("Deleted");
@@ -375,22 +426,33 @@ export default function UserDashboard() {
   const handleDeleteFolder = async (folderName: string) => {
     const parentPath = currentPath;
     const folderEntry = uploadedFiles.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
     const full = parentPath ? `${parentPath}/${folderName}` : folderName;
     const prev = uploadedFiles;
-    setUploadedFiles((p) => p.filter((f) => {
-      if (f.id === folderEntry?.id) return false;
-      const fn = f.folderName || "";
-      return !fn.startsWith(full);
-    }));
+    setUploadedFiles((p) =>
+      p.filter((f) => {
+        if (f.id === folderEntry?.id) return false;
+        const fn = f.folderName || "";
+        return !fn.startsWith(full);
+      })
+    );
     try {
-      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/user/folders/delete`;
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}`
+        : `/api/user/folders/delete`;
       const method = folderEntry ? "DELETE" : "POST";
       const res = await fetch(url, {
         method,
-        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
-        body: folderEntry ? undefined : JSON.stringify({ parentPath, folderName }),
+        headers: folderEntry
+          ? undefined
+          : { "Content-Type": "application/json" },
+        body: folderEntry
+          ? undefined
+          : JSON.stringify({ parentPath, folderName }),
       });
       if (!res.ok) throw new Error("Failed");
       await fetchData();
@@ -615,12 +677,18 @@ export default function UserDashboard() {
             onDeleteFolder={handleDeleteFolder}
             isUploading={isUploading}
             handleFileSelect={handleFileSelect}
-            handleFileUpload={handleFileUpload}
-            selectedFile={selectedFile}
-            setSelectedFile={setSelectedFile}
+            handleFileUpload={handleFileUploadById}
+            handleConfirmAll={handleConfirmAll}
+            selectedFiles={selectedFiles.map((f) => ({
+              id: f.id,
+              name: f.name,
+            }))}
+            onRemoveSelectedFile={handleRemoveSelectedFile}
+            onClearSelectedFiles={handleClearSelectedFiles}
             onSelectedFileNameChange={handleSelectedFileNameChange}
             onFileArchive={handleArchiveFile}
             theme="user"
+            uploadingIds={uploadingIds}
           />
         )}
         {activeTab === "responses" && (

@@ -14,6 +14,7 @@ import { useMemo, useState, useEffect } from "react";
 import FileBrowser from "@/app/_component/FileBrowser";
 import { ManagedFile } from "@/types/files";
 import { toast } from "react-hot-toast";
+import { s3 } from "@/lib/s3";
 
 interface User {
   id: string;
@@ -38,6 +39,18 @@ interface UserDetails {
   userArchivedFiles?: FileDetail[];
 }
 
+interface SelectedFile {
+  id: string;
+  url: string;
+  path: string;
+  name: string;
+  size: string;
+  type: string;
+  createdAt: string;
+  updatedAt: string;
+  file: globalThis.File;
+}
+
 interface FileManagementProps {
   users: User[];
   loading: boolean;
@@ -56,7 +69,10 @@ interface FileManagementProps {
   onPrivateFileSelect: (file: File | null) => void;
   onResponseFileSelect: (file: File | null) => void;
   onPrivateUpload: (folderPath: string, overrideName?: string) => Promise<void>;
-  onResponseUpload: (folderPath: string, overrideName?: string) => Promise<void>;
+  onResponseUpload: (
+    folderPath: string,
+    overrideName?: string
+  ) => Promise<void>;
   onRefreshUserDetails: () => void;
 }
 
@@ -131,10 +147,30 @@ export default function FileManagement({
   const [isUsersCollapsed, setIsUsersCollapsed] = useState(false);
 
   // Local optimistic state for Document Management lists
-  const [privateFilesData, setPrivateFilesData] = useState<FileDetail[] | undefined>(undefined);
-  const [responseFilesData, setResponseFilesData] = useState<FileDetail[] | undefined>(undefined);
-  const [privateSelectedName, setPrivateSelectedName] = useState<string | null>(null);
-  const [responseSelectedName, setResponseSelectedName] = useState<string | null>(null);
+  const [privateFilesData, setPrivateFilesData] = useState<
+    FileDetail[] | undefined
+  >(undefined);
+  const [responseFilesData, setResponseFilesData] = useState<
+    FileDetail[] | undefined
+  >(undefined);
+  const [privateSelectedName, setPrivateSelectedName] = useState<string | null>(
+    null
+  );
+  const [responseSelectedName, setResponseSelectedName] = useState<
+    string | null
+  >(null);
+
+  // Multiple file upload state
+  const [privateSelectedFiles, setPrivateSelectedFiles] = useState<
+    SelectedFile[]
+  >([]);
+  const [responseSelectedFiles, setResponseSelectedFiles] = useState<
+    SelectedFile[]
+  >([]);
+  const [privateUploadingIds, setPrivateUploadingIds] = useState<string[]>([]);
+  const [responseUploadingIds, setResponseUploadingIds] = useState<string[]>(
+    []
+  );
 
   // Sync local state with userDetails for optimistic updates
   useEffect(() => {
@@ -148,8 +184,86 @@ export default function FileManagement({
     setPrivateSelectedName(privateUploadFile ? privateUploadFile.name : null);
   }, [privateUploadFile]);
   useEffect(() => {
-    setResponseSelectedName(responseUploadFile ? responseUploadFile.name : null);
+    setResponseSelectedName(
+      responseUploadFile ? responseUploadFile.name : null
+    );
   }, [responseUploadFile]);
+
+  // Multiple file selection handlers
+  const handlePrivateFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files;
+    if (!list || list.length === 0) return;
+    const newItems: SelectedFile[] = Array.from(list).map((file) => ({
+      id: crypto.randomUUID(),
+      url: "",
+      path: "",
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(1)} KB`,
+      type: file.type,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      file,
+    }));
+    setPrivateSelectedFiles((prev) => [...prev, ...newItems]);
+  };
+
+  const handleResponseFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = e.target.files;
+    if (!list || list.length === 0) return;
+    const newItems: SelectedFile[] = Array.from(list).map((file) => ({
+      id: crypto.randomUUID(),
+      url: "",
+      path: "",
+      name: file.name,
+      size: `${(file.size / 1024).toFixed(1)} KB`,
+      type: file.type,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+      file,
+    }));
+    setResponseSelectedFiles((prev) => [...prev, ...newItems]);
+  };
+
+  // File removal handlers
+  const handleRemovePrivateSelectedFile = (selectedTempId: string) => {
+    setPrivateSelectedFiles((prev) =>
+      prev.filter((f) => f.id !== selectedTempId)
+    );
+  };
+
+  const handleRemoveResponseSelectedFile = (selectedTempId: string) => {
+    setResponseSelectedFiles((prev) =>
+      prev.filter((f) => f.id !== selectedTempId)
+    );
+  };
+
+  // Clear all selected files
+  const handleClearPrivateSelectedFiles = () => {
+    setPrivateSelectedFiles([]);
+  };
+
+  const handleClearResponseSelectedFiles = () => {
+    setResponseSelectedFiles([]);
+  };
+
+  // File name change handlers
+  const handlePrivateSelectedFileNameChange = (
+    selectedTempId: string,
+    newName: string
+  ) => {
+    setPrivateSelectedFiles((prev) =>
+      prev.map((f) => (f.id === selectedTempId ? { ...f, name: newName } : f))
+    );
+  };
+
+  const handleResponseSelectedFileNameChange = (
+    selectedTempId: string,
+    newName: string
+  ) => {
+    setResponseSelectedFiles((prev) =>
+      prev.map((f) => (f.id === selectedTempId ? { ...f, name: newName } : f))
+    );
+  };
 
   const { files: processedUploadedFiles, folders: processedUploadedFolders } =
     useMemo(
@@ -193,15 +307,19 @@ export default function FileManagement({
     } as FileDetail;
     const revert = () => {
       if (type === "private") {
-        setPrivateFilesData((prev) => (prev || []).filter((f) => f.id !== tempFolder.id));
+        setPrivateFilesData((prev) =>
+          (prev || []).filter((f) => f.id !== tempFolder.id)
+        );
       } else {
-        setResponseFilesData((prev) => (prev || []).filter((f) => f.id !== tempFolder.id));
+        setResponseFilesData((prev) =>
+          (prev || []).filter((f) => f.id !== tempFolder.id)
+        );
       }
     };
     if (type === "private") {
-      setPrivateFilesData((prev) => ([...(prev || []), tempFolder]));
+      setPrivateFilesData((prev) => [...(prev || []), tempFolder]);
     } else {
-      setResponseFilesData((prev) => ([...(prev || []), tempFolder]));
+      setResponseFilesData((prev) => [...(prev || []), tempFolder]);
     }
     try {
       const res = await fetch("/api/s3/admin-db", {
@@ -219,9 +337,17 @@ export default function FileManagement({
       const created = await res.json();
       // Replace temp with actual
       if (type === "private") {
-        setPrivateFilesData((prev) => (prev || []).map((f) => (f.id === tempFolder.id ? { ...f, id: created.id } : f)));
+        setPrivateFilesData((prev) =>
+          (prev || []).map((f) =>
+            f.id === tempFolder.id ? { ...f, id: created.id } : f
+          )
+        );
       } else {
-        setResponseFilesData((prev) => (prev || []).map((f) => (f.id === tempFolder.id ? { ...f, id: created.id } : f)));
+        setResponseFilesData((prev) =>
+          (prev || []).map((f) =>
+            f.id === tempFolder.id ? { ...f, id: created.id } : f
+          )
+        );
       }
       toast.success("Folder created successfully");
       // Optional sync refresh can run in background if needed
@@ -229,6 +355,261 @@ export default function FileManagement({
       toast.error("Failed to create folder");
       revert();
     }
+  };
+
+  // Multiple file upload handlers
+  const uploadPrivateFile = async (sf: SelectedFile) => {
+    if (!selectedUser) return false;
+    if (!privateFilesPath) {
+      toast.error("Please select or create a folder before uploading a file.");
+      return false;
+    }
+    try {
+      setPrivateUploadingIds((prev) => [...prev, sf.id]);
+
+      // Create a temporary file record for optimistic UI
+      const tempFile = {
+        id: `temp-${Date.now()}`,
+        name: sf.name,
+        size: sf.size,
+        url: "",
+        createdAt: new Date().toISOString(),
+        folderName: privateFilesPath,
+      } as FileDetail;
+
+      setPrivateFilesData((prev) => [tempFile, ...(prev || [])]);
+
+      const filePath = s3.getUserSendingFilePath(
+        selectedUser,
+        sf.name,
+        privateFilesPath
+      );
+
+      const signedUrlRes = await fetch("/api/s3/put", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filePath,
+          contentType: sf.type,
+        }),
+      });
+
+      if (!signedUrlRes.ok) {
+        throw new Error("Failed to get signed URL");
+      }
+
+      const { signedUrl } = await signedUrlRes.json();
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        body: sf.file,
+        headers: {
+          "Content-Type": sf.type,
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to S3");
+      }
+
+      const dbRes = await fetch("/api/s3/admin-db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filePath,
+          url: signedUrl,
+          name: sf.name,
+          size: sf.size,
+          type: sf.type,
+          uploadedById: selectedUser,
+          receivedById: selectedUser,
+          isAdminOnlyPrivateFile: true,
+          folderName: privateFilesPath,
+        }),
+      });
+
+      if (!dbRes.ok) {
+        throw new Error("Failed to save file in database");
+      }
+
+      const newFile = await dbRes.json();
+
+      // Replace temp file with actual file
+      setPrivateFilesData((prev) =>
+        (prev || []).map((f) => (f.id === tempFile.id ? newFile : f))
+      );
+
+      toast.success(`${sf.name} uploaded successfully!`);
+      return true;
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      toast.error(error.message || "Failed to upload file");
+
+      // Remove temp file on error
+      setPrivateFilesData((prev) =>
+        (prev || []).filter((f) => f.id !== `temp-${Date.now()}`)
+      );
+      return false;
+    } finally {
+      setPrivateUploadingIds((prev) => prev.filter((id) => id !== sf.id));
+    }
+  };
+
+  const uploadResponseFile = async (sf: SelectedFile) => {
+    if (!selectedUser) return false;
+    if (!responseFilesPath) {
+      toast.error("Please select or create a folder before uploading a file.");
+      return false;
+    }
+    try {
+      setResponseUploadingIds((prev) => [...prev, sf.id]);
+
+      // Create a temporary file record for optimistic UI
+      const tempFile = {
+        id: `temp-${Date.now()}`,
+        name: sf.name,
+        size: sf.size,
+        url: "",
+        createdAt: new Date().toISOString(),
+        folderName: responseFilesPath,
+      } as FileDetail;
+
+      setResponseFilesData((prev) => [tempFile, ...(prev || [])]);
+
+      const filePath = s3.getUserSendingFilePath(
+        selectedUser,
+        sf.name,
+        responseFilesPath
+      );
+
+      const signedUrlRes = await fetch("/api/s3/put", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          filePath,
+          contentType: sf.type,
+        }),
+      });
+
+      if (!signedUrlRes.ok) {
+        throw new Error("Failed to get signed URL");
+      }
+
+      const { signedUrl } = await signedUrlRes.json();
+
+      const uploadRes = await fetch(signedUrl, {
+        method: "PUT",
+        body: sf.file,
+        headers: {
+          "Content-Type": sf.type,
+        },
+      });
+
+      if (!uploadRes.ok) {
+        throw new Error("Failed to upload file to S3");
+      }
+
+      const dbRes = await fetch("/api/s3/admin-db", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          filePath,
+          url: signedUrl,
+          name: sf.name,
+          size: sf.size,
+          type: sf.type,
+          uploadedById: selectedUser,
+          receivedById: selectedUser,
+          isAdminOnlyPrivateFile: false,
+          folderName: responseFilesPath,
+        }),
+      });
+
+      if (!dbRes.ok) {
+        throw new Error("Failed to save file in database");
+      }
+
+      const newFile = await dbRes.json();
+
+      // Replace temp file with actual file
+      setResponseFilesData((prev) =>
+        (prev || []).map((f) => (f.id === tempFile.id ? newFile : f))
+      );
+
+      toast.success(`${sf.name} uploaded successfully!`);
+      return true;
+    } catch (error: any) {
+      console.error("Error uploading file:", error);
+      toast.error(error.message || "Failed to upload file");
+
+      // Remove temp file on error
+      setResponseFilesData((prev) =>
+        (prev || []).filter((f) => f.id !== `temp-${Date.now()}`)
+      );
+      return false;
+    } finally {
+      setResponseUploadingIds((prev) => prev.filter((id) => id !== sf.id));
+    }
+  };
+
+  // Upload individual files
+  const handlePrivateFileUploadById = async (selectedTempId: string) => {
+    const sf = privateSelectedFiles.find((f) => f.id === selectedTempId);
+    if (!sf) return;
+
+    const ok = await uploadPrivateFile(sf);
+    if (ok) {
+      setPrivateSelectedFiles((prev) =>
+        prev.filter((f) => f.id !== selectedTempId)
+      );
+    }
+  };
+
+  const handleResponseFileUploadById = async (selectedTempId: string) => {
+    const sf = responseSelectedFiles.find((f) => f.id === selectedTempId);
+    if (!sf) return;
+
+    const ok = await uploadResponseFile(sf);
+    if (ok) {
+      setResponseSelectedFiles((prev) =>
+        prev.filter((f) => f.id !== selectedTempId)
+      );
+    }
+  };
+
+  // Upload all files
+  const handlePrivateConfirmAll = async () => {
+    if (privateSelectedFiles.length === 0) return;
+
+    for (const sf of privateSelectedFiles) {
+      // Skip if duplicate name exists in current view
+      const duplicate = processedPrivateFiles.some((f) => f.name === sf.name);
+      if (duplicate) continue;
+
+      await uploadPrivateFile(sf);
+    }
+
+    setPrivateSelectedFiles([]);
+    toast.success("All uploads attempted.");
+  };
+
+  const handleResponseConfirmAll = async () => {
+    if (responseSelectedFiles.length === 0) return;
+
+    for (const sf of responseSelectedFiles) {
+      // Skip if duplicate name exists in current view
+      const duplicate = processedResponseFiles.some((f) => f.name === sf.name);
+      if (duplicate) continue;
+
+      await uploadResponseFile(sf);
+    }
+
+    setResponseSelectedFiles([]);
+    toast.success("All uploads attempted.");
   };
 
   const handleArchiveFile = async (fileId: string) => {
@@ -259,7 +640,9 @@ export default function FileManagement({
   // Admin rename/delete for Document Management (private/response)
   const handlePrivateRenameFile = async (fileId: string, newName: string) => {
     const prev = privateFilesData;
-    setPrivateFilesData((curr) => (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    setPrivateFilesData((curr) =>
+      (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f))
+    );
     try {
       const res = await fetch(`/api/user/files/${fileId}/rename`, {
         method: "PATCH",
@@ -277,7 +660,9 @@ export default function FileManagement({
 
   const handleResponseRenameFile = async (fileId: string, newName: string) => {
     const prev = responseFilesData;
-    setResponseFilesData((curr) => (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f)));
+    setResponseFilesData((curr) =>
+      (curr || []).map((f) => (f.id === fileId ? { ...f, name: newName } : f))
+    );
     try {
       const res = await fetch(`/api/user/files/${fileId}/rename`, {
         method: "PATCH",
@@ -293,10 +678,16 @@ export default function FileManagement({
     }
   };
 
-  const handlePrivateRenameFolder = async (folderName: string, newName: string) => {
+  const handlePrivateRenameFolder = async (
+    folderName: string,
+    newName: string
+  ) => {
     const parentPath = privateFilesPath;
     const folderEntry = (privateFilesData || [])?.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
     // Optimistic update regardless of explicit record
     const oldFull = parentPath ? `${parentPath}/${folderName}` : folderName;
@@ -306,9 +697,14 @@ export default function FileManagement({
       (curr || []).map((f) => {
         // Update descendants folder paths
         const fn = f.folderName || "";
-        if (fn.startsWith(oldFull)) return { ...f, folderName: `${newFull}${fn.slice(oldFull.length)}` } as any;
+        if (fn.startsWith(oldFull))
+          return {
+            ...f,
+            folderName: `${newFull}${fn.slice(oldFull.length)}`,
+          } as any;
         // If there is an explicit folder record, update its display name
-        if (folderEntry && f.id === folderEntry.id) return { ...f, name: newName } as any;
+        if (folderEntry && f.id === folderEntry.id)
+          return { ...f, name: newName } as any;
         return f;
       })
     );
@@ -339,10 +735,16 @@ export default function FileManagement({
     }
   };
 
-  const handleResponseRenameFolder = async (folderName: string, newName: string) => {
+  const handleResponseRenameFolder = async (
+    folderName: string,
+    newName: string
+  ) => {
     const parentPath = responseFilesPath;
     const folderEntry = (responseFilesData || [])?.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
     // Optimistic update regardless of explicit record
     const oldFull = parentPath ? `${parentPath}/${folderName}` : folderName;
@@ -352,9 +754,14 @@ export default function FileManagement({
       (curr || []).map((f) => {
         // Update descendants folder paths
         const fn = f.folderName || "";
-        if (fn.startsWith(oldFull)) return { ...f, folderName: `${newFull}${fn.slice(oldFull.length)}` } as any;
+        if (fn.startsWith(oldFull))
+          return {
+            ...f,
+            folderName: `${newFull}${fn.slice(oldFull.length)}`,
+          } as any;
         // If there is an explicit folder record, update its display name
-        if (folderEntry && f.id === folderEntry.id) return { ...f, name: newName } as any;
+        if (folderEntry && f.id === folderEntry.id)
+          return { ...f, name: newName } as any;
         return f;
       })
     );
@@ -389,7 +796,9 @@ export default function FileManagement({
     const prev = privateFilesData;
     setPrivateFilesData((curr) => (curr || []).filter((f) => f.id !== fileId));
     try {
-      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      const res = await fetch(`/api/user/files/${fileId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete file");
       toast.success("File deleted successfully");
       // UI already updated optimistically
@@ -403,7 +812,9 @@ export default function FileManagement({
     const prev = responseFilesData;
     setResponseFilesData((curr) => (curr || []).filter((f) => f.id !== fileId));
     try {
-      const res = await fetch(`/api/user/files/${fileId}`, { method: "DELETE" });
+      const res = await fetch(`/api/user/files/${fileId}`, {
+        method: "DELETE",
+      });
       if (!res.ok) throw new Error("Failed to delete file");
       toast.success("File deleted successfully");
       // UI already updated optimistically
@@ -416,7 +827,10 @@ export default function FileManagement({
   const handlePrivateDeleteFolder = async (folderName: string) => {
     const parentPath = privateFilesPath;
     const folderEntry = (privateFilesData || [])?.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
     const full = parentPath ? `${parentPath}/${folderName}` : folderName;
     const prev = privateFilesData;
@@ -428,19 +842,33 @@ export default function FileManagement({
         // Also remove the explicit folder record itself if it exists
         if (folderEntry && f.id === folderEntry.id) return false;
         // Be defensive: remove any folder item matching name+parentPath
-        if (f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath) return false;
+        if (
+          f.type === "folder" &&
+          f.name === folderName &&
+          (f.folderName || "") === parentPath
+        )
+          return false;
         return true;
       })
     );
     try {
-      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/admin/folders/delete`;
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}`
+        : `/api/admin/folders/delete`;
       const method = folderEntry ? "DELETE" : "POST";
       const res = await fetch(url, {
         method,
-        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
+        headers: folderEntry
+          ? undefined
+          : { "Content-Type": "application/json" },
         body: folderEntry
           ? undefined
-          : JSON.stringify({ selectedUserId: selectedUser, parentPath, folderName, isPrivate: true }),
+          : JSON.stringify({
+              selectedUserId: selectedUser,
+              parentPath,
+              folderName,
+              isPrivate: true,
+            }),
       });
       if (!res.ok) throw new Error("Failed to delete folder");
       toast.success("Folder deleted successfully");
@@ -454,7 +882,10 @@ export default function FileManagement({
   const handleResponseDeleteFolder = async (folderName: string) => {
     const parentPath = responseFilesPath;
     const folderEntry = (responseFilesData || [])?.find(
-      (f) => f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath
+      (f) =>
+        f.type === "folder" &&
+        f.name === folderName &&
+        (f.folderName || "") === parentPath
     );
     const full = parentPath ? `${parentPath}/${folderName}` : folderName;
     const prev = responseFilesData;
@@ -466,19 +897,33 @@ export default function FileManagement({
         // Also remove the explicit folder record itself if it exists
         if (folderEntry && f.id === folderEntry.id) return false;
         // Be defensive: remove any folder item matching name+parentPath
-        if (f.type === "folder" && f.name === folderName && (f.folderName || "") === parentPath) return false;
+        if (
+          f.type === "folder" &&
+          f.name === folderName &&
+          (f.folderName || "") === parentPath
+        )
+          return false;
         return true;
       })
     );
     try {
-      const url = folderEntry ? `/api/user/files/${folderEntry.id}` : `/api/admin/folders/delete`;
+      const url = folderEntry
+        ? `/api/user/files/${folderEntry.id}`
+        : `/api/admin/folders/delete`;
       const method = folderEntry ? "DELETE" : "POST";
       const res = await fetch(url, {
         method,
-        headers: folderEntry ? undefined : { "Content-Type": "application/json" },
+        headers: folderEntry
+          ? undefined
+          : { "Content-Type": "application/json" },
         body: folderEntry
           ? undefined
-          : JSON.stringify({ selectedUserId: selectedUser, parentPath, folderName, isPrivate: false }),
+          : JSON.stringify({
+              selectedUserId: selectedUser,
+              parentPath,
+              folderName,
+              isPrivate: false,
+            }),
       });
       if (!res.ok) throw new Error("Failed to delete folder");
       toast.success("Folder deleted successfully");
@@ -627,8 +1072,10 @@ export default function FileManagement({
                         isUploading={false}
                         handleFileSelect={() => {}}
                         handleFileUpload={() => {}}
-                        selectedFile={null}
-                        setSelectedFile={() => {}}
+                        selectedFiles={[]}
+                        onRemoveSelectedFile={() => {}}
+                        onClearSelectedFiles={() => {}}
+                        onSelectedFileNameChange={() => {}}
                         theme="user"
                       />
                     </TabsContent>
@@ -644,8 +1091,10 @@ export default function FileManagement({
                         isUploading={false}
                         handleFileSelect={() => {}}
                         handleFileUpload={() => {}}
-                        selectedFile={null}
-                        setSelectedFile={() => {}}
+                        selectedFiles={[]}
+                        onRemoveSelectedFile={() => {}}
+                        onClearSelectedFiles={() => {}}
+                        onSelectedFileNameChange={() => {}}
                         theme="archive"
                       />
                     </TabsContent>
@@ -698,16 +1147,20 @@ export default function FileManagement({
                         onDeleteFile={handlePrivateDeleteFile}
                         onDeleteFolder={handlePrivateDeleteFolder}
                         isUploading={privateUploadLoading}
-                        handleFileSelect={(e) =>
-                          onPrivateFileSelect(e.target.files?.[0] || null)
+                        handleFileSelect={handlePrivateFileSelect}
+                        handleFileUpload={handlePrivateFileUploadById}
+                        handleConfirmAll={handlePrivateConfirmAll}
+                        selectedFiles={privateSelectedFiles.map((f) => ({
+                          id: f.id,
+                          name: f.name,
+                        }))}
+                        onRemoveSelectedFile={handleRemovePrivateSelectedFile}
+                        onClearSelectedFiles={handleClearPrivateSelectedFiles}
+                        onSelectedFileNameChange={
+                          handlePrivateSelectedFileNameChange
                         }
-                        handleFileUpload={() =>
-                          onPrivateUpload(privateFilesPath, privateSelectedName || undefined)
-                        }
-                        selectedFile={privateSelectedName ? { name: privateSelectedName } as any : (privateUploadFile as any)}
-                        setSelectedFile={() => onPrivateFileSelect(null)}
-                        onSelectedFileNameChange={(newName) => setPrivateSelectedName(newName)}
                         theme="admin-private"
+                        uploadingIds={privateUploadingIds}
                       />
                     </TabsContent>
 
@@ -730,16 +1183,20 @@ export default function FileManagement({
                         onDeleteFile={handleResponseDeleteFile}
                         onDeleteFolder={handleResponseDeleteFolder}
                         isUploading={responseUploadLoading}
-                        handleFileSelect={(e) =>
-                          onResponseFileSelect(e.target.files?.[0] || null)
+                        handleFileSelect={handleResponseFileSelect}
+                        handleFileUpload={handleResponseFileUploadById}
+                        handleConfirmAll={handleResponseConfirmAll}
+                        selectedFiles={responseSelectedFiles.map((f) => ({
+                          id: f.id,
+                          name: f.name,
+                        }))}
+                        onRemoveSelectedFile={handleRemoveResponseSelectedFile}
+                        onClearSelectedFiles={handleClearResponseSelectedFiles}
+                        onSelectedFileNameChange={
+                          handleResponseSelectedFileNameChange
                         }
-                        handleFileUpload={() =>
-                          onResponseUpload(responseFilesPath, responseSelectedName || undefined)
-                        }
-                        selectedFile={responseSelectedName ? { name: responseSelectedName } as any : (responseUploadFile as any)}
-                        setSelectedFile={() => onResponseFileSelect(null)}
-                        onSelectedFileNameChange={(newName) => setResponseSelectedName(newName)}
                         theme="admin-response"
+                        uploadingIds={responseUploadingIds}
                       />
                     </TabsContent>
                   </Tabs>

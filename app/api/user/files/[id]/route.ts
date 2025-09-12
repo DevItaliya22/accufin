@@ -23,7 +23,9 @@ export async function DELETE(
     }
 
     if (file.type === "folder") {
-      const oldFolderPath = file.folderName ? `${file.folderName}/${file.name}` : file.name ?? "";
+      const oldFolderPath = file.folderName
+        ? `${file.folderName}/${file.name}`
+        : (file.name ?? "");
       await prisma.$transaction(async (tx) => {
         // Delete descendants first
         await tx.file.deleteMany({
@@ -38,7 +40,10 @@ export async function DELETE(
         await tx.file.delete({ where: { id } });
 
         // Notify admins about folder delete
-        const admins = await tx.user.findMany({ where: { isAdmin: true }, select: { id: true } });
+        const admins = await tx.user.findMany({
+          where: { isAdmin: true },
+          select: { id: true },
+        });
         if (admins.length > 0) {
           await tx.notification.createMany({
             data: admins.map((a) => ({
@@ -54,7 +59,10 @@ export async function DELETE(
 
     await prisma.file.delete({ where: { id } });
     // Notify admins about file delete
-    const admins = await prisma.user.findMany({ where: { isAdmin: true }, select: { id: true } });
+    const admins = await prisma.user.findMany({
+      where: { isAdmin: true },
+      select: { id: true },
+    });
     if (admins.length > 0) {
       await prisma.notification.createMany({
         data: admins.map((a) => ({
@@ -73,5 +81,3 @@ export async function DELETE(
     );
   }
 }
-
-

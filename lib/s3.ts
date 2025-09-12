@@ -11,12 +11,24 @@ export const s3 = {
     return `user-uploads/${userId}/received`;
   },
   // To get path while uploading user file to s3 in user dashboard
-  getUserSendingFilePath: (userId: string, filename: string) => {
-    return `user-uploads/${userId}/sent/${filename}`;
+  // Accepts optional folderPath to support nested folders
+  getUserSendingFilePath: (
+    userId: string,
+    filename: string,
+    folderPath?: string
+  ) => {
+    const folder = folderPath && folderPath.length > 0 ? `/${folderPath}` : "";
+    return `user-uploads/${userId}/sent${folder}/${filename}`;
   },
   // To get path while uploading Admin Response file to s3 in admin dashboard
-  getUserReceivedFilePath: (userId: string, filename: string) => {
-    return `user-uploads/${userId}/received/${filename}`;
+  // Accepts optional folderPath to support nested folders
+  getUserReceivedFilePath: (
+    userId: string,
+    filename: string,
+    folderPath?: string
+  ) => {
+    const folder = folderPath && folderPath.length > 0 ? `/${folderPath}` : "";
+    return `user-uploads/${userId}/received${folder}/${filename}`;
   },
 
   // To get path for testimonial image uploads
@@ -28,9 +40,11 @@ export const s3 = {
   getAdminPrivateUploadPath: (
     adminId: string,
     userId: string,
-    filename: string
+    filename: string,
+    folderPath?: string
   ) => {
-    return `admin-private-uploads/${adminId}/${userId}/${filename}`;
+    const folder = folderPath && folderPath.length > 0 ? `/${folderPath}` : "";
+    return `admin-private-uploads/${adminId}/${userId}${folder}/${filename}`;
   },
 
   getUserProfilePicturePath: (userId: string, filename: string) => {

@@ -43,15 +43,24 @@ type FileBrowserProps = {
   onDeleteFolder?: (folderName: string) => void;
   isUploading: boolean;
   handleFileSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  handleFileUpload: () => void;
-  selectedFile: { name: string } | null;
-  setSelectedFile: (file: null) => void;
-  onSelectedFileNameChange?: (newName: string) => void;
+  // Upload a specific selected file by its temp id
+  handleFileUpload: (selectedTempId: string) => void;
+  // Upload all selected files sequentially
+  handleConfirmAll?: () => void;
+  // Selected files (local, prior to upload)
+  selectedFiles: { id: string; name: string }[];
+  // Remove a selected file from the queue
+  onRemoveSelectedFile: (selectedTempId: string) => void;
+  // Clear all selected files
+  onClearSelectedFiles?: () => void;
+  onSelectedFileNameChange?: (selectedTempId: string, newName: string) => void;
   onFileArchive?: (fileId: string) => void;
   onFileUnarchive?: (fileId: string) => void;
   showUploadButton?: boolean;
   showAddFolderButton?: boolean;
   theme?: "user" | "admin-private" | "admin-response" | "archive";
+  // Optional per-file uploading status (ids currently uploading)
+  uploadingIds?: string[];
 };
 
 const Breadcrumbs = ({
@@ -117,23 +126,36 @@ export default function FileBrowser({
   isUploading,
   handleFileSelect,
   handleFileUpload,
-  selectedFile,
-  setSelectedFile,
+  handleConfirmAll,
+  selectedFiles,
+  onRemoveSelectedFile,
+  onClearSelectedFiles,
   onSelectedFileNameChange,
   onFileArchive,
   onFileUnarchive,
   showUploadButton = true,
   showAddFolderButton = true,
   theme = "user",
+  uploadingIds = [],
 }: FileBrowserProps) {
   const [newFolderName, setNewFolderName] = useState("");
-  const [renameTargetFileId, setRenameTargetFileId] = useState<string | null>(null);
-  const [renameTargetFolderName, setRenameTargetFolderName] = useState<string | null>(null);
+  const [renameTargetFileId, setRenameTargetFileId] = useState<string | null>(
+    null
+  );
+  const [renameTargetFolderName, setRenameTargetFolderName] = useState<
+    string | null
+  >(null);
   const [renameNewName, setRenameNewName] = useState("");
-  const [renameOriginalExt, setRenameOriginalExt] = useState<string | null>(null);
+  const [renameOriginalExt, setRenameOriginalExt] = useState<string | null>(
+    null
+  );
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
-  const [deleteTargetFileId, setDeleteTargetFileId] = useState<string | null>(null);
-  const [deleteTargetFolderName, setDeleteTargetFolderName] = useState<string | null>(null);
+  const [deleteTargetFileId, setDeleteTargetFileId] = useState<string | null>(
+    null
+  );
+  const [deleteTargetFolderName, setDeleteTargetFolderName] = useState<
+    string | null
+  >(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
 
   // Color theme system
@@ -182,7 +204,7 @@ export default function FileBrowser({
       headerBg: "bg-gray-200",
       headerText: "text-gray-900",
     },
-  };
+  } as const;
 
   const currentTheme = colorTheme[theme];
 
@@ -198,12 +220,16 @@ export default function FileBrowser({
   const onDrop = (e: React.DragEvent) => {
     e.preventDefault();
 
-    const files = Array.from(e.dataTransfer.files);
-    if (files.length > 0) {
+    const filesDropped = Array.from(e.dataTransfer.files);
+    if (filesDropped.length > 0) {
       // Create the exact same event structure that the file input would create
       const fakeEvent = {
         target: {
-          files: e.dataTransfer.files,
+          files: {
+            length: filesDropped.length,
+            item: (i: number) => filesDropped[i],
+            0: filesDropped[0],
+          } as unknown as FileList,
         },
       } as React.ChangeEvent<HTMLInputElement>;
 
@@ -251,7 +277,9 @@ export default function FileBrowser({
     }
     if (renameTargetFileId && onRenameFile) {
       const base = renameNewName.trim();
-      const finalName = renameOriginalExt ? `${base}.${renameOriginalExt}` : base;
+      const finalName = renameOriginalExt
+        ? `${base}.${renameOriginalExt}`
+        : base;
       onRenameFile(renameTargetFileId, finalName);
     } else if (renameTargetFolderName && onRenameFolder) {
       onRenameFolder(renameTargetFolderName, renameNewName.trim());
@@ -324,9 +352,13 @@ export default function FileBrowser({
           }
         }}
       >
-        <DialogContent className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}>
+        <DialogContent
+          className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}
+        >
           <DialogHeader>
-            <DialogTitle className={`${currentTheme.headerText}`}>Rename {renameTargetFolderName ? "Folder" : "File"}</DialogTitle>
+            <DialogTitle className={`${currentTheme.headerText}`}>
+              Rename {renameTargetFolderName ? "Folder" : "File"}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             {renameTargetFileId ? (
@@ -339,7 +371,9 @@ export default function FileBrowser({
                   onKeyDown={(e) => e.key === "Enter" && confirmRename()}
                 />
                 {renameOriginalExt && (
-                  <span className="text-sm text-gray-500 whitespace-nowrap">.{renameOriginalExt}</span>
+                  <span className="text-sm text-gray-500 whitespace-nowrap">
+                    .{renameOriginalExt}
+                  </span>
                 )}
               </div>
             ) : (
@@ -354,7 +388,10 @@ export default function FileBrowser({
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <DialogClose asChild>
-              <Button variant="outline" className={`w-full sm:w-auto ${currentTheme.border}`}>
+              <Button
+                variant="outline"
+                className={`w-full sm:w-auto ${currentTheme.border}`}
+              >
                 Cancel
               </Button>
             </DialogClose>
@@ -376,22 +413,40 @@ export default function FileBrowser({
           }
         }}
       >
-        <DialogContent className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}>
+        <DialogContent
+          className={`sm:max-w-md ${currentTheme.card} ${currentTheme.cardBorder} border`}
+        >
           <DialogHeader>
-            <DialogTitle className={`${currentTheme.headerText}`}>Confirm Delete</DialogTitle>
+            <DialogTitle className={`${currentTheme.headerText}`}>
+              Confirm Delete
+            </DialogTitle>
           </DialogHeader>
           <div className="py-2 text-sm">
             {deleteTargetFolderName ? (
-              <p>Are you sure you want to delete the folder "{deleteTargetFolderName}" and all its contents?</p>
+              <p>
+                Are you sure you want to delete the folder "
+                {deleteTargetFolderName}" and all its contents?
+              </p>
             ) : (
               <p>Are you sure you want to delete this file?</p>
             )}
           </div>
           <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <DialogClose asChild>
-              <Button variant="outline" className={`w-full sm:w-auto ${currentTheme.border}`}>Cancel</Button>
+              <Button
+                variant="outline"
+                className={`w-full sm:w-auto ${currentTheme.border}`}
+              >
+                Cancel
+              </Button>
             </DialogClose>
-            <Button onClick={confirmDelete} className="w-full sm:w-auto" variant="destructive">Delete</Button>
+            <Button
+              onClick={confirmDelete}
+              className="w-full sm:w-auto"
+              variant="destructive"
+            >
+              Delete
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -439,13 +494,20 @@ export default function FileBrowser({
                     className={`w-full sm:w-auto ${currentTheme.border} ${currentTheme.hover}`}
                   >
                     <Upload className="w-4 h-4 mr-2" />
-                    Upload File
+                    Upload File(s)
                   </Button>
                 )}
                 {showUploadButton && (
                   <input
                     type="file"
-                    onChange={handleFileSelect}
+                    multiple
+                    onChange={(e) => {
+                      handleFileSelect(e);
+                      // Allow re-selecting the same file across different folders
+                      if (e.target) {
+                        (e.target as HTMLInputElement).value = "";
+                      }
+                    }}
                     id="file-upload"
                     className="hidden"
                   />
@@ -454,69 +516,118 @@ export default function FileBrowser({
             </div>
           </CardHeader>
           <CardContent className={`p-0 sm:p-6 ${currentTheme.bg}`}>
-            {selectedFile && (
+            {selectedFiles && selectedFiles.length > 0 && (
               <div
-                className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 mb-4 rounded-lg border gap-3 ${currentTheme.bg} ${currentTheme.border}`}
+                className={`p-3 mb-4 rounded-lg border gap-3 ${currentTheme.bg} ${currentTheme.border}`}
               >
-                <div className="flex items-center space-x-2 min-w-0 flex-1">
-                  <FileText
-                    className={`w-5 h-5 ${currentTheme.file} flex-shrink-0`}
-                  />
-                  <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sm truncate">
-                      {selectedFile.name}
-                    </p>
-                    {onSelectedFileNameChange && (
-                      <div className="mt-2 flex items-center gap-2">
-                        {(() => {
-                          const originalName = selectedFile.name || "";
-                          const dotIndex = originalName.lastIndexOf(".");
-                          const ext = dotIndex > 0 ? originalName.slice(dotIndex + 1) : "";
-                          const base = dotIndex > 0 ? originalName.slice(0, dotIndex) : originalName;
-                          return (
-                            <>
-                              <Input
-                                type="text"
-                                defaultValue={base}
-                                onChange={(e) => {
-                                  const raw = e.target.value.trim();
-                                  if (raw.includes("/")) {
-                                    toast.error("Name cannot contain '/'");
-                                    return;
-                                  }
-                                  const newName = ext ? `${raw}.${ext}` : raw;
-                                  if (raw.length === 0) return; // ignore empty
-                                  onSelectedFileNameChange(newName);
-                                }}
-                                className="h-8 w-48"
-                              />
-                              {ext && (
-                                <span className="text-xs text-gray-500 whitespace-nowrap">.{ext}</span>
-                              )}
-                            </>
-                          );
-                        })()}
-                      </div>
+                <div className="flex items-center justify-between mb-2">
+                  <p className="font-medium text-sm">
+                    {selectedFiles.length} file(s) selected
+                  </p>
+                  <div className="flex gap-2">
+                    {handleConfirmAll && (
+                      <Button
+                        size="sm"
+                        onClick={handleConfirmAll}
+                        disabled={isUploading || uploadingIds.length > 0}
+                        className="w-full sm:w-auto"
+                      >
+                        Confirm All
+                      </Button>
+                    )}
+                    {onClearSelectedFiles && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => onClearSelectedFiles()}
+                        className="w-full sm:w-auto"
+                      >
+                        Clear All
+                      </Button>
                     )}
                   </div>
                 </div>
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                  <Button
-                    size="sm"
-                    onClick={handleFileUpload}
-                    disabled={isUploading}
-                    className="w-full sm:w-auto"
-                  >
-                    {isUploading ? "Uploading..." : "Confirm Upload"}
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setSelectedFile(null)}
-                    className="w-full sm:w-auto"
-                  >
-                    Cancel
-                  </Button>
+                <div className="space-y-2">
+                  {selectedFiles.map((sf) => {
+                    const isUploadingThis = uploadingIds.includes(sf.id);
+                    // Treat name as duplicate only if not currently uploading this selected item
+                    const isDuplicateName =
+                      !isUploadingThis && files.some((f) => f.name === sf.name);
+                    const disabled = isUploadingThis || isDuplicateName;
+                    const dotIndex = (sf.name || "").lastIndexOf(".");
+                    const ext = dotIndex > 0 ? sf.name.slice(dotIndex + 1) : "";
+                    const base =
+                      dotIndex > 0 ? sf.name.slice(0, dotIndex) : sf.name;
+                    return (
+                      <div
+                        key={sf.id}
+                        className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-2 rounded-md border"
+                      >
+                        <div className="flex items-center space-x-2 min-w-0 flex-1">
+                          <FileText
+                            className={`w-5 h-5 ${currentTheme.file} flex-shrink-0`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium text-sm truncate">
+                              {sf.name}
+                            </p>
+                            {onSelectedFileNameChange && (
+                              <div className="mt-2 flex items-center gap-2">
+                                <Input
+                                  type="text"
+                                  defaultValue={base}
+                                  onChange={(e) => {
+                                    const raw = e.target.value.trim();
+                                    if (raw.includes("/")) {
+                                      toast.error("Name cannot contain '/'");
+                                      return;
+                                    }
+                                    const newName = ext ? `${raw}.${ext}` : raw;
+                                    if (raw.length === 0) return; // ignore empty
+                                    onSelectedFileNameChange(sf.id, newName);
+                                  }}
+                                  className="h-8 w-48"
+                                />
+                                {ext && (
+                                  <span className="text-xs text-gray-500 whitespace-nowrap">
+                                    .{ext}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 mt-2 sm:mt-0">
+                          <Button
+                            size="sm"
+                            onClick={() => handleFileUpload(sf.id)}
+                            disabled={disabled}
+                            className="w-full sm:w-auto"
+                          >
+                            {isUploadingThis
+                              ? "Uploading..."
+                              : isDuplicateName
+                                ? "Rename to Upload"
+                                : "Confirm Upload"}
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => onRemoveSelectedFile(sf.id)}
+                            className="w-full sm:w-auto"
+                          >
+                            Remove
+                          </Button>
+                          {isDuplicateName && (
+                            <span className="text-xs text-red-600">
+                              A file with this name already exists in this
+                              folder.
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -532,9 +643,12 @@ export default function FileBrowser({
                       key={folder}
                       className={`flex items-center p-3 border rounded-lg cursor-pointer transition-colors ${currentTheme.border} ${currentTheme.hover}`}
                     >
-                      <div onClick={() => handleFolderDoubleClick(folder)} className="flex items-center flex-1 min-w-0">
+                      <div
+                        onClick={() => handleFolderDoubleClick(folder)}
+                        className="flex items-center flex-1 min-w-0"
+                      >
                         <Folder
-                        className={`w-6 h-6 ${currentTheme.folder} flex-shrink-0 mr-3`}
+                          className={`w-6 h-6 ${currentTheme.folder} flex-shrink-0 mr-3`}
                         />
                         <span className="text-sm font-medium truncate flex-1">
                           {folder}
@@ -543,7 +657,11 @@ export default function FileBrowser({
                       {(onRenameFolder || onDeleteFolder) && (
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon" onClick={(e) => e.stopPropagation()}>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => e.stopPropagation()}
+                            >
                               <MoreVertical className="w-4 h-4" />
                             </Button>
                           </DropdownMenuTrigger>
@@ -575,89 +693,114 @@ export default function FileBrowser({
                   ))}
                 </div>
                 <div className={`space-y-2 pr-2 ${currentTheme.bg}`}>
-                  {files.map((file) => (
-                    <div
-                      className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border-2 rounded-lg ${currentTheme.border}`}
-                      key={file.id}
-                    >
-                      <div className="flex items-center space-x-3 min-w-0 flex-1">
-                        <FileText
-                          className={`w-6 h-6 ${currentTheme.file} flex-shrink-0`}
-                        />
-                        <div className="min-w-0 flex-1">
-                          <p className="font-medium truncate text-sm">
-                            {file.name}
-                          </p>
-                          {file.size && file.createdAt && (
-                            <p className="text-xs text-gray-500 truncate">
-                              {file.size} •{" "}
-                              {new Date(file.createdAt).toLocaleDateString()}
+                  {files
+                    .filter((file) => {
+                      // While a selected file is uploading, hide the optimistic temp duplicate in the list
+                      const uploadingSelectedNames = selectedFiles
+                        .filter((sf) => uploadingIds.includes(sf.id))
+                        .map((sf) => sf.name);
+                      const isTemp =
+                        typeof file.id === "string" &&
+                        file.id.startsWith("temp-");
+                      if (
+                        isTemp &&
+                        uploadingSelectedNames.includes(file.name)
+                      ) {
+                        return false;
+                      }
+                      return true;
+                    })
+                    .map((file) => (
+                      <div
+                        className={`flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-3 border-2 rounded-lg ${currentTheme.border}`}
+                        key={file.id}
+                      >
+                        <div className="flex items-center space-x-3 min-w-0 flex-1">
+                          <FileText
+                            className={`w-6 h-6 ${currentTheme.file} flex-shrink-0`}
+                          />
+                          <div className="min-w-0 flex-1">
+                            <p className="font-medium truncate text-sm">
+                              {file.name}
                             </p>
+                            {file.size && file.createdAt && (
+                              <p className="text-xs text-gray-500 truncate">
+                                {file.size} •{" "}
+                                {new Date(file.createdAt).toLocaleDateString()}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className={`whitespace-nowrap w-full sm:w-auto ${currentTheme.border} ${currentTheme.hover}`}
+                            asChild
+                          >
+                            <a
+                              href={file.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
+                              <Download className="w-4 h-4 mr-2" />
+                              Download
+                            </a>
+                          </Button>
+                          {onFileArchive && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onFileArchive(file.id)}
+                              className="w-full sm:w-auto"
+                            >
+                              <Archive className="w-4 h-4 mr-2" />
+                              Archive
+                            </Button>
+                          )}
+                          {(onRenameFile || onDeleteFile) && (
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="w-4 h-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {onRenameFile && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      openRenameFileDialog(file.id, file.name)
+                                    }
+                                  >
+                                    Rename
+                                  </DropdownMenuItem>
+                                )}
+                                {onDeleteFile && (
+                                  <DropdownMenuItem
+                                    onClick={() =>
+                                      openDeleteFileDialog(file.id)
+                                    }
+                                  >
+                                    Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          )}
+                          {onFileUnarchive && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => onFileUnarchive(file.id)}
+                              className="w-full sm:w-auto"
+                            >
+                              <ArchiveRestore className="w-4 h-4 mr-2" />
+                              Unarchive
+                            </Button>
                           )}
                         </div>
                       </div>
-                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className={`whitespace-nowrap w-full sm:w-auto ${currentTheme.border} ${currentTheme.hover}`}
-                          asChild
-                        >
-                          <a
-                            href={file.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                          >
-                            <Download className="w-4 h-4 mr-2" />
-                            Download
-                          </a>
-                        </Button>
-                        {onFileArchive && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onFileArchive(file.id)}
-                            className="w-full sm:w-auto"
-                          >
-                            <Archive className="w-4 h-4 mr-2" />
-                            Archive
-                          </Button>
-                        )}
-                        {(onRenameFile || onDeleteFile) && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon">
-                                <MoreVertical className="w-4 h-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                              {onRenameFile && (
-                                <DropdownMenuItem onClick={() => openRenameFileDialog(file.id, file.name)}>
-                                  Rename
-                                </DropdownMenuItem>
-                              )}
-                              {onDeleteFile && (
-                                <DropdownMenuItem onClick={() => openDeleteFileDialog(file.id)}>
-                                  Delete
-                                </DropdownMenuItem>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        )}
-                        {onFileUnarchive && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => onFileUnarchive(file.id)}
-                            className="w-full sm:w-auto"
-                          >
-                            <ArchiveRestore className="w-4 h-4 mr-2" />
-                            Unarchive
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
                 {!isLoading && files.length === 0 && folders.length === 0 && (
                   <div className="text-center py-6 sm:py-8 text-gray-500">

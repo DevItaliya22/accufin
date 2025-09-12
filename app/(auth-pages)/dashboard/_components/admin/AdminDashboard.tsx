@@ -91,7 +91,9 @@ export default function AdminDashboard() {
 
     // Users
     fetch("/api/admin/get-users")
-      .then((res) => (res.ok ? res.json() : Promise.reject("Failed to fetch users")))
+      .then((res) =>
+        res.ok ? res.json() : Promise.reject("Failed to fetch users")
+      )
       .then((usersData) => {
         setUsers(usersData);
       })
@@ -212,7 +214,10 @@ export default function AdminDashboard() {
     if (!res.ok) throw new Error("Failed to mark as read");
   };
 
-  const handlePrivateUpload = async (folderPath: string, overrideName?: string) => {
+  const handlePrivateUpload = async (
+    folderPath: string,
+    overrideName?: string
+  ) => {
     if (!privateUploadFile || !session?.user?.id || !selectedUser) return;
     setPrivateUploadLoading(true);
     try {
@@ -221,14 +226,17 @@ export default function AdminDashboard() {
         const original = privateUploadFile.name;
         const dot = original.lastIndexOf(".");
         const ext = dot > 0 ? original.slice(dot + 1) : "";
-        const raw = overrideName.includes(".") ? overrideName.slice(0, overrideName.lastIndexOf(".")) : overrideName;
+        const raw = overrideName.includes(".")
+          ? overrideName.slice(0, overrideName.lastIndexOf("."))
+          : overrideName;
         return ext ? `${raw}.${ext}` : raw;
       })();
 
       const filePath = s3.getAdminPrivateUploadPath(
         session.user.id,
         selectedUser,
-        finalName
+        finalName,
+        folderPath
       );
       const signedUrlRes = await fetch("/api/s3/put", {
         method: "POST",
@@ -287,7 +295,10 @@ export default function AdminDashboard() {
     }
   };
 
-  const handleResponseUpload = async (folderPath: string, overrideName?: string) => {
+  const handleResponseUpload = async (
+    folderPath: string,
+    overrideName?: string
+  ) => {
     if (!responseUploadFile || !session?.user?.id || !selectedUser) return;
     setResponseUploadLoading(true);
     try {
@@ -296,13 +307,16 @@ export default function AdminDashboard() {
         const original = responseUploadFile.name;
         const dot = original.lastIndexOf(".");
         const ext = dot > 0 ? original.slice(dot + 1) : "";
-        const raw = overrideName.includes(".") ? overrideName.slice(0, overrideName.lastIndexOf(".")) : overrideName;
+        const raw = overrideName.includes(".")
+          ? overrideName.slice(0, overrideName.lastIndexOf("."))
+          : overrideName;
         return ext ? `${raw}.${ext}` : raw;
       })();
 
       const filePath = s3.getUserReceivedFilePath(
         selectedUser,
-        finalName
+        finalName,
+        folderPath
       );
       const signedUrlRes = await fetch("/api/s3/put", {
         method: "POST",
@@ -374,11 +388,15 @@ export default function AdminDashboard() {
     let timer: any;
     async function checkActive() {
       try {
-        const res = await fetch("/api/user/check-active", { cache: "no-store" });
+        const res = await fetch("/api/user/check-active", {
+          cache: "no-store",
+        });
         if (res.status === 401) return; // not logged in
         const data = await res.json();
         if (data && data.active === false) {
-          toast.error("Your account is inactive. You have been signed out by admin.");
+          toast.error(
+            "Your account is inactive. You have been signed out by admin."
+          );
           await signOut({ redirect: false });
           router.push("/login");
         }
@@ -389,14 +407,15 @@ export default function AdminDashboard() {
     return () => clearInterval(timer);
   }, [router]);
 
-
   return (
     <div className="min-h-screen bg-cyan-50">
       <DashboardHeader
         activeTab={activeTab}
         onTabChange={(tab) => setActiveTab(tab as any)}
         onLogout={handleLogout}
-        unreadNotificationsCount={notifications.filter((n:any) => !n.isRead).length}
+        unreadNotificationsCount={
+          notifications.filter((n: any) => !n.isRead).length
+        }
       />
       <div className="w-full sm:px-0 lg:px-6 py-8">
         {activeTab === "users" && (
